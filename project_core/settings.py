@@ -53,6 +53,8 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'project_core.urls'
 
+AUTH_USER_MODEL = 'curso_crud.CustomUser'
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -78,7 +80,7 @@ WSGI_APPLICATION = 'project_core.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'postgres',       # Nombre de la base de datos
+        'NAME': 'clinicakalesi',       # Nombre de la base de datos
         'USER': 'postgres',          # Nombre de usuario
         'PASSWORD': 'admin',  # Contraseña del usuario
         'HOST': 'localhost',       # Host de la base de datos (usualmente 'localhost')
