@@ -33,7 +33,6 @@
                         </div>
                     {% endfor %}
                 </div>
-
                 <button type="submit" class="btn btn-primary w-100 mt-4">Registrarse</button>
             </form>
         </div>
@@ -44,12 +43,9 @@
     /* Estilos para el contenedor grid */
     .form-grid {
         display: grid;
-        grid-template-columns: repeat(3, 1fr); /* 2 columnas */
+        grid-template-columns: repeat(3, 1fr); /* 3 columnas */
         gap: 16px; /* Espacio entre campos */
     }
-
-    /* Si quieres 3 columnas, cambia a: */
-    /* grid-template-columns: repeat(3, 1fr); */
 
     /* Asegúrate de que los campos ocupen todo el ancho */
     .form-grid .mb-3 {
@@ -58,8 +54,7 @@
 
     /* Ajustar el botón para que ocupe toda la fila */
     .form-grid + button {
-        grid-column: span 3; /* Para 2 columnas */
-        /* grid-column: span 3; Para 3 columnas */
+        grid-column: span 3; /* Para 3 columnas */
     }
 </style>
 {% endblock content %}

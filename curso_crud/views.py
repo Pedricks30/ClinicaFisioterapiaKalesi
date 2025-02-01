@@ -28,4 +28,3 @@ def registrar_usuario(request):
             return render(request, 'user/registration.html', {
                 'form': form
             })
-
