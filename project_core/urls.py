@@ -22,5 +22,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', views.index,name='curso_crud'),
     path('registrar/', views.registrar_usuario,name='registar_usuario'),
-    path('cursos', include('curso_crud.urls')),
+    path('cursos/', include('curso_crud.urls')),
 ]
