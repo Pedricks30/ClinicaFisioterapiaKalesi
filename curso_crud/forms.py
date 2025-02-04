@@ -26,62 +26,65 @@ class CustomUserCreationForm(UserCreationForm):
         required=True,
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Teléfono'})
     )
-    prefijo_telefono = forms.CharField(
+    telephone_prefix = forms.CharField(  # Cambiado a telephone_prefix
         max_length=5,
         required=True,
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Prefijo'})
     )
-    direccion1 = forms.CharField(
+    address1 = forms.CharField(  # Cambiado a address1
         max_length=255,
         required=True,
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Dirección 1'})
     )
-    direccion2 = forms.CharField(
+    address2 = forms.CharField(  # Cambiado a address2
         max_length=255,
         required=False,
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Dirección 2'})
     )
-    pais = forms.CharField(
+    country = forms.CharField(  # Cambiado a country
         max_length=100,
         required=True,
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'País'})
     )
-    fecha_nacimiento = forms.DateField(
+    birthdate = forms.DateField(  # Cambiado a birthdate
         required=True,
         widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'})
     )
-    tipo_documento = forms.ModelChoiceField(
+    document_type = forms.ModelChoiceField(  # Cambiado a document_type
         queryset=DocumentType.objects.all(),
         required=True,
         widget=forms.Select(attrs={'class': 'form-control'})
     )
-    numero_documento = forms.CharField(
+    document_number = forms.CharField(  # Cambiado a document_number
         max_length=100,
         required=True,
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Número de documento'})
     )
-    nivel_acceso = forms.ModelChoiceField(
+    access_level = forms.ModelChoiceField(  # Cambiado a access_level
         queryset=AccessLevel.objects.all(),
         required=True,
         widget=forms.Select(attrs={'class': 'form-control'})
     )
-
-    # Personalizar el campo is_active
+    profile_image = forms.ImageField(  # Agregado el campo profile_image
+        required=False,
+        widget=forms.FileInput(attrs={'class': 'form-control'}),
+        label="Imagen de perfil"
+    )
     is_active = forms.ChoiceField(
-        choices=[(True, 'Activo'), (False, 'Inactivo')],  # Opciones para el combo box
+        choices=[(True, 'Activo'), (False, 'Inactivo')],
         required=True,
         initial=True,
         widget=forms.Select(attrs={'class': 'form-control'}),
-        label="Activo",  # Etiqueta del campo
+        label="Activo",
         help_text="Indica si el usuario debe ser tratado como activo. Desmarque esta opción en lugar de borrar la cuenta."
     )
 
     class Meta:
         model = CustomUser
         fields = (
-            'username', 'email', 'first_name', 'last_name', 'age', 'phone', 'prefijo_telefono',
-            'direccion1', 'direccion2', 'pais', 'fecha_nacimiento', 'tipo_documento', 'numero_documento',
-            'nivel_acceso', 'password1', 'password2', 'is_active'
+            'username', 'email', 'first_name', 'last_name', 'age', 'phone', 'telephone_prefix',
+            'address1', 'address2', 'country', 'birthdate', 'document_type', 'document_number',
+            'access_level', 'password1', 'password2', 'is_active', 'profile_image'
         )
 
     def __init__(self, *args, **kwargs):

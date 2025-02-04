@@ -1,0 +1,18 @@
+
+body {
+    background-color: #047857;
+}
+    /* Estilos para centrar el marco */
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh; /* Ocupa toda la altura de la pantalla */
+    padding: 20px; /* Espaciado para dispositivos pequeños */
+}
+    /* Estilos para el marco (card) */
+.card {
+    max-width: 1100px; /* Ancho máximo del marco */
+    width: 100%; /* Ocupa el 100% del ancho disponible */
+    margin: auto; /* Centra el marco horizontalmente */
+}

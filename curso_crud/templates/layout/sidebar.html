@@ -1,14 +1,21 @@
 {% load static %}
-
 <!-- Sidebar -->
-<ul class="navbar-nav bg-gradient-danger sidebar sidebar-dark accordion" id="accordionSidebar">
+<ul class="navbar-nav sidebar sidebar-dark accordion" id="accordionSidebar" style="background-color: #047857;">
+    <!-- Divider -->
+    <hr class="sidebar-divider my-1">
     <!-- Logo container -->
-    <div class="sidebar-brand d-flex align-items-center justify-content-center mt-5">
-        <img class="rounded-circle" src="{% static 'images/LicoreriaLogo.png' %}" alt="Logo Licorería" width="150" height="150">
-    </div>
+    <a class="sidebar-brand d-flex align-items-center justify-content-center" href="#">
+        <div class="sidebar-brand-icon">
+            <img class="rounded-circle" src="{% static 'img/logokalesi.webp' %}" alt="Centro medico de fisioterapia Kalesi" width="80" height="80">
+        </div>
+        <div class="sidebar-brand-text mx-2" style="font-size: 0.8rem;">
+            <div>Centro médico de</div>
+            <div>fisioterapia Kalesi</div>
+        </div>
+    </a>
 
     <!-- Divider -->
-    <hr class="sidebar-divider my-3">
+    <hr class="sidebar-divider my-2">
 
     <!-- Nav Item - Dashboard -->
     <li class="nav-item active">

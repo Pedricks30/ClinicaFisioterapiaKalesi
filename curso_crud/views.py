@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth.models import User
 from .forms import CustomUserCreationForm #Importar el formulario personalizado
-
+from django.contrib.auth import authenticate, login as auth_login
+from django.contrib import messages
 # Create your views here.
 
 def index(request):
@@ -17,8 +17,8 @@ def registrar_usuario(request):
             'form': CustomUserCreationForm()  # Usa el formulario personalizado
         })
     else:
-        # Procesar el formulario enviado
-        form = CustomUserCreationForm(request.POST)
+        # Procesar el formulario enviado (incluyendo archivos)
+        form = CustomUserCreationForm(request.POST, request.FILES)  # ¡Aquí agregamos request.FILES!
         if form.is_valid():
             # Guardar el usuario con los datos del formulario
             user = form.save()
@@ -28,3 +28,20 @@ def registrar_usuario(request):
             return render(request, 'user/registration.html', {
                 'form': form
             })
+        
+def login(request):
+    if request.method == 'POST':
+        email = request.POST.get('email', '')  # Devuelve '' si 'email' no existe
+        password = request.POST.get('password', '')  # Devuelve '' si 'password' no existe
+
+        user = authenticate(request, username=email, password=password)
+        if user is not None:
+            auth_login(request, user)
+            return redirect('curso_crud')
+        else:
+            messages.error(request, 'Credenciales inválidas')
+            messages.error(request, 'Debes ingresar tu correo y contraseña')
+    return render(request, 'registration/login.html')
+
+def forgot_password(request):
+    return render(request, 'registration/forgot_password.html')
