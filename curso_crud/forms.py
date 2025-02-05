@@ -65,11 +65,6 @@ class CustomUserCreationForm(UserCreationForm):
         required=True,
         widget=forms.Select(attrs={'class': 'form-control'})
     )
-    profile_image = forms.ImageField(  # Agregado el campo profile_image
-        required=False,
-        widget=forms.FileInput(attrs={'class': 'form-control'}),
-        label="Imagen de perfil"
-    )
     is_active = forms.ChoiceField(
         choices=[(True, 'Activo'), (False, 'Inactivo')],
         required=True,

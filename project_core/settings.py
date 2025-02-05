@@ -72,10 +72,6 @@ TEMPLATES = [
     },
 ]
 
-# Configuración para la carpeta MEDIA
-MEDIA_URL = '/media/'  # URL para acceder a los archivos multimedia
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')  # Ruta donde se almacenarán los archivos
-
 WSGI_APPLICATION = 'project_core.wsgi.application'
 
 
@@ -134,5 +130,7 @@ STATICFILES_DIRS = [
 ]
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+# Configuración para la carpeta MEDIA
+MEDIA_URL = '/media/'  # URL para acceder a los archivos multimedia
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')  # Ruta donde se almacenarán los archivos

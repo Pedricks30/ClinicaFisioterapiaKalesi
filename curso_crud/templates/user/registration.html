@@ -6,7 +6,7 @@
     <div class="row justify-content-center">
         <div class="col-md-13"> <!-- Aumenté el ancho para acomodar más columnas -->
             <h2 class="text-center mb-4">Registro de Usuario</h2>
-            <form method="post" class="border p-4 rounded shadow">
+            <form method="post" class="border p-4 rounded shadow" enctype="multipart/form-data">
                 {% csrf_token %}
 
                 <!-- Contenedor grid para los campos -->
@@ -35,7 +35,7 @@
                     <div class="mb-3">
                         <label class="form-label">Subir Archivo</label>
                         <div class="input-group">
-                            <input type="text" class="form-control" id="file-name" readonly>
+                            <input type="text" class="form-control" id="profile_image" readonly>
                             <label class="input-group-text btn btn-danger">
                                 <i class="fas fa-folder-open"></i> Seleccionar archivo
                                 <input type="file" class="d-none" id="file-input" name="profile_image">  <!-- Cambiado a profile_image -->

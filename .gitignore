@@ -10,3 +10,6 @@ db.sqlite3
 
 # Ignorar la carpeta de VS Code
 .vscode/
+
+# Ignorar la capeta de MEDIA
+media/

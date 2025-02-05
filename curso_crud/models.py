@@ -30,30 +30,49 @@ class CustomUser(AbstractUser):
     country = models.CharField(max_length=100, null=True, blank=True)  # País
     birthdate = models.DateField(null=True, blank=True)  # Fecha de nacimiento
     document_number = models.CharField(max_length=40)  # Número de documento
-    profile_image = models.ImageField(upload_to='profile_images/', null=True, blank=True)
+    profile_image = models.ImageField(upload_to='profile_images/', default='imagen')
 
     # Relaciones con otras tablas
     document_type = models.ForeignKey(DocumentType, on_delete=models.SET_NULL, null=True, blank=True)
     access_level = models.ForeignKey(AccessLevel, on_delete=models.SET_NULL, null=True, blank=True)
 
-    def save(self, *args, **kwargs):
-        # Guardar el objeto primero para obtener la ruta de la imagen
-        super().save(*args, **kwargs)
-
-        # Comprimir y convertir la imagen si se ha subido una
-        if self.profile_image:
-            try:
-                # Verificar si el archivo es una imagen
-                if self.profile_image.name.lower().endswith(('.png', '.jpg', '.jpeg', '.webp')):
-                    compressed_image_path = compress_image(self.profile_image)
-                    self.profile_image.name = os.path.relpath(compressed_image_path, start=os.path.dirname(self.profile_image.path))
-                    super().save(*args, **kwargs)  # Guardar de nuevo con la nueva imagen
-            except Exception as e:
-                print(f"Error al comprimir la imagen: {e}")
-
     def __str__(self):
         return self.username
 
+def save(self, *args, **kwargs):
+    # Verificar si es un nuevo usuario o una actualización
+    is_new = self._state.adding  # True si es un nuevo objeto, False si es una actualización
+
+    # Guardar el objeto primero para obtener la ruta de la imagen
+    super().save(*args, **kwargs)
+
+    # Comprimir y convertir la imagen si se ha subido una
+    if self.profile_image:
+        try:
+            # Verificar si el archivo es una imagen
+            if self.profile_image.name.lower().endswith(('.png', '.jpg', '.jpeg', '.webp')):
+                # Abrir la imagen original
+                img = Image.open(self.profile_image.path)
+
+                # Crear la ruta para la imagen comprimida (en formato WebP)
+                output_path = os.path.splitext(self.profile_image.path)[0] + '.webp'
+
+                # Guardar la imagen en formato WebP
+                img.save(output_path, 'WEBP', quality=70)
+
+                # Actualizar el nombre del archivo en el campo profile_image
+                self.profile_image.name = os.path.relpath(output_path, start=os.path.dirname(self.profile_image.path))
+
+                # Guardar el objeto nuevamente solo si la imagen se comprimió correctamente
+                super().save(*args, **kwargs)
+        except Exception as e:
+            print(f"Error al comprimir la imagen: {e}")
+            # Si ocurre un error, mantener la imagen original
+            if is_new:
+                # Si es un nuevo usuario, eliminar el objeto creado
+                self.delete()
+                raise e  # Relanzar la excepción para detener el proceso de guardado
+            
 def compress_image(image, quality=70):
     """
     Comprime una imagen y la convierte a WebP.
