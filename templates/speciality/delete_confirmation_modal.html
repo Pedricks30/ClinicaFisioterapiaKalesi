@@ -1,0 +1,65 @@
+<!-- delete_confirmation_modal.html -->
+<div class="modal-dialog" role="document">
+    <div class="modal-content">
+        <div class="modal-header bg-success">
+            <h5 class="modal-title text-light">Confirmar Eliminación</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        <div class="modal-body" id="deleteModalBody">
+            ¿Estás seguro de que deseas eliminar el tipo de documento "<span id="documentName"></span>"?
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="button" class="btn btn-danger" id="confirmDeleteButton">Eliminar</button>
+        </div>
+    </div>
+</div>
+<!-- Fin del Modal de Confirmación de Eliminación -->
+<script>
+// Función para manejar la eliminación de un documento
+function abrir_modal_eliminacion(url, nombreDocumento) {
+    $('#eliminacion #documentName').text(nombreDocumento);
+    $('#eliminacion').modal('show');
+    
+    $('#confirmDeleteButton').off('click').on('click', function() {
+        const $button = $(this);
+        $button.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Eliminando...');
+        
+        $.ajax({
+            url: url,
+            type: 'POST',
+            data: {
+                'csrfmiddlewaretoken': '{{ csrf_token }}'
+            },
+            success: function() {
+                $('#eliminacion').modal('hide');
+                Swal.fire({
+                    title: '¡Éxito!',
+                    text: 'Especialidad eliminada correctamente',
+                    icon: 'success',
+                    confirmButtonText: 'Aceptar',
+                    customClass: {
+                        confirmButton: 'btn btn-primary' // Añadimos la clase de botón primario
+                    }
+                }).then(() => location.reload());
+            },
+            error: function() {
+                Swal.fire({
+                    title: 'Error',
+                    text: 'No se pudo eliminar el documento',
+                    icon: 'error',
+                    confirmButtonText: 'Aceptar',
+                    customClass: {
+                        confirmButton: 'btn btn-primary' // Añadimos la clase de botón primario
+                    }
+                });
+            },
+            complete: function() {
+                $button.prop('disabled', false).text('Eliminar');
+            }
+        });
+    });
+}
+</script>

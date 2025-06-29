@@ -1,0 +1,73 @@
+{% extends "layout/base.html" %}
+{% load static %}
+{% block title %}Lista de Tipos de Documento{% endblock title %}
+{% block content %}
+<!-- Begin Page Content -->
+<div class="container-fluid">
+    <!-- DataTales Example -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 bg-success">
+            <h6 class="m-0 font-weight-bold text-light">Lista de Tipos de Documento</h6>
+        </div>
+        
+        <div class="card-body">
+            <!-- Tabla de Tipos de Documento -->
+            <div class="table-responsive">
+                <table class="table table-bordered responsive" id="dataTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Tipo de Documento</th>
+                            <th>Descripción</th>
+                            <th>Fecha de Creación</th>
+                            <th>Última Actualización</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for document_type in document_types %}
+                        <tr>
+                            <td>{{ document_type.id_document }}</td>
+                            <td>{{ document_type.document_type }}</td>
+                            <td>{{ document_type.document_description }}</td>
+                            <td>{{ document_type.created_at }}</td>
+                            <td>{{ document_type.update_at }}</td>
+                            <td>
+                                {% if perms.user.change_documenttype %}
+                                    <button type="button" 
+                                            class="btn btn-primary" 
+                                            onclick="abrir_modal_edicion('{% url 'editar_documento' document_type.id_document %}')"
+                                            title="Editar tipo de documento">
+                                        <i class="fas fa-pencil-alt"></i>
+                                    </button>
+                                {% endif %}
+                                {% if perms.user.delete_documenttype %}
+                                    <button type="button" 
+                                            class="btn btn-danger" 
+                                            onclick="abrir_modal_eliminacion('{% url 'eliminar_documento' document_type.id_document %}', '{{ document_type.document_type }}')"
+                                            title="Eliminar tipo de documento">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Crear y Editar -->
+<div class="modal fade" id="edicion" tabindex="-1" role="dialog">
+    <!-- El contenido del modal se carga dinámicamente aquí -->
+</div>
+
+<!-- Modal para Eliminación -->
+<div class="modal fade" id="eliminacion" tabindex="-1" role="dialog">
+    <!-- El contenido del modal se carga dinámicamente aquí -->
+    {% include 'document/delete_confirmation_modal.html' %}
+</div>
+
+{% endblock %}

@@ -1,0 +1,112 @@
+<div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+        <div class="modal-header bg-success">
+            <h5 class="modal-title text-light">
+                {% if object %}Editar{% else %}Crear{% endif %} Cita
+            </h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        <form method="post" action="{% if object %}{% url 'citas:update' object.id %}{% else %}{% url 'citas:create' %}{% endif %}" id="citaForm">
+            <div class="modal-body">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.paciente.id_for_label }}">Paciente</label>
+                            {{ form.paciente }}
+                            {% if form.paciente.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.paciente.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.fecha.id_for_label }}">Fecha</label>
+                            {{ form.fecha }}
+                            {% if form.fecha.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.fecha.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.hora_inicio.id_for_label }}">Hora Inicio</label>
+                            {{ form.hora_inicio }}
+                            {% if form.hora_inicio.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.hora_inicio.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.hora_fin.id_for_label }}">Hora Fin</label>
+                            {{ form.hora_fin }}
+                            {% if form.hora_fin.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.hora_fin.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="{{ form.motivo.id_for_label }}">Motivo</label>
+                    {{ form.motivo }}
+                    {% if form.motivo.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.motivo.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="form-group">
+                    <label for="{{ form.estado.id_for_label }}">Estado</label>
+                    {{ form.estado }}
+                    {% if form.estado.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.estado.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-success">
+                    {% if object %}Actualizar{% else %}Crear{% endif %} Cita
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+$(document).ready(function(){
+    $('#citaForm').on('submit', function(e){
+        e.preventDefault();
+        $.ajax({
+            type: $(this).attr('method'),
+            url: $(this).attr('action'),
+            data: $(this).serialize(),
+            success: function(response){
+                if(response.success){
+                    location.reload();
+                } else {
+                    $('#edicion').html(response.form);
+                }
+            }
+        });
+    });
+});
+</script>

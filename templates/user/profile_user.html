@@ -1,0 +1,147 @@
+{% extends "layout/base.html" %} <!-- Extiende la plantilla base -->
+{% block title %}{% if is_from_list %}Detalle de Usuario{% else %}Mi Perfil{% endif %}{% endblock title %} <!-- Título de la página -->
+{% load static %}
+{% block content %}
+<!-- Contenedor principal que asegura que el contenido ocupe toda la altura disponible -->
+<div id="content-wrapper" class="d-flex flex-column">
+  <div class="container py-5 flex-grow-1"> 
+    <div class="row justify-content-center">
+      <div class="col-md-12"> 
+        <div class="card shadow"> 
+          <div class="card-header py-3 bg-success"> 
+            <h6 class="m-0 font-weight-bold text-light text-left">
+              {% if is_from_list %}Detalle de Usuario{% else %}Mi Perfil{% endif %}
+            </h6>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-lg-4 text-center">
+                <!-- Imagen de perfil -->
+                <img src="{% if user.profile_image %}{{ user.profile_image.url }}{% else %}{% static 'img/undraw_profile_2.svg' %}{% endif %}" 
+                    alt="Imagen de perfil"
+                    class="rounded-circle img-fluid" style="width: 370px; height: 370px;">
+                <h5 class="my-3">{{ user.first_name }} {{ user.last_name }}</h5>
+                <p class="text-muted mb-1">@{{ user.username }}</p>
+                <p class="text-muted mb-4">{{ user.address1 }}, {{ user.country }}</p>
+                {% if not is_from_list %}
+                  <a href="{% url 'cambiar_contrasena' %}" class="btn btn-primary">Actualizar Contraseña</a>
+                {% endif %}
+              </div>
+              <div class="col-lg-8">
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="row mb-3">
+                      <div class="col-sm-5 font-weight-bold">Nombre Completo</div>
+                      <div class="col-sm-7 text-muted">{{ user.first_name }} {{ user.last_name }}</div>
+                    </div>
+                    <hr>
+                    <div class="row mb-3">
+                      <div class="col-sm-5 font-weight-bold">Email</div>
+                      <div class="col-sm-7 text-muted">{{ user.email }}</div>
+                    </div>
+                    <hr>
+                    <div class="row mb-3">
+                      <div class="col-sm-5 font-weight-bold">Teléfono</div>
+                      <div class="col-sm-7 text-muted">{{ user.phone_number }}</div>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="row mb-3">
+                      <div class="col-sm-5 font-weight-bold">Fecha de Nacimiento</div>
+                      <div class="col-sm-7 text-muted">{{ user.birthdate }}</div>
+                    </div>
+                    <hr>
+                    <div class="row mb-3">
+                      <div class="col-sm-5 font-weight-bold">Edad</div>
+                      <div class="col-sm-7 text-muted">
+                        {% if age %}
+                          {{ age }} años
+                        {% else %}
+                          No disponible
+                        {% endif %}
+                      </div>
+                    </div>
+                    <hr>
+                    <div class="row mb-3">
+                      <div class="col-sm-5 font-weight-bold">Dirección Secundaria</div>
+                      <div class="col-sm-7 text-muted">{{ user.address2 }}</div>
+                    </div>
+                  </div>
+                </div>
+                <hr>
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="row mb-3">
+                      <div class="col-sm-5 font-weight-bold">Tipo de Documento</div>
+                      <div class="col-sm-7 text-muted">{{ user.document_type }}</div>
+                    </div>
+                    <hr>
+                    <div class="row mb-3">
+                      <div class="col-sm-5 font-weight-bold">Nivel de Acceso</div>
+                      <div class="col-sm-7 text-muted">{{ user.access_level }}</div>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="row mb-3">
+                      <div class="col-sm-5 font-weight-bold">Número de Documento</div>
+                      <div class="col-sm-7 text-muted">{{ user.document_number }}</div>
+                    </div>
+                    <hr>
+                    <div class="row mb-3">
+                      <div class="col-sm-5 font-weight-bold">Fecha de Creación</div>
+                      <div class="col-sm-7 text-muted">{{ user.created_at }}</div>
+                    </div>
+                  </div>
+                </div>
+                <hr>
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="row mb-3">
+                      <div class="col-sm-5 font-weight-bold">Especialidad</div>
+                      <div class="col-sm-7 text-muted">{{ user.specialties }}</div>
+                    </div>
+                    <hr>
+                    <div class="row mb-3">
+                      <div class="col-sm-5 font-weight-bold">Estado del Usuario</div>
+                      <div class="col-sm-7">
+                        {% if user.is_active %}
+                          <button class="btn btn-success btn-sm">Activo</button>
+                        {% else %}
+                          <button class="btn btn-danger btn-sm">Inactivo</button>
+                        {% endif %}
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="row mb-3">
+                      <div class="col-sm-5 font-weight-bold">Estado del Superusuario</div>
+                      <div class="col-sm-7">
+                        {% if user.is_superuser %}
+                          <button class="btn btn-success btn-sm">Permitido</button>
+                        {% else %}
+                          <button class="btn btn-danger btn-sm">Denegado</button>
+                        {% endif %}
+                      </div>
+                    </div>
+                    <hr>
+                    <div class="row mb-3">
+                      <div class="col-sm-5 font-weight-bold">Es Staff</div>
+                      <div class="col-sm-7">
+                        {% if user.is_staff %}
+                          <button class="btn btn-success btn-sm">Permitido</button>
+                        {% else %}
+                          <button class="btn btn-danger btn-sm">Denegado</button>
+                        {% endif %}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

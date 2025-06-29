@@ -1,0 +1,40 @@
+<div class="modal-dialog" role="document">
+    <div class="modal-content">
+        <div class="modal-header bg-danger">
+            <h5 class="modal-title text-light">Confirmar Eliminación</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        <form method="post" action="{% url 'citas:delete' object.id %}">
+            <div class="modal-body">
+                {% csrf_token %}
+                <p>¿Estás seguro que deseas eliminar la cita del paciente <strong>{{ object.paciente.user.get_full_name }}</strong> 
+                programada para el <strong>{{ object.fecha|date:"d/m/Y" }}</strong> a las <strong>{{ object.hora_inicio|time:"H:i" }}</strong>?</p>
+                <p class="text-danger">Esta acción no se puede deshacer.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-danger">Eliminar Cita</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+$(document).ready(function(){
+    $('form').on('submit', function(e){
+        e.preventDefault();
+        $.ajax({
+            type: $(this).attr('method'),
+            url: $(this).attr('action'),
+            data: $(this).serialize(),
+            success: function(response){
+                if(response.success){
+                    location.reload();
+                }
+            }
+        });
+    });
+});
+</script>

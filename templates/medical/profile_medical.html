@@ -1,0 +1,77 @@
+{% extends "layout/base.html" %}
+{% load static %}
+
+{% block title %}Perfil de {{ profesional.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 bg-primary">
+            <div class="d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-light">Perfil de {{ profesional.name }}</h6>
+                <a href="{% url 'listar_profesionales' %}" class="btn btn-sm btn-light">
+                    <i class="fas fa-arrow-left"></i> Volver
+                </a>
+            </div>
+        </div>
+        
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4 text-center">
+                    {% if profesional.profile_image %}
+                        <img src="{{ profesional.profile_image.url }}" 
+                             class="rounded-circle img-thumbnail mb-3" 
+                             style="width: 200px; height: 200px; object-fit: cover;" 
+                             alt="Imagen de {{ profesional.name }}">
+                    {% else %}
+                        <img src="{% static 'media/profile_images_default/default_profile.webp' %}" 
+                             class="rounded-circle img-thumbnail mb-3" 
+                             style="width: 200px; height: 200px; object-fit: cover;" 
+                             alt="Imagen por defecto">
+                    {% endif %}
+                    
+                    <h4>{{ profesional.name }}</h4>
+                    <p class="text-muted">{{ profesional.specialties.specialties|default:"Sin especialidad" }}</p>
+                </div>
+                
+                <div class="col-md-8">
+                    <div class="card mb-4">
+                        <div class="card-header bg-light">
+                            <h6 class="m-0 font-weight-bold text-primary">Información Personal</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p><strong>Sexo:</strong> {{ profesional.get_sexo_display }}</p>
+                                    <p><strong>Email:</strong> {{ profesional.email }}</p>
+                                    <p><strong>Teléfono:</strong> {{ profesional.phone_number|default:"-" }}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p><strong>Documento:</strong> 
+                                        {% if profesional.document_type %}
+                                            {{ profesional.document_type.document_type }}: {{ profesional.document_number }}
+                                        {% else %}
+                                            {{ profesional.document_number }}
+                                        {% endif %}
+                                    </p>
+                                    <p><strong>País:</strong> {{ profesional.country|default:"-" }}</p>
+                                    <p><strong>Fecha Nacimiento:</strong> {{ profesional.birthdate|date:"d/m/Y"|default:"-" }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <h6 class="m-0 font-weight-bold text-primary">Dirección</h6>
+                        </div>
+                        <div class="card-body">
+                            <p>{{ profesional.address1|default:"No registrada" }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

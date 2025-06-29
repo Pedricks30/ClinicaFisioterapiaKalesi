@@ -1,0 +1,81 @@
+{% extends "layout/base.html" %}
+{% load static %}
+
+{% block title %}Gestión de Horarios{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 bg-success">
+            <h6 class="m-0 font-weight-bold text-light">Horarios Asignados</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered responsive" id="dataTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nº de documento</th>
+                            <th>Nombres y Apellidos</th>
+                            <th>Especialidad</th>
+                            <th>Días Laborales</th>
+                            <th>Hora Desde</th>
+                            <th>Hora Hasta</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for horario in horarios %}
+                        <tr>
+                            <td>{{ horario.profesional.id }}</td>
+                            <td>{{ horario.profesional.document_number }}</td>
+                            <td>{{ horario.profesional.name }}</td>
+                            <td>{{ horario.profesional.specialties.name }}</td>
+                            <td>{{ horario.get_dias_display|join:", " }}</td>
+                            <td>{{ horario.hora_inicio|time:"H:i" }}</td>
+                            <td>{{ horario.hora_fin|time:"H:i" }}</td>
+                            <td class="text-center">
+                                <a href="{% url 'editar_horario' horario.pk %}" class="btn btn-primary" data-toggle="tooltip" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="#" class="btn btn-danger" data-toggle="modal" data-target="#confirmDeleteModal{{ horario.id }}" data-toggle="tooltip" title="Eliminar">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        <!-- Modal de Confirmación de Eliminación -->
+                        <div class="modal fade" id="confirmDeleteModal{{ horario.id }}" tabindex="-1" role="dialog" aria-labelledby="confirmDeleteModalLabel{{ horario.id }}" aria-hidden="true">
+                            <div class="modal-dialog" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header bg-danger text-white">
+                                        <h5 class="modal-title" id="confirmDeleteModalLabel{{ horario.id }}">Confirmar Eliminación</h5>
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                    <div class="modal-body">
+                                        ¿Estás seguro de que deseas eliminar el horario de "{{ horario.profesional.name }}"?
+                                        <div class="alert alert-warning mt-2">
+                                            <small><i class="fas fa-exclamation-triangle"></i> Esta acción no se puede deshacer.</small>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <form method="POST" action="{% url 'eliminar_horario' horario.id %}">
+                                            {% csrf_token %}
+                                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                                            <button type="submit" class="btn btn-danger">Confirmar Eliminación</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

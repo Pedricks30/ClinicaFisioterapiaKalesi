@@ -1,0 +1,115 @@
+<div class="modal-dialog modal-md" role="document">
+    <div class="modal-content">
+        <div class="modal-header bg-success">
+            <h5 class="modal-title text-light" id="edicionLabel">
+                {% if editar %}Editar Nivel de Acceso{% else %}Registrar Nivel de Acceso{% endif %}
+            </h5>
+            <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        <div class="modal-body">
+            <form method="post" id="accessLevelForm" action="{% if editar %}{% url 'editar_nivel_acceso' object.id_access_level %}{% else %}{% url 'gestionar_nivel_acceso' %}{% endif %}">
+                {% csrf_token %}
+                <div>
+                    {% for field in form %}
+                        <div class="mb-3">
+                            <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                            {{ field }}
+                            <div class="invalid-feedback" id="{{ field.id_for_label }}_error"></div>
+                            {% if field.help_text %}
+                                <small class="form-text text-muted">{{ field.help_text }}</small>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="submitButton">
+                        {% if editar %}Guardar Cambios{% else %}Registrar{% endif %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+$(function() {
+    // Función para limpiar errores
+    function clearErrors() {
+        $('#accessLevelForm').find('.is-invalid').removeClass('is-invalid');
+        $('#accessLevelForm').find('.invalid-feedback').empty();
+    }
+
+    // Función para manejar el envío del formulario
+    $(document).on('submit', '#accessLevelForm', function(e) {
+        e.preventDefault();
+        var form = $(this);
+        var url = form.attr('action');
+        var formData = form.serialize();
+        var isEdit = url.includes('editar_nivel_acceso');
+        
+        // Mostrar estado de carga
+        var submitButton = $('#submitButton');
+        var originalText = submitButton.html();
+        submitButton.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Procesando...');
+
+        // Limpiar errores anteriores
+        clearErrors();
+
+        $.ajax({
+            url: url,
+            type: 'POST',
+            data: formData,
+            success: function(response) {
+                if (response.success) {
+                    Swal.fire({
+                        title: '¡Éxito!',
+                        text: response.message,
+                        icon: 'success',
+                        confirmButtonText: 'Aceptar',
+                        customClass: {
+                            confirmButton: 'btn btn-primary'
+                        }
+                    }).then((result) => {
+                        $('#edicion').modal('hide');
+                        location.reload();
+                    });
+                } else {
+                    // Mostrar nuevos errores
+                    $.each(response.errors, function(field, errors) {
+                        var fieldElement = form.find('[name=' + field + ']');
+                        var errorContainer = form.find('#' + fieldElement.attr('id') + '_error');
+                        
+                        fieldElement.addClass('is-invalid');
+                        if (errors.length > 0) {
+                            errorContainer.html('<div>' + errors[0] + '</div>');
+                        }
+                    });
+                }
+            },
+            error: function(xhr) {
+                Swal.fire({
+                    title: 'Error',
+                    text: 'Ocurrió un error al procesar la solicitud',
+                    icon: 'error',
+                    confirmButtonText: 'Aceptar',
+                    customClass: {
+                        confirmButton: 'btn btn-primary'
+                    }
+                });
+                console.error(xhr.responseText);
+            },
+            complete: function() {
+                submitButton.prop('disabled', false).html(originalText);
+            }
+        });
+    });
+
+    // Limpiar errores al abrir y cerrar el modal
+    $('#edicion').on('show.bs.modal hidden.bs.modal', function() {
+        clearErrors();
+    });
+});
+</script>

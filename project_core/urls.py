@@ -20,9 +20,18 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 urlpatterns = [
+    path('', include('authentication.urls')),  # Redirige la URL raíz a la app de autenticación
     path('admin/', admin.site.urls),
-    path('cursos/', include('curso_crud.urls')),
-    path('', include('curso_crud.urls')),  # Redirige la URL raíz a la app curso_crud
+    path('users/', include('users.urls')),  # URLs de usuarios
+    path('staff/', include('staff.urls')),
+    path('dashboard/', include('dashboard.urls')),  # URLs del dashboard
+    path('medical/', include('medical.urls')),  # URLs de la app médica
+    path('horario_personal/', include('horario.urls')),  # URLs de la app médica
+    path('citas/', include('citas.urls')),  # URLs de la app de citas
+    #path('paciente/', include('paciente.urls')),  # URLs de la app de pacientes}
+    #path('expedientes/', include('expedientes.urls')),  # URLs de la app de expediente
+    path('notifications/', include('notifications.urls')),  # URLs de notificaciones
+    
 ]
 
 if settings.DEBUG:

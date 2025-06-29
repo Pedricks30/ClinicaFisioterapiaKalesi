@@ -17,6 +17,6 @@ def main():
         ) from exc
     execute_from_command_line(sys.argv)
 
-
 if __name__ == '__main__':
+    # Ensure the script is run with the correct Python interpreter
     main()

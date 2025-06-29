@@ -1,0 +1,64 @@
+{% extends "layout/base.html" %}
+{% load static %}
+{% block title %}Lista de Especialidades{% endblock title %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 bg-success">
+            <h6 class="m-0 font-weight-bold text-light">Lista de Especialidades</h6>
+        </div>
+        
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Especialidad</th>
+                            <th>Fecha de Creación</th>
+                            <th>Última Actualización</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for especiality in specialities %}
+                        <tr>
+                            <td>{{ especiality.id_specialty }}</td>
+                            <td>{{ especiality.specialties }}</td>
+                            <td>{{ especiality.created_at }}</td>
+                            <td>{{ especiality.update_at }}</td>
+                            <td>
+                                {% if perms.user.change_specialty %}
+                                    <button type="button" 
+                                            class="btn btn-primary mr-2" 
+                                            onclick="abrir_modal_edicion('{% url 'editar_especialidad' especiality.id_specialty %}')"
+                                            title="Editar Especialidad">
+                                        <i class="fas fa-pencil-alt"></i>
+                                    </button>
+                                {% endif %}
+                                {% if perms.user.delete_specialty %}
+                                    <button type="button" 
+                                            class="btn btn-danger" 
+                                            onclick="abrir_modal_eliminacion('{% url 'eliminar_especialidad' especiality.id_specialty %}', '{{ especiality.specialties }}')"
+                                            title="Eliminar Especialidad">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modales -->
+<div class="modal fade" id="edicion" tabindex="-1" role="dialog"></div>
+<div class="modal fade" id="eliminacion" tabindex="-1" role="dialog">
+    {% include 'document/delete_confirmation_modal.html' %}
+</div>
+
+{% endblock %}

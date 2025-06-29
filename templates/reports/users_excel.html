@@ -1,0 +1,26 @@
+{% extends 'user/list_users.html' %}
+
+{% block table_content %}
+<table>
+    <thead>
+        <tr>
+            <th>Nombre de Usuario</th>
+            <th>Email</th>
+            <th>Nombre</th>
+            <th>Apellidos</th>
+            <th>Es Staff</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for usuario in page_obj %}
+        <tr>
+            <td>{{ usuario.username }}</td>
+            <td>{{ usuario.email }}</td>
+            <td>{{ usuario.first_name }}</td>
+            <td>{{ usuario.last_name }}</td>
+            <td>{% if usuario.is_staff %}Sí{% else %}No{% endif %}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

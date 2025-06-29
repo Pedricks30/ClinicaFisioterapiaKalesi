@@ -1,0 +1,224 @@
+/* Ajusta el ancho del campo de teléfono */
+.intl-tel-input {
+    width: 100% !important;
+}
+/* Ajusta el ancho del campo de país */
+.country-select {
+    width: 100% !important;
+}
+
+/*ALERTAS ESTILOS GENERAL PARA LAS ALERTASSS*/
+.alert {
+    display: flex;
+    align-items: center;
+    padding: 12px 20px;
+    margin: 10px 0;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+/* Icono de la alerta */
+.bi {
+    margin-right: 15px; /* Separación entre el icono y el texto */
+}
+
+/* Estilo para las descripciones */
+.alert-description {
+    flex: 1;
+    color: #333;
+}
+
+/* Estilos específicos para cada tipo de alerta */
+.alert-success {
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+}
+
+.alert-danger {
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+}
+
+.alert-primary {
+    background-color: #cce5ff;
+    border-color: #b8daff;
+}
+
+/* Estilos para el contenedor grid */
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* 3 columnas */
+    gap: 16px; /* Espacio entre campos */
+}
+
+/* Asegúrate de que los campos ocupen todo el ancho */
+.form-grid .mb-3 {
+    margin-bottom: 0; /* Reducir el margen inferior */
+}
+
+/* Contenedor de los botones */
+.form-buttons {
+    display: flex;
+    justify-content: space-between; /* Distribuir los botones con espacio entre ellos */
+    gap: 16px; /* Espacio entre los botones */
+}
+
+/* Asegurar que los botones ocupen el mismo tamaño */
+.form-buttons .btn {
+    width: 50%; /* Ocupan casi la mitad de la fila cada uno */
+}
+
+/* Estilos adicionales si es necesario */
+.input-group-text {
+    cursor: pointer;
+}
+
+
+/* Estilos para el menú desplegable de visibilidad de columnas */
+div.dt-button-collection {
+    background-color: white; /* Fondo blanco */
+    border: 1px solid #ddd; /* Borde gris */
+    border-radius: 4px; /* Bordes redondeados */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra suave */
+    padding: 0; /* Elimina el padding para que se vea como un dropdown */
+    min-width: 200px; /* Ancho mínimo */
+    position: absolute; /* Posicionamiento absoluto */
+    z-index: 1000; /* Asegura que esté por encima de otros elementos */
+    display: none; /* Oculta el menú por defecto */
+}
+
+div.dt-button-collection.show {
+    display: block; /* Muestra el menú cuando tiene la clase "show" */
+}
+
+div.dt-button-collection button.dt-button {
+    display: block; /* Muestra los botones en bloque */
+    width: 100%; /* Ocupa todo el ancho */
+    text-align: left; /* Alinea el texto a la izquierda */
+    padding: 8px 12px; /* Espaciado interno */
+    margin: 0; /* Elimina el margen entre botones */
+    background-color: transparent; /* Fondo transparente */
+    border: none; /* Sin borde */
+    color: #151515; /* Color del texto */
+    font-size: 14px; /* Tamaño de la fuente */
+    cursor: pointer; /* Cursor de puntero */
+}
+
+div.dt-button-collection button.dt-button:hover {
+    background-color: #4e73df; /* Fondo gris claro al pasar el mouse */
+    color: #000000; /* Cambia el color del texto al pasar el mouse */
+}
+
+div.dt-button-collection button.dt-button.active {
+    background-color: #8b8b8b; /* Fondo verde para el botón activo */
+    color: white; /* Texto blanco */
+}
+
+/* Personalizar el buscador predeterminado de DataTables */
+div.dataTables_wrapper div.dataTables_filter {
+    float: right; /* Alinea el buscador a la derecha */
+    margin-bottom: 10px; /* Espacio inferior */
+}
+
+div.dataTables_wrapper div.dataTables_filter label {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0; /* Elimina el margen inferior predeterminado */
+}
+
+div.dataTables_wrapper div.dataTables_filter input {
+    margin-left: 10px; /* Espacio entre el texto "Buscar:" y el input */
+    border: 1px solid #ddd; /* Borde del input */
+    border-radius: 4px; /* Bordes redondeados */
+    padding: 5px 10px; /* Espaciado interno */
+    background-color: #f8f9fa; /* Color de fondo */
+    color: #495057; /* Color del texto */
+    font-size: 14px; /* Tamaño de la fuente */
+}
+
+div.dataTables_wrapper div.dataTables_filter input:focus {
+    border-color: #047857; /* Color del borde al enfocar */
+    outline: none; /* Elimina el contorno predeterminado */
+    box-shadow: 0 0 5px rgba(4, 120, 87, 0.5); /* Sombra al enfocar */
+}
+
+/* Ajustar el diseño en pantallas pequeñas */
+@media (max-width: 768px) {
+    div.dataTables_wrapper div.dataTables_filter {
+        float: none; /* Elimina la flotación en pantallas pequeñas */
+        text-align: left; /* Alinea el buscador a la izquierda */
+        margin-top: 10px; /* Espacio superior */
+    }
+
+    div.dataTables_wrapper div.dataTables_filter label {
+        width: 100%; /* Asegura que ocupe todo el ancho */
+    }
+
+    div.dataTables_wrapper div.dataTables_filter input {
+        margin-left: 0; /* Elimina el margen izquierdo */
+        width: 100%; /* Asegura que ocupe todo el ancho */
+    }
+}
+/* Mantener los elementos en línea en pantallas grandes */
+.top-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Hacer que el buscador se coloque debajo cuando la pantalla es pequeña */
+@media (max-width: 768px) {
+    .top-wrapper {
+        flex-direction: column; /* Coloca los elementos en columna */
+        align-items: flex-start; /* Alinea a la izquierda */
+    }
+
+    .top-wrapper label {
+        width: 100%; /* Asegura que ocupen todo el ancho */
+    }
+
+    #dataTable_filter {
+        margin-top: 10px; /* Agrega un espacio entre los elementos */
+    }
+}
+
+/* PAGINACION DE LA TABLA */
+.pagination .page-link {
+    background-color: #1cc88a !important; /* Color success */
+    color: white !important; /* Texto blanco */
+    border-radius: 50% !important; /* Hace los botones completamente redondos */
+    width: 40px; /* Tamaño uniforme */
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: none; /* Sin borde */
+    margin: 0 5px; /* Espaciado entre botones */
+}
+
+.pagination .page-item.active .page-link {
+    background-color: #0c7552 !important; /* Un tono más oscuro para el activo */
+    font-weight: bold;
+}
+
+.pagination .page-link:hover {
+    background-color: #1cc88a !important; /* Efecto hover */
+}
+
+
+/*Visibilidad de columnas*/
+
+
+/* Estilos para los botones y el buscador */
+.dataTables_wrapper .dt-buttons {
+    margin-bottom: 10px; /* Espacio entre los botones y el buscador */
+}
+
+.dataTables_wrapper .dataTables_filter {
+    margin-bottom: 5px; /* Espacio entre el buscador y la tabla */
+}
+
+.dataTables_wrapper .dataTables_length {
+    margin-bottom: 10px; /* Espacio entre el selector de longitud y la tabla */
+}
+

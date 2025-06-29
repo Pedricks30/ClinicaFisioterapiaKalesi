@@ -1,0 +1,113 @@
+{% extends "layout/base.html" %}
+{% load static %}
+{% block title %}Lista de Usuarios{% endblock title %}
+{% block content %}
+<!-- Begin Page Content -->
+<div class="container-fluid">
+
+    <!-- Page Heading 
+    <h1 class="h3 mb-2 text-gray-800">Lista de Usuarios</h1>
+    <p class="mb-4">Aquí puedes ver y gestionar a los usuarios registrados en el sistema.</p> -->
+
+    <!-- DataTales Example -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 bg-success">
+            <h6 class="m-0 font-weight-bold text-light">Lista de Usuarios</h6>
+        </div>
+        
+        <div class="card-body">
+            <!-- Tabla de Usuarios -->
+            <div class="table-responsive">
+                <table class="table table-bordered responsive" id="dataTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Imagen de Perfil</th>
+                            <th>Nombre de Usuario</th>
+                            <th>Email</th>
+                            <th>Nombre</th>
+                            <th>Apellidos</th>
+                            <th>Es Staff</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for usuario in usuarios %}
+                        <tr>
+                            <td>
+                                {% if usuario.profile_image %}
+                                    <img src="{{ usuario.profile_image.url }}" class="rounded-circle img-thumbnail" style="width: 50px; height: 50px; object-fit: cover;" alt="Perfil">
+                                {% else %}
+                                    <span class="text-muted">Sin imagen</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ usuario.username }}</td>
+                            <td>{{ usuario.email }}</td>
+                            <td>{{ usuario.first_name }}</td>
+                            <td>{{ usuario.last_name }}</td>
+                            <td>
+                                {% if usuario.is_staff %}
+                                    <span class="btn btn-success">Sí</span>
+                                {% else %}
+                                    <span class="btn btn-danger">No</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if perms.user.change_customuser %}
+                                    <a href="{% url 'editar_usuario' usuario.id %}" 
+                                        class="btn btn-primary" 
+                                        data-toggle="tooltip" 
+                                        title="Editar usuario">
+                                        <i class="fas fa-pencil-alt"></i>
+                                    </a>
+                                {% endif %}
+                                {% if perms.user.delete_customuser %}
+                                    <button type="button" 
+                                            class="btn btn-danger" 
+                                            data-toggle="modal"
+                                            data-target="#confirmDeleteModal{{ usuario.id }}"
+                                            title="Eliminar usuario">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                {% endif %}
+                                <a href="{% url 'perfil_usuario_detail' usuario.id %}" 
+                                    class="btn btn-info" 
+                                    data-toggle="tooltip" 
+                                    title="Detalle de usuario">
+                                    <i class="fas fa-info-circle"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        <!-- Modal de Confirmación de Eliminación -->
+                        <div class="modal fade" id="confirmDeleteModal{{ usuario.id }}" tabindex="-1" role="dialog" aria-labelledby="confirmDeleteModalLabel{{ usuario.id }}" aria-hidden="true">
+                            <div class="modal-dialog" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="confirmDeleteModalLabel{{ usuario.id }}">Confirmar Eliminación</h5>
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                    <div class="modal-body">
+                                        ¿Estás seguro de que deseas eliminar al usuario "{{ usuario.username }}"?
+                                    </div>
+                                    <div class="modal-footer">
+                                        <form method="POST" action="{% url 'eliminar_usuario' usuario.id %}">
+                                            <button type="button" class="btn btn-primary" data-dismiss="modal">Cancelar</button>
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-danger">Eliminar</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+

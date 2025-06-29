@@ -1,0 +1,244 @@
+/*!
+ * SB Admin 2 v5.3.5 - Adaptado para Bootstrap 5.3.5
+ * Mantiene los estilos principales de SB Admin 2 pero compatible con Bootstrap 5
+ */
+
+ :root {
+    --blue: #0d6efd;
+    --indigo: #6610f2;
+    --purple: #6f42c1;
+    --pink: #e83e8c;
+    --red: #e74a3b;
+    --orange: #fd7e14;
+    --yellow: #f6c23e;
+    --green: #198754;
+    --teal: #20c9a6;
+    --cyan: #36b9cc;
+    --white: #fff;
+    --gray: #858796;
+    --gray-dark: #5a5c69;
+    --primary: #4e73df;
+    --secondary: #858796;
+    --success: #1cc88a;
+    --info: #36b9cc;
+    --warning: #f6c23e;
+    --danger: #e74a3b;
+    --light: #f8f9fc;
+    --dark: #5a5c69;
+    --breakpoint-xs: 0;
+    --breakpoint-sm: 576px;
+    --breakpoint-md: 768px;
+    --breakpoint-lg: 992px;
+    --breakpoint-xl: 1200px;
+    --breakpoint-xxl: 1400px;
+    --font-family-sans-serif: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-family-monospace: SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  }
+  
+  /* Layout principal */
+  body {
+    font-family: var(--font-family-sans-serif);
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.5;
+    color: var(--gray);
+    background-color: #f8f9fc;
+  }
+  
+  #wrapper {
+    display: flex;
+    width: 100%;
+  }
+  
+  #sidebar {
+    width: 14rem;
+    min-height: 100vh;
+    background-color: var(--dark);
+    color: #fff;
+    transition: all 0.3s;
+  }
+  
+  #content-wrapper {
+    width: 100%;
+    overflow-x: hidden;
+  }
+  
+  #content {
+    flex: 1 0 auto;
+  }
+  
+  .sidebar-brand {
+    height: 4.375rem;
+    text-decoration: none;
+    font-size: 1.2rem;
+    font-weight: 800;
+    padding: 1.5rem 1rem;
+    text-align: center;
+    letter-spacing: 0.05rem;
+    z-index: 1;
+  }
+  
+  .sidebar-brand-icon img {
+    width: 2.5rem;
+  }
+  
+  .sidebar-brand-text {
+    display: inline;
+  }
+  
+  .sidebar-divider {
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+    margin: 1rem 0;
+  }
+  
+  .nav-item .nav-link {
+    position: relative;
+    color: rgba(255, 255, 255, 0.8);
+    padding: 1rem;
+    font-weight: 600;
+  }
+  
+  .nav-item .nav-link:hover {
+    color: #fff;
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  .nav-item .nav-link i {
+    margin-right: 0.25rem;
+  }
+  
+  .nav-item .nav-link[data-bs-toggle="collapse"]::after {
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    content: '\f107';
+    margin-left: auto;
+    transition: transform 0.3s;
+  }
+  
+  .nav-item .nav-link[data-bs-toggle="collapse"].collapsed::after {
+    transform: rotate(-90deg);
+  }
+  
+  .collapse-inner {
+    border-radius: 0.35rem;
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+  }
+  
+  /* Topbar */
+  .topbar {
+    height: 4.375rem;
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+  }
+  
+  .topbar .navbar-search {
+    width: 25rem;
+  }
+  
+  .topbar .navbar-search input {
+    font-size: 0.85rem;
+    height: auto;
+  }
+  
+  .topbar .dropdown-list {
+    padding: 0;
+    border: none;
+    overflow: hidden;
+    width: 20rem !important;
+  }
+  
+  .topbar .dropdown-list .dropdown-header {
+    background-color: var(--primary);
+    border: 1px solid var(--primary);
+    color: #fff;
+    font-weight: 800;
+  }
+  
+  /* Cards */
+  .card {
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+    margin-bottom: 1.5rem;
+  }
+  
+  .card-header {
+    background-color: #f8f9fc;
+    border-bottom: 1px solid #e3e6f0;
+  }
+  
+  /* Botones */
+  .btn-primary {
+    background-color: var(--primary);
+    border-color: var(--primary);
+  }
+  
+  .btn-primary:hover {
+    background-color: #2e59d9;
+    border-color: #2653d4;
+  }
+  
+  /* Scroll to top */
+  .scroll-to-top {
+    position: fixed;
+    right: 1rem;
+    bottom: 1rem;
+    display: none;
+    width: 2.75rem;
+    height: 2.75rem;
+    text-align: center;
+    color: #fff;
+    background: rgba(90, 92, 105, 0.5);
+    line-height: 46px;
+    border-radius: 50%;
+  }
+  
+  .scroll-to-top:hover {
+    background: var(--dark);
+    color: #fff;
+  }
+  
+  /* Responsive */
+  @media (max-width: 768px) {
+    #sidebar {
+      width: 6.5rem !important;
+    }
+    #sidebar .nav-item .nav-link {
+      text-align: center;
+      padding: 0.75rem 1rem;
+      width: 6.5rem;
+    }
+    #sidebar .nav-item .nav-link span {
+      display: none;
+    }
+    #sidebar .nav-item .nav-link i {
+      margin-right: 0;
+    }
+    #sidebar .sidebar-brand .sidebar-brand-text {
+      display: none;
+    }
+    #content-wrapper {
+      margin-left: 6.5rem !important;
+    }
+  }
+  
+  /* Utilidades específicas de SB Admin 2 */
+  .bg-gradient-primary {
+    background-color: var(--primary);
+    background-image: linear-gradient(180deg, var(--primary) 10%, #224abe 100%);
+  }
+  
+  .text-primary {
+    color: var(--primary) !important;
+  }
+  
+  .border-left-primary {
+    border-left: 0.25rem solid var(--primary) !important;
+  }
+  
+  /* Animaciones */
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
+  .animated--fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+  }

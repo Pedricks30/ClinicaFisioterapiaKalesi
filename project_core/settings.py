@@ -13,21 +13,25 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 import os
 from pathlib import Path
+import environ
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+#INICIALIZAMOS LA LIBRERIA ENVIRON
+env = environ.Env()
+environ.Env.read_env()
 
 # Quick-start development settings - unsuiteable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-b14q!eb_#rr_4%@at&r=xk!dii51^$ai(z-!agk7a*g97o-+x'
+SECRET_KEY = env.str('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env.bool('DEBUG', default=False)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = tuple(env.list('ALLOWED_HOSTS', default=[]))
 
 
 # Application definition
@@ -39,7 +43,18 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'curso_crud'
+    'authentication',
+    'django_htmx',
+    'dashboard',
+    'users',
+    'core',
+    'staff',
+    'medical',
+    'horario',
+    'citas',
+    'paciente',
+    'expedientes',
+    'notifications',
 ]
 
 MIDDLEWARE = [
@@ -50,11 +65,12 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django_htmx.middleware.HtmxMiddleware',
 ]
 
 ROOT_URLCONF = 'project_core.urls'
 
-AUTH_USER_MODEL = 'curso_crud.CustomUser'
+AUTH_USER_MODEL = 'users.CustomUser'# Cambia esto si tienes un modelo de usuario personalizado
 
 TEMPLATES = [
     {
@@ -73,7 +89,16 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'project_core.wsgi.application'
+# Para los mensajes
+from django.contrib.messages import constants as messages
 
+MESSAGE_TAGS = {
+    messages.DEBUG: 'info',
+    messages.INFO: 'info',
+    messages.SUCCESS: 'success',
+    messages.WARNING: 'warning',
+    messages.ERROR: 'error',
+}
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
@@ -81,16 +106,13 @@ WSGI_APPLICATION = 'project_core.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'clinicakalesi',       # Nombre de la base de datos
-        'USER': 'postgres',          # Nombre de usuario
-        'PASSWORD': 'admin',  # Contraseña del usuario
-        'HOST': 'localhost',       # Host de la base de datos (usualmente 'localhost')
-        'PORT': '5432',            # Puerto de PostgreSQL (por defecto es 5432)
+        'NAME': env.str('DB_NAME'),      # Nombre de la base de datos
+        'USER': env.str('DB_USER'),          # Nombre de usuario
+        'PASSWORD': env.str('DB_PASSWORD'),  # Contraseña del usuario
+        'HOST': env.str('DB_HOST'),       # Host de la base de datos (usualmente 'localhost')
+        'PORT': env.int('DB_PORT'),            # Puerto de PostgreSQL (por defecto es 5432)
     }
 }
-
-
-# Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -131,6 +153,16 @@ STATICFILES_DIRS = [
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Configuración para enviar correos electrónicos
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'  # Servidor SMTP de Gmail
+EMAIL_USE_TLS = env.bool('EMAIL_USE_TLS', default=True)  # Usar TLS para seguridad
+EMAIL_PORT = env.int('EMAIL_PORT')  # Puerto para TLS
+EMAIL_HOST_USER = env.str('EMAIL_HOST_USER') # Tu dirección de correo electrónico
+EMAIL_HOST_PASSWORD = env.str('EMAIL_HOST_PASSWORD') # Tu contraseña de correo
+# Password validation
+
 # Configuración para la carpeta MEDIA
 MEDIA_URL = '/media/'  # URL para acceder a los archivos multimedia
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')  # Ruta donde se almacenarán los archivos

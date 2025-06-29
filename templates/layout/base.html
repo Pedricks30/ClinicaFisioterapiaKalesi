@@ -1,0 +1,167 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>{% block title %}Clinica Kalesi - Dashboard{% endblock %}</title>
+
+    <!-- Custom fonts for this template -->
+    <link href="{% static 'vendor/fontawesome-free/css/all.min.css' %}" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
+
+    <!-- DataTables CSS -->
+    <link href="{% static 'vendor/datatables/dataTables.bootstrap4.min.css' %}" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/3.0.4/css/responsive.bootstrap4.css">
+
+    <!-- SB Admin 2 CSS -->
+    <link href="{% static 'css/sb-admin-2.min.css' %}" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link href="{% static 'css/sb_forms.css' %}" rel="stylesheet">
+
+    <!-- Third-party CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/country-select-js/2.1.0/css/countrySelect.min.css"/>
+</head>
+
+<body id="page-top">
+    <!-- Contenedor principal -->
+    <div id="wrapper" class="d-flex">
+        <!-- Sidebar (Barra lateral de navegación) -->
+        {% include 'layout/sidebar.html' %}
+
+        <!-- Contenedor del contenido principal -->
+        <div id="content-wrapper" class="d-flex flex-column flex-grow-1">
+            <!-- Main Content -->
+            <div id="content">
+                {% include 'layout/header.html' %}
+                {% block content %}
+                {% endblock %}
+            </div>
+            <!-- Fin del contenido principal -->
+
+            <!-- Footer -->
+            <footer class="bg-white text-center py-3 mt-auto">
+                <div class="container">
+                    <span>Copyright &copy; Your Website 2025</span>
+                </div>
+            </footer>
+        </div>
+        <!-- Fin del contenedor del contenido principal -->
+    </div>
+    <!-- Fin del contenedor principal -->
+
+    <!-- Botón para volver arriba -->
+    <a class="scroll-to-top rounded" href="#page-top">
+        <i class="fas fa-angle-up"></i>
+    </a>
+
+    <div id="toastContainer" class="position-fixed bottom-0 end-0 p-3" style="z-index: 1100"></div>
+    <!-- Modal de cierre de sesión -->
+    <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">¿Listo para irte?</h5>
+                    <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">Seleccione "Cerrar sesión" a continuación si está listo para finalizar su sesión actual.</div>
+                <div class="modal-footer">
+                    <button class="btn btn-danger" type="button" data-dismiss="modal">Cancelar</button>
+                    <a class="btn btn-primary" href="{% url 'logout' %}">Cerrar Sesión</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Fin del Modal de Cierre de Sesión -->
+
+    <!-- Íconos SVG utilizados en alertas o notificaciones -->
+    <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+        <symbol id="check-circle-fill" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+        </symbol>
+        <symbol id="info-fill" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
+        </symbol>
+        <symbol id="exclamation-triangle-fill" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+        </symbol>
+    </svg>
+    <!-- Fin de los íconos SVG -->
+
+    {% block extra_js %}
+    <script>
+        // Variables del contexto de Django
+        var urlBoton = "{{ url_boton }}";
+        var accionBoton = "{{ accionBoton }}";
+    </script>
+    <!-- Luego Bootstrap -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Incluir SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Para integrar con Django messages -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Verificar si hay mensajes de Django
+            {% if messages %}
+                {% for message in messages %}
+                    Swal.fire({
+                        title: '¡Éxito!',
+                        text: '{{ message }}',
+                        icon: '{% if message.tags == "error" %}error{% else %}{{ message.tags }}{% endif %}',
+                        confirmButtonText: 'Aceptar',
+                        customClass: {
+                            confirmButton: 'btn btn-primary' // Añadimos la clase de botón primario
+                        }
+                    });
+                {% endfor %}
+            {% endif %}
+        });
+    </script>
+    <!-- jQuery (debe cargarse primero) -->
+    <script src="{% static 'vendor/jquery/jquery.min.js' %}"></script>
+    <!-- Bootstrap core JavaScript -->
+    <script src="{% static 'vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+
+    <!-- Core plugin JavaScript -->
+    <script src="{% static 'vendor/jquery-easing/jquery.easing.min.js' %}"></script>
+    
+    <!-- Custom scripts for all pages -->
+    <script src="{% static 'js/sb-admin-2.min.js' %}"></script>
+    <script src="{% static 'js/sb-admin-2.js' %}"></script>
+    <script src="{% static 'js/horarios.js'%}"></script>
+    
+
+    <!-- DataTables JavaScript -->
+    <script src="{% static 'vendor/datatables/jquery.dataTables.min.js' %}"></script>
+    <script src="{% static 'vendor/datatables/dataTables.bootstrap4.min.js' %}"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap4.min.js"></script>
+
+    <!-- Scripts personalizados para DataTables -->
+    <script src="{% static 'js/datatable.js' %}"></script>
+
+    <!-- Scripts personalizados para Forms de país y Teléfono -->
+    <script src="{% static 'js/sb-forms.js' %}"></script>
+
+    <!-- Third-party JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.print.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.colVis.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/country-select-js/2.1.0/js/countrySelect.min.js"></script>
+    {% endblock %}
+</body>
+</html>

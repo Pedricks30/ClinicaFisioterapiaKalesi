@@ -1,0 +1,65 @@
+{% extends "layout/base.html" %}
+{% load static %}
+{% block title %}{% if editar %}Editar Profesional Médico{% else %}Registrar Profesional Médico{% endif %}{% endblock title %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-9">
+            <div class="card shadow">
+                <div class="card-header py-3 bg-success">
+                    <h6 class="m-0 font-weight-bold text-light text-left">
+                        {% if editar %}Editar Profesional Médico{% else %}Registrar Profesional Médico{% endif %}
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <form method="post" class="border p-4 rounded" enctype="multipart/form-data">
+                        {% csrf_token %}
+
+                        <div class="form-grid">
+                            {% for field in form %}
+                                <div class="mb-3">
+                                    <label for="{{ field.id_for_label }}" class="form-label">
+                                        {{ field.label }}
+                                    </label>
+                                    {{ field }}
+                                    {% if field.errors %}
+                                        <div class="text-danger">
+                                            {{ field.errors }}
+                                        </div>
+                                    {% endif %}
+                                    {% if field.help_text %}
+                                        <small class="form-text text-muted">
+                                            {{ field.help_text }}
+                                        </small>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                            <!-- Campo para subir archivo de imagen de perfil -->
+                            <div class="mb-3">
+                                <label class="form-label">Imagen de Perfil</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="file-name" readonly>
+                                    <label class="input-group-text btn btn-danger">
+                                        <i class="fas fa-folder-open"></i> Seleccionar imagen
+                                        <input type="file" class="d-none" id="file-input" name="profile_image">
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-buttons">
+                            <button type="button" class="btn btn-danger" onclick="window.history.back();">
+                                Cancelar
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                {% if editar %}Guardar Cambios{% else %}Registrar{% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+}

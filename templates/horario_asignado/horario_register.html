@@ -1,0 +1,224 @@
+{% extends "layout/base.html" %}
+{% load static %}
+
+{% block title %}{% if object %}Editar{% else %}Crear{% endif %} Horario{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Card for creating or editing a schedule -->
+            <div class="card shadow">
+                <div class="card-header py-3 bg-success">
+                    <h4 class="m-0 font-weight-bold text-light text-left">
+                        {% if object %}Editar{% else %}Crear{% endif %} Horario
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <!-- Mostrar errores no asociados a campos específicos -->
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form.non_field_errors %}
+                                <p>{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.especialidad.id_for_label }}" class="form-label">
+                                        Especialidad *
+                                    </label>
+                                    {{ form.especialidad }}
+                                    {% if form.especialidad.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.especialidad.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                    <small class="form-text text-muted">Seleccione una especialidad para filtrar los profesionales.</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.profesional.id_for_label }}" class="form-label">
+                                        Profesional *
+                                    </label>
+                                    {{ form.profesional }}
+                                    {% if form.profesional.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.profesional.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                    <small class="form-text text-muted">Seleccione un profesional de la especialidad elegida.</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card mb-4">
+                            <div class="card-header bg-light">
+                                <h5 class="mb-0">Días Laborables *</h5>
+                            </div>
+                            <div class="card-body">
+                                {% if form.dias_laborables.errors %}
+                                    <div class="alert alert-danger">
+                                        {% for error in form.dias_laborables.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="row">
+                                    {% for dia in form.dias_laborables.field.choices %}
+                                    <div class="col-md-3 mb-2">
+                                        <div class="form-check">
+                                            <input class="form-check-input {% if form.dias_laborables.errors %}is-invalid{% endif %}" 
+                                                   type="checkbox" 
+                                                   name="dias_laborables" 
+                                                   id="dia_{{ dia.0 }}" 
+                                                   value="{{ dia.0 }}"
+                                                   {% if dia.0 in form.dias_laborables.value %}checked{% endif %}>
+                                            <label class="form-check-label" for="dia_{{ dia.0 }}">
+                                                {{ dia.1 }}
+                                            </label>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.hora_inicio.id_for_label }}" class="form-label">
+                                        Hora Desde *
+                                    </label>
+                                    {{ form.hora_inicio }}
+                                    {% if form.hora_inicio.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.hora_inicio.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.hora_fin.id_for_label }}" class="form-label">
+                                        Hora Hasta *
+                                    </label>
+                                    {{ form.hora_fin }}
+                                    {% if form.hora_fin.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.hora_fin.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-buttons">
+                            <button type="button" class="btn btn-danger" onclick="window.history.back();">
+                                Cancelar
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                Guardar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Agregar HTMX para el filtrado dinámico -->
+<script src="https://unpkg.com/htmx.org@1.9.6"></script>
+<!-- En la sección del script -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const especialidadSelect = document.getElementById('id_especialidad');
+    const profesionalSelect = document.getElementById('id_profesional');
+    
+    // Función para habilitar el campo de profesionales
+    function habilitarProfesional() {
+        if (especialidadSelect.value) {
+            profesionalSelect.removeAttribute('disabled');
+        } else {
+            profesionalSelect.setAttribute('disabled', 'disabled');
+        }
+    }
+    
+    // Configurar HTMX
+    if (especialidadSelect) {
+        especialidadSelect.setAttribute('hx-get', '{% url "filtrar_profesionales" %}');
+        especialidadSelect.setAttribute('hx-target', '#id_profesional');
+        especialidadSelect.setAttribute('hx-trigger', 'change');
+        
+        // Manejar la respuesta de HTMX
+        especialidadSelect.addEventListener('htmx:afterRequest', function(evt) {
+            if (evt.detail.successful) {
+                const response = JSON.parse(evt.detail.xhr.responseText);
+                profesionalSelect.innerHTML = '';
+                
+                // Agregar opción por defecto
+                const defaultOption = document.createElement('option');
+                defaultOption.value = '';
+                defaultOption.textContent = '---------';
+                profesionalSelect.appendChild(defaultOption);
+                
+                // Agregar profesionales filtrados
+                if (response.profesionales && response.profesionales.length > 0) {
+                    response.profesionales.forEach(function(profesional) {
+                        const option = document.createElement('option');
+                        option.value = profesional.id;
+                        option.textContent = profesional.name;
+                        if (profesional.especialidad) {
+                            option.setAttribute('data-especialidad', profesional.especialidad);
+                        }
+                        profesionalSelect.appendChild(option);
+                    });
+                    
+                    // Habilitar el campo después de cargar los profesionales
+                    habilitarProfesional();
+                } else {
+                    const noResults = document.createElement('option');
+                    noResults.value = '';
+                    noResults.textContent = 'No hay profesionales para esta especialidad';
+                    profesionalSelect.appendChild(noResults);
+                }
+            }
+        });
+        
+        // Habilitar/deshabilitar al cambiar la especialidad
+        especialidadSelect.addEventListener('change', function() {
+            // Si no hay HTMX, habilitar directamente
+            if (!especialidadSelect.hasAttribute('hx-get')) {
+                habilitarProfesional();
+            }
+        });
+    }
+    
+    // Validar que se seleccione especialidad antes de profesional
+    profesionalSelect.addEventListener('focus', function() {
+        if (!especialidadSelect.value) {
+            alert('Por favor seleccione una especialidad primero');
+            especialidadSelect.focus();
+        }
+    });
+    
+    // Inicializar el estado del campo profesional
+    habilitarProfesional();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background-color: #047857; color: white; padding: 10px; text-align: center; }
+        .content { padding: 20px; border: 1px solid #ddd; }
+        .footer { margin-top: 20px; font-size: 0.8em; color: #777; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>{% if tipo == 'confirmacion' %}Confirmación de Cita{% elif tipo == 'recordatorio' %}Recordatorio de Cita{% else %}Cancelación de Cita{% endif %}</h2>
+        </div>
+        
+        <div class="content">
+            <p>Hola {{ paciente.name }},</p>
+            
+            {% if tipo == 'confirmacion' %}
+            <p>Tu cita con el/la Dr(a). {{ profesional.name }} ha sido confirmada.</p>
+            {% elif tipo == 'recordatorio' %}
+            <p>Este es un recordatorio de tu cita programada para mañana.</p>
+            {% else %}
+            <p>Tu cita ha sido cancelada. Por favor contacta a la clínica si necesitas reprogramarla.</p>
+            {% endif %}
+            
+            <h3>Detalles de la cita:</h3>
+            <ul>
+                <li><strong>Fecha:</strong> {{ cita.fecha }}</li>
+                <li><strong>Hora:</strong> {{ cita.hora_inicio }} - {{ cita.hora_fin }}</li>
+                <li><strong>Profesional:</strong> {{ profesional.name }}</li>
+                <li><strong>Motivo:</strong> {{ cita.motivo }}</li>
+            </ul>
+            
+            <p>Por favor llega 15 minutos antes de tu cita.</p>
+        </div>
+        
+        <div class="footer">
+            <p>Este es un mensaje automático, por favor no respondas a este correo.</p>
+            <p>&copy; {{ year }} Clínica Médica. Todos los derechos reservados.</p>
+        </div>
+    </div>
+</body>
+</html>
