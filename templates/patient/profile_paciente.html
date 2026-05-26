@@ -1,0 +1,244 @@
+<!-- patient/profile_paciente.html (versión corregida) -->
+{% extends "layout/base.html" %}
+{% load static %}
+{% load core_tags %}
+{% block title %}Perfil de {{ paciente.nombres }} {{ paciente.apellidos }}{% endblock %}
+
+{% block content %}
+<div id="content-wrapper" class="d-flex flex-column">
+  <div class="container py-5 flex-grow-1">
+    <div class="row justify-content-center">
+      <div class="col-md-12">
+        <div class="card shadow">
+          <div class="card-header py-3 bg-success">
+            <div class="d-flex justify-content-between align-items-center">
+              <h6 class="m-0 font-weight-bold text-light">Detalle del Paciente {{ paciente.nombres }} {{ paciente.apellidos }}</h6>
+              <button class="btn btn-sm btn-light" onclick="window.history.back();">
+                <i class="fas fa-arrow-left"></i> Volver
+              </button>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <!-- Columna izquierda: Imagen y datos básicos -->
+              <div class="col-lg-4 text-center">
+                <img src="{% if paciente.foto_perfil %}{{ paciente.foto_perfil.url }}{% else %}{% static 'profile_images_default/user_default.webp' %}{% endif %}"
+                     alt="Imagen de perfil"
+                     class="rounded-circle img-fluid"
+                     style="width: 370px; height: 370px; object-fit: cover;">
+                <h5 class="my-3">{{ paciente.nombres }} {{ paciente.apellidos }}</h5>
+                <p class="text-muted mb-1">{{ paciente.tipo_documento.document_type }}: {{ paciente.documento_identidad }}</p>
+                <p class="text-muted mb-4">{{ paciente.direccion|default:"-" }}</p>
+                
+                <!-- Estado del paciente -->
+                <div class="mb-4">
+                  {% if paciente.estado %}
+                    <span class="btn btn-success btn-sm">Activo</span>
+                  {% else %}
+                    <span class="btn btn-danger btn-sm">Inactivo</span>
+                  {% endif %}
+                </div>
+                
+                <!-- Edad del paciente -->
+                <div class="mb-4">
+                    <p class="text-muted">
+                        <i class="fas fa-birthday-cake mr-2"></i>
+                        {% if paciente.fecha_nacimiento %}
+                            {{ paciente.fecha_nacimiento|calcular_edad }} años
+                            {% if paciente.fecha_nacimiento|es_menor %}
+                                <span class="badge badge-warning ml-2">Menor de edad</span>
+                            {% endif %}
+                        {% else %}
+                            Edad no disponible
+                        {% endif %}
+                    </p>
+                </div>
+              </div>
+
+              <!-- Columna derecha: Detalles -->
+              <div class="col-lg-8">
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="row mb-3">
+                      <div class="col-sm-5 font-weight-bold">Nombres</div>
+                      <div class="col-sm-7 text-muted">{{ paciente.nombres }}</div>
+                    </div>
+                    <hr>
+                    <div class="row mb-3">
+                      <div class="col-sm-5 font-weight-bold">Apellidos</div>
+                      <div class="col-sm-7 text-muted">{{ paciente.apellidos }}</div>
+                    </div>
+                    <hr>
+                    <div class="row mb-3">
+                      <div class="col-sm-5 font-weight-bold">Tipo de Documento</div>
+                      <div class="col-sm-7 text-muted">{{ paciente.tipo_documento.document_type }}</div>
+                    </div>
+                    <hr>
+                    <div class="row mb-3">
+                      <div class="col-sm-5 font-weight-bold">N° Documento</div>
+                      <div class="col-sm-7 text-muted">{{ paciente.documento_identidad }}</div>
+                    </div>
+                  </div>
+
+                  <div class="col-md-6">
+                    <div class="row mb-3">
+                      <div class="col-sm-5 font-weight-bold">Fecha Nacimiento</div>
+                      <div class="col-sm-7 text-muted">{{ paciente.fecha_nacimiento|date:"d/m/Y" }}</div>
+                    </div>
+                    <hr>
+                    <div class="row mb-3">
+                      <div class="col-sm-5 font-weight-bold">Sexo</div>
+                      <div class="col-sm-7 text-muted">{{ paciente.get_sexo_display }}</div>
+                    </div>
+                    <hr>
+                    <div class="row mb-3">
+                      <div class="col-sm-5 font-weight-bold">Estado Civil</div>
+                      <div class="col-sm-7 text-muted">{{ paciente.get_estado_civil_display|default:"-" }}</div>
+                    </div>
+                    <hr>
+                    <div class="row mb-3">
+                      <div class="col-sm-5 font-weight-bold">Nacionalidad</div>
+                      <div class="col-sm-7 text-muted">{{ paciente.nacionalidad|default:"-" }}</div>
+                    </div>
+                  </div>
+                </div>
+
+                <hr>
+
+                <!-- Datos de Contacto -->
+                <h5 class="mb-3 text-success">Datos de Contacto</h5>
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="row mb-3">
+                      <div class="col-sm-5 font-weight-bold">Teléfono</div>
+                      <div class="col-sm-7 text-muted">{{ paciente.numero_telefono }}</div>
+                    </div>
+                    <hr>
+                    <div class="row mb-3">
+                      <div class="col-sm-5 font-weight-bold">Email</div>
+                      <div class="col-sm-7 text-muted">{{ paciente.email|default:"-" }}</div>
+                    </div>
+                  </div>
+
+                  <div class="col-md-6">
+                    <div class="row mb-3">
+                      <div class="col-sm-5 font-weight-bold">Dirección</div>
+                      <div class="col-sm-7 text-muted">{{ paciente.direccion }}</div>
+                    </div>
+                    <hr>
+                    <div class="row mb-3">
+                      <div class="col-sm-5 font-weight-bold">Ocupación</div>
+                      <div class="col-sm-7 text-muted">{{ paciente.ocupacion|default:"-" }}</div>
+                    </div>
+                  </div>
+                </div>
+
+                <hr>
+
+                <!-- Datos Médicos -->
+                <h5 class="mb-3 text-success">Datos Médicos</h5>
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="row mb-3">
+                      <div class="col-sm-5 font-weight-bold">Tipo de Sangre</div>
+                      <div class="col-sm-7 text-muted">{{ paciente.tipo_sangre|default:"No especificado" }}</div>
+                    </div>
+                    {% if paciente.alergias %}
+                    <hr>
+                    <div class="row mb-3">
+                      <div class="col-sm-5 font-weight-bold">Alergias</div>
+                      <div class="col-sm-7 text-muted">{{ paciente.alergias }}</div>
+                    </div>
+                    {% endif %}
+                  </div>
+
+                  <div class="col-md-6">
+                    {% if paciente.condiciones_medicas %}
+                    <div class="row mb-3">
+                      <div class="col-sm-5 font-weight-bold">Condiciones Médicas</div>
+                      <div class="col-sm-7 text-muted">{{ paciente.condiciones_medicas }}</div>
+                    </div>
+                    {% endif %}
+                  </div>
+                </div>
+
+                <hr>
+
+                <!-- Datos del Acompañante/Responsable -->
+                <h5 class="mb-3 text-success">Datos del Acompañante/Responsable</h5>
+                {% if paciente.nombre_acompanante %}
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="row mb-3">
+                      <div class="col-sm-5 font-weight-bold">Nombre</div>
+                      <div class="col-sm-7 text-muted">{{ paciente.nombre_acompanante }}</div>
+                    </div>
+                    <hr>
+                    <div class="row mb-3">
+                      <div class="col-sm-5 font-weight-bold">Parentesco</div>
+                      <div class="col-sm-7 text-muted">{{ paciente.parentesco_acompanante|default:"-" }}</div>
+                    </div>
+                  </div>
+
+                  <div class="col-md-6">
+                    <div class="row mb-3">
+                      <div class="col-sm-5 font-weight-bold">Teléfono</div>
+                      <div class="col-sm-7 text-muted">{{ paciente.telefono_acompanante|default:"-" }}</div>
+                    </div>
+                    <hr>
+                    <div class="row mb-3">
+                      <div class="col-sm-5 font-weight-bold">Dirección</div>
+                      <div class="col-sm-7 text-muted">{{ paciente.direccion_acompanante|default:"-" }}</div>
+                    </div>
+                  </div>
+                </div>
+                {% else %}
+                <div class="alert alert-info text-center" role="alert">
+                  <i class="fas fa-info-circle"></i> Sin acompañante/responsable registrado
+                </div>
+                {% endif %}
+
+                <!-- Información adicional -->
+                <hr>
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="row mb-3">
+                      <div class="col-sm-5 font-weight-bold">Registrado por</div>
+                      <div class="col-sm-7 text-muted">
+                        {% if paciente.creado_por %}
+                          {{ paciente.creado_por.get_full_name|default:paciente.creado_por.username }} 
+                          ({{ paciente.creado_por.get_tipo_usuario_display|default:"Usuario" }})
+                        {% else %}
+                          Sistema
+                        {% endif %}
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="row mb-3">
+                      <div class="col-sm-5 font-weight-bold">Fecha Registro</div>
+                      <div class="col-sm-7 text-muted">{{ paciente.created_at|date:"d/m/Y H:i" }}</div>
+                    </div>
+                  </div>
+                </div>
+              </div> <!-- fin col-lg-8 -->
+            </div> <!-- fin row -->
+          </div> <!-- fin card-body -->
+          
+          <!-- Pie de tarjeta con botones -->
+          <div class="card-footer text-right">
+            {% if perms.paciente.change_patient %}
+            <a href="{% url 'editar_paciente' paciente.id %}" class="btn btn-primary">
+              <i class="fas fa-edit"></i> Editar
+            </a>
+            {% endif %}
+            <button onclick="window.history.back();" class="btn btn-danger">
+              <i class="fas fa-times"></i> Cerrar
+            </button>
+          </div>
+        </div> <!-- fin card -->
+      </div> <!-- fin col-md-12 -->
+    </div> <!-- fin row -->
+  </div> <!-- fin container -->
+</div> <!-- fin content-wrapper -->
+{% endblock %}

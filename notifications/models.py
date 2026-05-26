@@ -20,7 +20,9 @@ class Notificacion(models.Model):
     tipo = models.CharField(max_length=20, choices=TIPOS, default='primary')
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     url = models.CharField(max_length=200, blank=True, null=True)
-    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
     class Meta:
         ordering = ['-fecha_creacion']
         verbose_name = 'Notificación'

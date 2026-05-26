@@ -1,0 +1,173 @@
+{% extends "layout/base.html" %}
+{% block title %}{% if editar %}Editar Fisioterapeuta{% else %}Registrar Fisioterapeuta{% endif %}{% endblock title %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-9">
+            <div class="card shadow">
+                <div class="card-header py-3 bg-success">
+                    <h6 class="m-0 font-weight-bold text-light">
+                        {% if editar %}Editar Perfil de Fisioterapeuta{% else %}Registrar Perfil de Fisioterapeuta{% endif %}
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <!-- Campo de selección de usuario FISIO con buscador -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h6 class="text-primary mb-3">
+                                            <i class="fas fa-search"></i> 
+                                            {% if editar %}
+                                                Fisioterapeuta seleccionado
+                                            {% else %}
+                                                Buscar y seleccionar Fisioterapeuta
+                                            {% endif %}
+                                        </h6>
+                                        <div class="form-group">
+                                            <label for="id_user_select" class="form-label font-weight-bold">
+                                                {{ form.user.label }}
+                                            </label>
+                                            {{ form.user }}
+                                            {% if form.user.errors %}
+                                                <div class="text-danger mt-1">
+                                                    {{ form.user.errors }}
+                                                </div>
+                                            {% endif %}
+                                            {% if form.user.help_text %}
+                                                <small class="form-text text-muted">{{ form.user.help_text }}</small>
+                                            {% endif %}
+                                        </div>
+                                        <small class="text-info">
+                                            <i class="fas fa-info-circle"></i> 
+                                            Use el selector para buscar por nombre, apellido o email del fisioterapeuta.
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Campos específicos del perfil de fisioterapeuta -->
+                        <div class="row">
+                            <!-- Columna izquierda -->
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="{{ form.specialties.id_for_label }}" class="form-label font-weight-bold">
+                                        {{ form.specialties.label }}
+                                    </label>
+                                    {{ form.specialties }}
+                                    {% if form.specialties.errors %}
+                                        <div class="text-danger">{{ form.specialties.errors }}</div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="form-group mb-3">
+                                    <label for="{{ form.registro_fisioterapia.id_for_label }}" class="form-label font-weight-bold">
+                                        {{ form.registro_fisioterapia.label }}
+                                    </label>
+                                    {{ form.registro_fisioterapia }}
+                                    {% if form.registro_fisioterapia.errors %}
+                                        <div class="text-danger">{{ form.registro_fisioterapia.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Columna derecha -->
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="{{ form.tecnicas_especializadas.id_for_label }}" class="form-label font-weight-bold">
+                                        {{ form.tecnicas_especializadas.label }}
+                                    </label>
+                                    {{ form.tecnicas_especializadas }}
+                                    {% if form.tecnicas_especializadas.errors %}
+                                        <div class="text-danger">{{ form.tecnicas_especializadas.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Botones de acción -->
+                        <div class="form-buttons text-right mt-4">
+                            <button type="button" class="btn btn-danger" onclick="window.history.back();">
+                                <i class="fas fa-times"></i> Cancelar
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> 
+                                {% if editar %}Guardar Cambios{% else %}Registrar Perfil{% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script>
+    // Inicializar Select2 en el campo de usuario para mejor búsqueda
+    $(document).ready(function() {
+        $('#id_user_select').select2({
+            placeholder: 'Buscar fisioterapeuta por nombre, apellido o email...',
+            allowClear: true,
+            width: '100%',
+            language: {
+                noResults: function() {
+                    return "No se encontraron fisioterapeutas. <br>Primero debe crear el usuario de tipo FISIO.";
+                },
+                searching: function() {
+                    return "Buscando...";
+                }
+            },
+            ajax: {
+                url: "{% url 'api_buscar_fisioterapeutas' %}",  // URL que crearemos para la búsqueda
+                dataType: 'json',
+                delay: 250,
+                data: function(params) {
+                    return {
+                        q: params.term,  // Término de búsqueda
+                        page: params.page || 1
+                    };
+                },
+                processResults: function(data) {
+                    return {
+                        results: data.results,
+                        pagination: {
+                            more: data.more
+                        }
+                    };
+                },
+                cache: true
+            },
+            minimumInputLength: 2,
+            templateResult: formatUserResult,
+            templateSelection: formatUserSelection
+        });
+
+        function formatUserResult(user) {
+            if (user.loading) {
+                return user.text;
+            }
+            var $container = $(
+                "<div class='select2-result-user clearfix'>" +
+                    "<div class='select2-result-user__avatar'><img src='" + (user.profile_image_url || '/static/img/default-user.png') + "' style='width:40px;height:40px;border-radius:50%;object-fit:cover;'/></div>" +
+                    "<div class='select2-result-user__meta'>" +
+                        "<div class='select2-result-user__title'>" + user.text + "</div>" +
+                        "<div class='select2-result-user__email'><small>" + (user.email || '') + "</small></div>" +
+                    "</div>" +
+                "</div>"
+            );
+            return $container;
+        }
+
+        function formatUserSelection(user) {
+            return user.text || user.id;
+        }
+    });
+</script>
+{% endblock extra_js %}

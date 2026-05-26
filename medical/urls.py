@@ -1,14 +1,19 @@
 from django.urls import path
 from .views import (
-    CrearProfesionalView, EditarProfesionalView,
-    ListarProfesionalesView, EliminarProfesionalView,
-    PerfilProfesionalView
+    CrearMedicoView,
+    EditarMedicoView,
+    ListarMedicoView,
+    EliminarMedicoView,
+    PerfilMedicoView,
 )
+from .api_views import buscar_medicos
+
 urlpatterns = [
-    # URLs para gestión de profesionales
-    path('listar_profesionales/', ListarProfesionalesView.as_view(), name='listar_profesionales'),
-    path('crear_profesional/', CrearProfesionalView.as_view(), name='crear_profesional'),
-    path('editar_profesional/<int:pk>/', EditarProfesionalView.as_view(), name='editar_profesional'),
-    path('eliminar_profesional/<int:pk>/', EliminarProfesionalView.as_view(), name='eliminar_profesional'),
-    path('perfil_profesional/<int:pk>/', PerfilProfesionalView.as_view(), name='perfil_profesional'),
+    path('crear/', CrearMedicoView.as_view(), name='crear_profesional'),
+    path('editar/<int:pk>/', EditarMedicoView.as_view(), name='editar_profesional'),
+    path('listar/', ListarMedicoView.as_view(), name='listar_profesionales'),
+    path('eliminar/<int:pk>/', EliminarMedicoView.as_view(), name='eliminar_profesional'),
+    path('perfil/<int:pk>/', PerfilMedicoView.as_view(), name='perfil_profesional'),
+    # API para búsqueda AJAX
+    path('api/buscar-medicos/', buscar_medicos, name='api_buscar_medicos'),
 ]

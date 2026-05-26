@@ -1,0 +1,427 @@
+<!-- patient/registration_paciente.html (añade este script al final) -->
+{% extends "layout/base.html" %}
+{% load static %}
+{% block title %}{% if editar %}Editar Paciente{% else %}Registrar Paciente{% endif %}{% endblock title %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-9">
+            <div class="card shadow">
+                <div class="card-header py-3 bg-success">
+                    <h6 class="m-0 font-weight-bold text-light text-left">
+                        {% if editar %}Editar Paciente{% else %}Registrar Paciente{% endif %}
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <form method="post" class="border p-4 rounded" enctype="multipart/form-data" id="patientForm">
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form.non_field_errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        
+                        <div class="row">
+                            <!-- Columna 1 -->
+                            <div class="col-md-6">
+                                <!-- Tarjeta Datos Personales -->
+                                <div class="card mb-4">
+                                    <div class="card-header bg-light">
+                                        <h5 class="mb-0">Datos Personales</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <!-- Campo Nombres -->
+                                        <div class="mb-3">
+                                            <label for="{{ form.nombres.id_for_label }}" class="form-label">{{ form.nombres.label }}</label>
+                                            {{ form.nombres }}
+                                            {% if form.nombres.errors %}
+                                                <div class="text-danger">{{ form.nombres.errors }}</div>
+                                            {% endif %}
+                                            {% if form.nombres.help_text %}
+                                                <small class="form-text text-muted">{{ form.nombres.help_text }}</small>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <!-- Campo Apellidos -->
+                                        <div class="mb-3">
+                                            <label for="{{ form.apellidos.id_for_label }}" class="form-label">{{ form.apellidos.label }}</label>
+                                            {{ form.apellidos }}
+                                            {% if form.apellidos.errors %}
+                                                <div class="text-danger">{{ form.apellidos.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <!-- Campo Tipo Documento -->
+                                        <div class="mb-3">
+                                            <label for="{{ form.tipo_documento.id_for_label }}" class="form-label">{{ form.tipo_documento.label }}</label>
+                                            {{ form.tipo_documento }}
+                                            {% if form.tipo_documento.errors %}
+                                                <div class="text-danger">{{ form.tipo_documento.errors }}</div>
+                                            {% endif %}
+                                            {% if form.tipo_documento.help_text %}
+                                                <small class="form-text text-muted">{{ form.tipo_documento.help_text }}</small>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <!-- Campo Documento Identidad -->
+                                        <div class="mb-3">
+                                            <label for="{{ form.documento_identidad.id_for_label }}" class="form-label">{{ form.documento_identidad.label }}</label>
+                                            {{ form.documento_identidad }}
+                                            {% if form.documento_identidad.errors %}
+                                                <div class="text-danger">{{ form.documento_identidad.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <!-- Campo Nacionalidad -->
+                                        <div class="mb-3">
+                                            <label for="{{ form.nacionalidad.id_for_label }}" class="form-label">{{ form.nacionalidad.label }}</label>
+                                            {{ form.nacionalidad }}
+                                            {% if form.nacionalidad.errors %}
+                                                <div class="text-danger">{{ form.nacionalidad.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <!-- Campo Sexo -->
+                                        <div class="mb-3">
+                                            <label for="{{ form.sexo.id_for_label }}" class="form-label">{{ form.sexo.label }}</label>
+                                            {{ form.sexo }}
+                                            {% if form.sexo.errors %}
+                                                <div class="text-danger">{{ form.sexo.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <!-- Campo Fecha Nacimiento -->
+                                        <div class="mb-3">
+                                            <label for="{{ form.fecha_nacimiento.id_for_label }}" class="form-label">{{ form.fecha_nacimiento.label }}</label>
+                                            {{ form.fecha_nacimiento }}
+                                            {% if form.fecha_nacimiento.errors %}
+                                                <div class="text-danger">{{ form.fecha_nacimiento.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <!-- Campo Estado Civil -->
+                                        <div class="mb-3">
+                                            <label for="{{ form.estado_civil.id_for_label }}" class="form-label">{{ form.estado_civil.label }}</label>
+                                            {{ form.estado_civil }}
+                                            {% if form.estado_civil.errors %}
+                                                <div class="text-danger">{{ form.estado_civil.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <!-- Campo Ocupación -->
+                                        <div class="mb-3">
+                                            <label for="{{ form.ocupacion.id_for_label }}" class="form-label">{{ form.ocupacion.label }}</label>
+                                            {{ form.ocupacion }}
+                                            {% if form.ocupacion.errors %}
+                                                <div class="text-danger">{{ form.ocupacion.errors }}</div>
+                                            {% endif %}
+                                            {% if form.ocupacion.help_text %}
+                                                <small class="form-text text-muted">{{ form.ocupacion.help_text }}</small>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <!-- Campo Lugar Nacimiento -->
+                                        <div class="mb-3">
+                                            <label for="{{ form.lugar_nacimiento.id_for_label }}" class="form-label">{{ form.lugar_nacimiento.label }}</label>
+                                            {{ form.lugar_nacimiento }}
+                                            {% if form.lugar_nacimiento.errors %}
+                                                <div class="text-danger">{{ form.lugar_nacimiento.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Tarjeta Datos de Contacto -->
+                                <div class="card mb-4">
+                                    <div class="card-header bg-light">
+                                        <h5 class="mb-0">Datos de Contacto</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <!-- Campo Teléfono -->
+                                        <div class="mb-3">
+                                            <label for="{{ form.numero_telefono.id_for_label }}" class="form-label">{{ form.numero_telefono.label }}</label>
+                                            {{ form.numero_telefono }}
+                                            {% if form.numero_telefono.errors %}
+                                                <div class="text-danger">{{ form.numero_telefono.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <!-- Campo Email -->
+                                        <div class="mb-3">
+                                            <label for="{{ form.email.id_for_label }}" class="form-label">{{ form.email.label }}</label>
+                                            {{ form.email }}
+                                            {% if form.email.errors %}
+                                                <div class="text-danger">{{ form.email.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <!-- Campo Dirección -->
+                                        <div class="mb-3">
+                                            <label for="{{ form.direccion.id_for_label }}" class="form-label">{{ form.direccion.label }}</label>
+                                            {{ form.direccion }}
+                                            {% if form.direccion.errors %}
+                                                <div class="text-danger">{{ form.direccion.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Columna 2 -->
+                            <div class="col-md-6">
+                                <!-- Tarjeta Datos Médicos -->
+                                <div class="card mb-4">
+                                    <div class="card-header bg-light">
+                                        <h5 class="mb-0">Datos Médicos</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <!-- Campo Tipo Sangre -->
+                                        <div class="mb-3">
+                                            <label for="{{ form.tipo_sangre.id_for_label }}" class="form-label">{{ form.tipo_sangre.label }}</label>
+                                            {{ form.tipo_sangre }}
+                                            {% if form.tipo_sangre.errors %}
+                                                <div class="text-danger">{{ form.tipo_sangre.errors }}</div>
+                                            {% endif %}
+                                            {% if form.tipo_sangre.help_text %}
+                                                <small class="form-text text-muted">{{ form.tipo_sangre.help_text }}</small>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <!-- Campo Alergias -->
+                                        <div class="mb-3">
+                                            <label for="{{ form.alergias.id_for_label }}" class="form-label">{{ form.alergias.label }}</label>
+                                            {{ form.alergias }}
+                                            {% if form.alergias.errors %}
+                                                <div class="text-danger">{{ form.alergias.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <!-- Campo Condiciones Médicas -->
+                                        <div class="mb-3">
+                                            <label for="{{ form.condiciones_medicas.id_for_label }}" class="form-label">{{ form.condiciones_medicas.label }}</label>
+                                            {{ form.condiciones_medicas }}
+                                            {% if form.condiciones_medicas.errors %}
+                                                <div class="text-danger">{{ form.condiciones_medicas.errors }}</div>
+                                            {% endif %}
+                                            {% if form.condiciones_medicas.help_text %}
+                                                <small class="form-text text-muted">{{ form.condiciones_medicas.help_text }}</small>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Tarjeta Imagen de Perfil -->
+                                <div class="card mb-4">
+                                    <div class="card-header bg-light">
+                                        <h5 class="mb-0">Imagen de Perfil</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <label class="form-label">Imagen de Perfil</label>
+                                            <div class="input-group">
+                                                <input type="text" class="form-control" id="file-name" readonly value="{% if form.foto_perfil.value %}{{ form.foto_perfil.value }}{% endif %}">
+                                                <label class="input-group-text btn btn-danger">
+                                                    <i class="fas fa-folder-open"></i> Seleccionar archivo
+                                                    <input type="file" class="d-none" id="file-input" name="foto_perfil" onchange="document.getElementById('file-name').value = this.files[0]?.name || '';">
+                                                </label>
+                                            </div>
+                                            {% if form.foto_perfil.value and form.foto_perfil.value.url %}
+                                            <div class="mt-2">
+                                                <small>Imagen actual:</small>
+                                                <img src="{{ form.foto_perfil.value.url }}" class="img-thumbnail" style="max-height: 100px;">
+                                            </div>
+                                            {% endif %}
+                                            {% if form.foto_perfil.errors %}
+                                                <div class="text-danger">{{ form.foto_perfil.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Tarjeta Datos del Acompañante/Responsable -->
+                                <div class="card mb-4" id="acompananteCard">
+                                    <div class="card-header bg-light">
+                                        <h5 class="mb-0">
+                                            Datos del Acompañante/Responsable
+                                            <span id="obligatorioBadge" class="badge badge-danger ml-2" style="display: none;">Obligatorio para menores</span>
+                                            <span id="opcionalBadge" class="badge badge-secondary ml-2" style="display: none;">Opcional</span>
+                                        </h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <!-- Campo Nombre Acompañante -->
+                                        <div class="mb-3">
+                                            <label for="{{ form.nombre_acompanante.id_for_label }}" class="form-label">{{ form.nombre_acompanante.label }}</label>
+                                            {{ form.nombre_acompanante }}
+                                            {% if form.nombre_acompanante.errors %}
+                                                <div class="text-danger">{{ form.nombre_acompanante.errors }}</div>
+                                            {% endif %}
+                                            {% if form.nombre_acompanante.help_text %}
+                                                <small class="form-text text-muted">{{ form.nombre_acompanante.help_text }}</small>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <!-- Campo Parentesco Acompañante -->
+                                        <div class="mb-3">
+                                            <label for="{{ form.parentesco_acompanante.id_for_label }}" class="form-label">{{ form.parentesco_acompanante.label }}</label>
+                                            {{ form.parentesco_acompanante }}
+                                            {% if form.parentesco_acompanante.errors %}
+                                                <div class="text-danger">{{ form.parentesco_acompanante.errors }}</div>
+                                            {% endif %}
+                                            {% if form.parentesco_acompanante.help_text %}
+                                                <small class="form-text text-muted">{{ form.parentesco_acompanante.help_text }}</small>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <!-- Campo Teléfono Acompañante -->
+                                        <div class="mb-3">
+                                            <label for="{{ form.telefono_acompanante.id_for_label }}" class="form-label">{{ form.telefono_acompanante.label }}</label>
+                                            {{ form.telefono_acompanante }}
+                                            {% if form.telefono_acompanante.errors %}
+                                                <div class="text-danger">{{ form.telefono_acompanante.errors }}</div>
+                                            {% endif %}
+                                            {% if form.telefono_acompanante.help_text %}
+                                                <small class="form-text text-muted">{{ form.telefono_acompanante.help_text }}</small>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <!-- Campo Dirección Acompañante -->
+                                        <div class="mb-3">
+                                            <label for="{{ form.direccion_acompanante.id_for_label }}" class="form-label">{{ form.direccion_acompanante.label }}</label>
+                                            {{ form.direccion_acompanante }}
+                                            {% if form.direccion_acompanante.errors %}
+                                                <div class="text-danger">{{ form.direccion_acompanante.errors }}</div>
+                                            {% endif %}
+                                            {% if form.direccion_acompanante.help_text %}
+                                                <small class="form-text text-muted">{{ form.direccion_acompanante.help_text }}</small>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Tarjeta Estado -->
+                                <div class="card">
+                                    <div class="card-header bg-light">
+                                        <h5 class="mb-0">Estado del Paciente</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="form-group">
+                                            <div class="form-check">
+                                                {{ form.estado }}
+                                                <label class="form-check-label" for="{{ form.estado.id_for_label }}">
+                                                    {{ form.estado.label }}
+                                                </label>
+                                                {% if form.estado.errors %}
+                                                    <div class="text-danger">{{ form.estado.errors }}</div>
+                                                {% endif %}
+                                                {% if form.estado.help_text %}
+                                                    <small class="form-text text-muted">{{ form.estado.help_text }}</small>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-buttons mt-4 text-right">
+                            <button type="button" class="btn btn-danger" onclick="window.history.back();">
+                                <i class="fas fa-times"></i> Cancelar
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> {% if editar %}Guardar Cambios{% else %}Registrar{% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Función para calcular edad y actualizar obligatoriedad de campos de acompañante
+    function calcularEdadYActualizar() {
+        const fechaNacimiento = document.getElementById('{{ form.fecha_nacimiento.id_for_label }}').value;
+        
+        if (!fechaNacimiento) {
+            // Si no hay fecha, mostrar como opcional (sin mostrar badges)
+            document.getElementById('obligatorioBadge').style.display = 'none';
+            document.getElementById('opcionalBadge').style.display = 'none';
+            return;
+        }
+        
+        // Calcular edad
+        const hoy = new Date();
+        const fechaNac = new Date(fechaNacimiento);
+        let edad = hoy.getFullYear() - fechaNac.getFullYear();
+        const mesDiff = hoy.getMonth() - fechaNac.getMonth();
+        
+        if (mesDiff < 0 || (mesDiff === 0 && hoy.getDate() < fechaNac.getDate())) {
+            edad--;
+        }
+        
+        const esMenor = edad < 18;
+        
+        // Actualizar badges
+        if (esMenor) {
+            document.getElementById('obligatorioBadge').style.display = 'inline-block';
+            document.getElementById('opcionalBadge').style.display = 'none';
+            
+            // Marcar campos como requeridos visualmente
+            const nombreInput = document.getElementById('{{ form.nombre_acompanante.id_for_label }}');
+            const parentescoInput = document.getElementById('{{ form.parentesco_acompanante.id_for_label }}');
+            const telefonoInput = document.getElementById('{{ form.telefono_acompanante.id_for_label }}');
+            const direccionInput = document.getElementById('{{ form.direccion_acompanante.id_for_label }}');
+            
+            if (nombreInput) nombreInput.required = true;
+            if (parentescoInput) parentescoInput.required = true;
+            if (telefonoInput) telefonoInput.required = true;
+            if (direccionInput) direccionInput.required = true;
+            
+            // Cambiar estilo de labels
+            const labels = document.querySelectorAll('#acompananteCard .form-label');
+            labels.forEach(label => {
+                if (label.innerText.includes('Nombre') || label.innerText.includes('Parentesco') || label.innerText.includes('Teléfono') || label.innerText.includes('Dirección')) {
+                    label.style.fontWeight = 'bold';
+                    label.style.color = '#dc3545';
+                }
+            });
+        } else {
+            document.getElementById('obligatorioBadge').style.display = 'none';
+            document.getElementById('opcionalBadge').style.display = 'inline-block';
+            
+            // Quitar required de campos
+            const nombreInput = document.getElementById('{{ form.nombre_acompanante.id_for_label }}');
+            const parentescoInput = document.getElementById('{{ form.parentesco_acompanante.id_for_label }}');
+            const telefonoInput = document.getElementById('{{ form.telefono_acompanante.id_for_label }}');
+            const direccionInput = document.getElementById('{{ form.direccion_acompanante.id_for_label }}');
+            
+            if (nombreInput) nombreInput.required = false;
+            if (parentescoInput) parentescoInput.required = false;
+            if (telefonoInput) telefonoInput.required = false;
+            if (direccionInput) direccionInput.required = false;
+            
+            // Restaurar estilo de labels
+            const labels = document.querySelectorAll('#acompananteCard .form-label');
+            labels.forEach(label => {
+                label.style.fontWeight = 'normal';
+                label.style.color = '';
+            });
+        }
+    }
+    
+    // Escuchar cambios en la fecha de nacimiento
+    document.addEventListener('DOMContentLoaded', function() {
+        const fechaNacimientoInput = document.getElementById('{{ form.fecha_nacimiento.id_for_label }}');
+        if (fechaNacimientoInput) {
+            fechaNacimientoInput.addEventListener('change', calcularEdadYActualizar);
+            // Calcular al cargar la página también
+            calcularEdadYActualizar();
+        }
+    });
+</script>
+{% endblock content %}

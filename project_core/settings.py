@@ -15,6 +15,8 @@ import os
 from pathlib import Path
 import environ
 
+
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -37,6 +39,7 @@ ALLOWED_HOSTS = tuple(env.list('ALLOWED_HOSTS', default=[]))
 # Application definition
 
 INSTALLED_APPS = [
+    'users',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -46,9 +49,8 @@ INSTALLED_APPS = [
     'authentication',
     'django_htmx',
     'dashboard',
-    'users',
     'core',
-    'staff',
+    'physiotherapist',
     'medical',
     'horario',
     'citas',

@@ -16,7 +16,7 @@
                 <table class="table table-bordered responsive" id="dataTable" width="100%" cellspacing="0">
                     <thead>
                         <tr>
-                            <th>ID</th>
+                            <th>#</th>
                             <th>Tipo de Documento</th>
                             <th>Descripción</th>
                             <th>Fecha de Creación</th>
@@ -27,7 +27,7 @@
                     <tbody>
                         {% for document_type in document_types %}
                         <tr>
-                            <td>{{ document_type.id_document }}</td>
+                            <td>{{ forloop.counter }}</td>
                             <td>{{ document_type.document_type }}</td>
                             <td>{{ document_type.document_description }}</td>
                             <td>{{ document_type.created_at }}</td>
@@ -35,7 +35,7 @@
                             <td>
                                 {% if perms.user.change_documenttype %}
                                     <button type="button" 
-                                            class="btn btn-primary" 
+                                            class="btn btn-primary btn-sm" 
                                             onclick="abrir_modal_edicion('{% url 'editar_documento' document_type.id_document %}')"
                                             title="Editar tipo de documento">
                                         <i class="fas fa-pencil-alt"></i>
@@ -43,7 +43,7 @@
                                 {% endif %}
                                 {% if perms.user.delete_documenttype %}
                                     <button type="button" 
-                                            class="btn btn-danger" 
+                                            class="btn btn-danger btn-sm" 
                                             onclick="abrir_modal_eliminacion('{% url 'eliminar_documento' document_type.id_document %}', '{{ document_type.document_type }}')"
                                             title="Eliminar tipo de documento">
                                         <i class="fas fa-trash"></i>

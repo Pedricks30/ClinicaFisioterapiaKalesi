@@ -1,0 +1,350 @@
+{% extends "layout/base.html" %}
+{% load static %}
+
+{% block title %}Búsqueda de Citas{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    
+    <!-- ================================================================ -->
+    <!-- CABECERA                                                        -->
+    <!-- ================================================================ -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-search mr-2"></i>Búsqueda de Citas
+        </h1>
+        <a href="{% url 'citas:calendario' %}" class="btn btn-success">
+            <i class="fas fa-calendar-alt mr-1"></i> Ver Calendario
+        </a>
+    </div>
+
+    <!-- ================================================================ -->
+    <!-- FORMULARIO DE BÚSQUEDA                                          -->
+    <!-- ================================================================ -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 bg-success">
+            <h6 class="m-0 font-weight-bold text-light">
+                <i class="fas fa-filter mr-2"></i>Filtros de Búsqueda
+            </h6>
+        </div>
+        <div class="card-body">
+            <form method="get" id="form-busqueda">
+                <div class="row">
+                    <!-- Campo de búsqueda general -->
+                    <div class="col-md-5 mb-3">
+                        <label for="id_busqueda_citas" class="font-weight-bold">
+                            <i class="fas fa-search mr-1"></i> Buscar
+                        </label>
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text bg-white">
+                                    <i class="fas fa-search text-muted"></i>
+                                </span>
+                            </div>
+                            <input type="text" 
+                                   name="q" 
+                                   id="id_busqueda_citas" 
+                                   class="form-control" 
+                                   placeholder="Nombre de médico, paciente, motivo..."
+                                   value="{{ request.GET.q|default:'' }}">
+                        </div>
+                        <small class="form-text text-muted">
+                            Busca por nombre del médico, nombre del paciente, documento o motivo de la cita.
+                        </small>
+                    </div>
+                    
+                    <!-- Filtro de estado -->
+                    <div class="col-md-3 mb-3">
+                        <label for="id_estado_filtro" class="font-weight-bold">
+                            <i class="fas fa-tag mr-1"></i> Estado
+                        </label>
+                        <select name="estado" id="id_estado_filtro" class="form-control">
+                            <option value="">Todos los estados</option>
+                            {% for value, label in form.estado.field.choices %}
+                                {% if value %}
+                                    <option value="{{ value }}" {% if request.GET.estado == value %}selected{% endif %}>
+                                        {{ label }}
+                                    </option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <!-- Fecha desde -->
+                    <div class="col-md-2 mb-3">
+                        <label for="id_fecha_desde" class="font-weight-bold">
+                            <i class="fas fa-calendar mr-1"></i> Desde
+                        </label>
+                        <input type="date" 
+                               name="fecha_desde" 
+                               id="id_fecha_desde" 
+                               class="form-control"
+                               value="{{ request.GET.fecha_desde|default:'' }}">
+                    </div>
+                    
+                    <!-- Fecha hasta -->
+                    <div class="col-md-2 mb-3">
+                        <label for="id_fecha_hasta" class="font-weight-bold">
+                            <i class="fas fa-calendar mr-1"></i> Hasta
+                        </label>
+                        <input type="date" 
+                               name="fecha_hasta" 
+                               id="id_fecha_hasta" 
+                               class="form-control"
+                               value="{{ request.GET.fecha_hasta|default:'' }}">
+                    </div>
+                </div>
+                
+                <!-- Botones de acción -->
+                <div class="d-flex justify-content-end">
+                    <a href="{% url 'citas:busqueda' %}" class="btn btn-secondary mr-2">
+                        <i class="fas fa-undo mr-1"></i> Limpiar Filtros
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search mr-1"></i> Buscar Citas
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ================================================================ -->
+    <!-- RESULTADOS DE BÚSQUEDA                                          -->
+    <!-- ================================================================ -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 bg-info d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold text-light">
+                <i class="fas fa-list mr-2"></i>Resultados
+                {% if is_paginated %}
+                    <span class="badge badge-light ml-2">{{ page_obj.paginator.count }} citas encontradas</span>
+                {% endif %}
+            </h6>
+        </div>
+        <div class="card-body">
+            
+            <!-- Tabla de citas -->
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover" id="tabla-citas" width="100%" cellspacing="0">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>#</th>
+                            <th>N° Cita</th>
+                            <th>Médico / Profesional</th>
+                            <th>Paciente</th>
+                            <th>Motivo</th>
+                            <th>Fecha y Hora</th>
+                            <th>Duración</th>
+                            <th>Tipo</th>
+                            <th>Estado</th>
+                            <th>Registrado por</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cita in citas %}
+                        <tr>
+                            <td>{{ forloop.counter0|add:page_obj.start_index }}</td>
+                            <td>
+                                <span class="font-weight-bold">#{{ cita.id }}</span>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    {% if cita.profesional.profile_image %}
+                                        <img src="{{ cita.profesional.profile_image.url }}" 
+                                             class="rounded-circle mr-2" 
+                                             style="width:35px;height:35px;object-fit:cover;" 
+                                             alt="">
+                                    {% else %}
+                                        <div class="rounded-circle mr-2 bg-secondary d-flex align-items-center justify-content-center" 
+                                             style="width:35px;height:35px;">
+                                            <i class="fas fa-user-md text-white"></i>
+                                        </div>
+                                    {% endif %}
+                                    <div>
+                                        <span class="font-weight-bold">{{ cita.profesional.get_full_name }}</span>
+                                        <br>
+                                        <small class="text-muted">{{ cita.profesional.get_tipo_usuario_display }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <a href="{% url 'perfil_paciente' cita.paciente.id %}" class="text-primary">
+                                    {{ cita.paciente.apellidos }}, {{ cita.paciente.nombres }}
+                                </a>
+                                <br>
+                                <small class="text-muted">{{ cita.paciente.documento_identidad }}</small>
+                            </td>
+                            <td>
+                                <span title="{{ cita.motivo }}">
+                                    {{ cita.motivo|truncatechars:40 }}
+                                </span>
+                            </td>
+                            <td>
+                                <i class="far fa-calendar text-muted mr-1"></i>
+                                {{ cita.fecha|date:"d/m/Y" }}
+                                <br>
+                                <i class="far fa-clock text-muted mr-1"></i>
+                                {{ cita.fecha|time:"H:i" }}
+                            </td>
+                            <td class="text-center">{{ cita.duracion }} min</td>
+                            <td>
+                                {% if cita.tipo_cita == 'PRIMERA_CONSULTA' %}
+                                    <span class="badge badge-info">1ª Consulta</span>
+                                {% elif cita.tipo_cita == 'SEGUIMIENTO' %}
+                                    <span class="badge badge-primary">Seguimiento</span>
+                                    {% if cita.numero_sesion %}
+                                        <br><small>Sesión {{ cita.numero_sesion }}</small>
+                                    {% endif %}
+                                {% elif cita.tipo_cita == 'FINALIZACION' %}
+                                    <span class="badge badge-success">Finalización</span>
+                                {% elif cita.tipo_cita == 'REVISION' %}
+                                    <span class="badge badge-secondary">Revisión</span>
+                                {% else %}
+                                    <span class="badge badge-light">Otro</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if cita.estado == 'PENDIENTE' %}
+                                    <span class="badge badge-warning">Pendiente</span>
+                                {% elif cita.estado == 'CONFIRMADA' %}
+                                    <span class="badge badge-success">Confirmada</span>
+                                {% elif cita.estado == 'EN_PROCESO' %}
+                                    <span class="badge badge-info">En Proceso</span>
+                                {% elif cita.estado == 'COMPLETADA' %}
+                                    <span class="badge badge-primary">Completada</span>
+                                {% elif cita.estado == 'CANCELADA' %}
+                                    <span class="badge badge-danger">Cancelada</span>
+                                {% elif cita.estado == 'REPROGRAMADA' %}
+                                    <span class="badge badge-secondary">Reprogramada</span>
+                                {% elif cita.estado == 'NO_ASISTIO' %}
+                                    <span class="badge badge-dark">No Asistió</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if cita.creada_por %}
+                                    {{ cita.creada_por.get_full_name }}
+                                {% else %}
+                                    <span class="text-muted">Sistema</span>
+                                {% endif %}
+                                <br>
+                                <small class="text-muted">{{ cita.created_at|date:"d/m/Y H:i" }}</small>
+                            </td>
+                            <td class="text-center">
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <a href="{% url 'citas:detail' cita.id %}" 
+                                       class="btn btn-info" 
+                                       data-toggle="tooltip" 
+                                       title="Ver detalle">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    {% if cita.estado in 'PENDIENTE,CONFIRMADA' %}
+                                    <a href="{% url 'citas:calendario' %}" 
+                                       class="btn btn-warning" 
+                                       data-toggle="tooltip" 
+                                       title="Editar cita">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="11" class="text-center py-5">
+                                {% if request.GET.q or request.GET.estado or request.GET.fecha_desde or request.GET.fecha_hasta %}
+                                    <i class="fas fa-search fa-3x text-muted mb-3 d-block"></i>
+                                    <h5 class="text-muted">No se encontraron citas con los filtros especificados</h5>
+                                    <p class="text-muted">Intente modificar los criterios de búsqueda.</p>
+                                    <a href="{% url 'citas:busqueda' %}" class="btn btn-outline-primary">
+                                        <i class="fas fa-undo mr-1"></i> Limpiar filtros
+                                    </a>
+                                {% else %}
+                                    <i class="far fa-calendar-times fa-3x text-muted mb-3 d-block"></i>
+                                    <h5 class="text-muted">No hay citas registradas</h5>
+                                    <p class="text-muted">Utilice los filtros de búsqueda o ingrese un criterio para buscar citas.</p>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- ================================================================ -->
+            <!-- PAGINACIÓN                                                       -->
+            <!-- ================================================================ -->
+            {% if is_paginated %}
+            <nav aria-label="Navegación de páginas">
+                <ul class="pagination justify-content-center">
+                    <!-- Botón Anterior -->
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}{% if request.GET.fecha_desde %}&fecha_desde={{ request.GET.fecha_desde }}{% endif %}{% if request.GET.fecha_hasta %}&fecha_hasta={{ request.GET.fecha_hasta }}{% endif %}" aria-label="Anterior">
+                                <i class="fas fa-chevron-left"></i>
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link"><i class="fas fa-chevron-left"></i></span>
+                        </li>
+                    {% endif %}
+
+                    <!-- Números de página -->
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}{% if request.GET.fecha_desde %}&fecha_desde={{ request.GET.fecha_desde }}{% endif %}{% if request.GET.fecha_hasta %}&fecha_hasta={{ request.GET.fecha_hasta }}{% endif %}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    <!-- Botón Siguiente -->
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}{% if request.GET.fecha_desde %}&fecha_desde={{ request.GET.fecha_desde }}{% endif %}{% if request.GET.fecha_hasta %}&fecha_hasta={{ request.GET.fecha_hasta }}{% endif %}" aria-label="Siguiente">
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link"><i class="fas fa-chevron-right"></i></span>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            
+            <!-- Información de paginación -->
+            <div class="text-center text-muted mt-2">
+                <small>
+                    Mostrando {{ page_obj.start_index }} - {{ page_obj.end_index }} 
+                    de {{ page_obj.paginator.count }} citas
+                </small>
+            </div>
+            {% endif %}
+            
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Inicializar tooltips
+    $(function () {
+        $('[data-toggle="tooltip"]').tooltip();
+    });
+    
+    // Submit automático al cambiar filtros (opcional - para búsqueda más fluida)
+    // Descomenta si quieres que los filtros se apliquen automáticamente al cambiar
+    /*
+    $('#id_estado_filtro, #id_fecha_desde, #id_fecha_hasta').on('change', function() {
+        $('#form-busqueda').submit();
+    });
+    */
+</script>
+{% endblock %}

@@ -1,0 +1,120 @@
+{# Fragmento del modal para crear/editar citas - Se incluye en citas_calendario.html #}
+
+<div class="modal fade" id="citaModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="modal-titulo">
+                    <i class="fas fa-calendar-plus mr-2"></i>Nueva Cita
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="citaForm">
+                    {% csrf_token %}
+                    <input type="hidden" id="cita_id" value="">
+                    <input type="hidden" id="profesional_id" value="">
+                    
+                    <!-- Fila: Paciente + Motivo -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="font-weight-bold">
+                                    <i class="fas fa-user mr-1"></i> Paciente *
+                                </label>
+                                <select id="id_paciente" class="form-control select2-buscar" required>
+                                    <option value="">Buscar paciente...</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="font-weight-bold">
+                                    <i class="fas fa-comment-medical mr-1"></i> Motivo *
+                                </label>
+                                <textarea id="id_motivo" class="form-control" rows="2" 
+                                          placeholder="Describa el motivo de la consulta..." required></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Fila: Fecha + Hora + Duración -->
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="font-weight-bold">
+                                    <i class="fas fa-calendar mr-1"></i> Fecha *
+                                </label>
+                                <input type="date" id="id_fecha" class="form-control" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="font-weight-bold">
+                                    <i class="fas fa-clock mr-1"></i> Hora *
+                                </label>
+                                <select id="id_hora" class="form-control" required>
+                                    <option value="">-- Seleccione fecha --</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="font-weight-bold">
+                                    <i class="fas fa-hourglass-half mr-1"></i> Duración
+                                </label>
+                                <select id="id_duracion" class="form-control">
+                                    <option value="15">15 minutos</option>
+                                    <option value="30" selected>30 minutos</option>
+                                    <option value="45">45 minutos</option>
+                                    <option value="60">1 hora</option>
+                                    <option value="90">1 hora 30 min</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Fila: Color + Tipo de cita -->
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="font-weight-bold">
+                                    <i class="fas fa-palette mr-1"></i> Color
+                                </label>
+                                <input type="color" id="id_color" class="form-control" 
+                                       value="#007BFF" style="width:80px;height:40px;padding:3px;">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="font-weight-bold">
+                                    <i class="fas fa-tag mr-1"></i> Tipo de Cita
+                                </label>
+                                <select id="id_tipo_cita" class="form-control">
+                                    <option value="OTRO">Otro</option>
+                                    <option value="PRIMERA_CONSULTA">Primera Consulta</option>
+                                    <option value="SEGUIMIENTO">Seguimiento</option>
+                                    <option value="FINALIZACION">Finalización</option>
+                                    <option value="REVISION">Revisión</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger mr-auto" id="btn-eliminar-cita" style="display:none;">
+                    <i class="fas fa-trash"></i> Cancelar Cita
+                </button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                    <i class="fas fa-times"></i> Cerrar
+                </button>
+                <button type="button" class="btn btn-primary" id="btn-guardar-cita">
+                    <i class="fas fa-save"></i> Guardar Cita
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

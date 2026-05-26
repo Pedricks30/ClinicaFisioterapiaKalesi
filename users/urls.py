@@ -1,9 +1,9 @@
 from django.urls import path
-from .views import (EditarDocumentTypeView, EditarEspecialidadView, EditarNivelAccesoView,
-                    EliminarDocumentTypeView, EliminarEspecialidadView, EliminarNivelAccesoView,
-                    GestionarDocumentTypeView, GestionarEspecialidadView, GestionarNivelAccesoView, 
+from .views import (EditarDocumentTypeView, EditarEspecialidadView,
+                    EliminarDocumentTypeView, EliminarEspecialidadView,
+                    GestionarDocumentTypeView, GestionarEspecialidadView, 
                     GestionarUsuarioView, EditarUsuarioView, ListarDocumentTypesView,
-                    ListarEspecialidadView, ListarNivelAccesoView, ListarUsuariosView, EliminarUsuarioView,
+                    ListarEspecialidadView, ListarUsuariosView, EliminarUsuarioView,
                     PerfilUsuarioView, CambiarContrasenaView)
 
 urlpatterns = [
@@ -26,8 +26,8 @@ urlpatterns = [
     path('listar-especialidades/',ListarEspecialidadView.as_view(),name='listar_espacialidades'),
     path('eliminar-especialidad/<int:pk>/',EliminarEspecialidadView.as_view(),name='eliminar_especialidad'),
     #Nivel de acceso
-    path('gestionar-nivel-acceso/',GestionarNivelAccesoView.as_view(),name='gestionar_nivel_acceso'),
-    path('editar-nivel-acceso/<int:pk>/',EditarNivelAccesoView.as_view(),name='editar_nivel_acceso'),
-    path('listar-nivel-acceso/',ListarNivelAccesoView.as_view(),name='listar_nivel_acceso'),
-    path('eliminar-nivel-acceso/<int:pk>/',EliminarNivelAccesoView.as_view(),name='eliminar_nivel_acceso'),
+    #path('gestionar-nivel-acceso/',GestionarNivelAccesoView.as_view(),name='gestionar_nivel_acceso'),
+    #path('editar-nivel-acceso/<int:pk>/',EditarNivelAccesoView.as_view(),name='editar_nivel_acceso'),
+    #path('listar-nivel-acceso/',ListarNivelAccesoView.as_view(),name='listar_nivel_acceso'),
+    #path('eliminar-nivel-acceso/<int:pk>/',EliminarNivelAccesoView.as_view(),name='eliminar_nivel_acceso'),
 ]

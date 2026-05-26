@@ -1,0 +1,74 @@
+{% extends "layout/base.html" %}
+{% load static %}
+{% block title %}Lista de Pacientes Inactivos{% endblock title %}
+{% block content %}
+<div class="container-fluid">
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 bg-warning">
+            <div class="d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-dark">Lista de Pacientes Inactivos</h6>
+                <a href="{% url 'listar_pacientes' %}" class="btn btn-success btn-sm">
+                    <i class="fas fa-eye"></i> Ver Activos
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered responsive" id="dataTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Imagen</th>
+                            <th>Nombre Completo</th>
+                            <th>Documento</th>
+                            <th>Sexo</th>
+                            <th>Email</th>
+                            <th>Teléfono</th>
+                            <th>Nacionalidad</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for paciente in pacientes %}
+                        <tr>
+                            <td class="text-center">
+                                {% if paciente.foto_perfil %}
+                                    <img src="{{ paciente.foto_perfil.url }}" class="rounded-circle img-thumbnail" style="width: 50px; height: 50px; object-fit: cover;" alt="Perfil">
+                                {% else %}
+                                    <span class="text-muted">Sin imagen</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ paciente.nombres }} {{ paciente.apellidos }}</td>
+                            <td>{{ paciente.tipo_documento.document_type }}: {{ paciente.documento_identidad }}</td>
+                            <td>{{ paciente.get_sexo_display }}</td>
+                            <td>{{ paciente.email|default:"-" }}</td>
+                            <td>{{ paciente.numero_telefono }}</td>
+                            <td>{{ paciente.nacionalidad|default:"-" }}</td>
+                            <td>
+                                <span class="badge badge-danger">Inactivo</span>
+                            </td>
+                            <td class="text-center">
+                                {% if perms.paciente.change_patient %}
+                                <form method="post" action="{% url 'reactivar_paciente' paciente.id %}" style="display: inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-success btn-sm" title="Reactivar paciente">
+                                        <i class="fas fa-check"></i> Reactivar
+                                    </button>
+                                </form>
+                                {% endif %}
+                                <a href="{% url 'perfil_paciente' paciente.id %}"
+                                    class="btn btn-info btn-sm"
+                                    data-toggle="tooltip"
+                                    title="Ver detalles">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

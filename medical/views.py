@@ -1,68 +1,122 @@
-from django.http import JsonResponse
-from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
 from django.contrib.auth.decorators import permission_required, login_required
 from django.utils.decorators import method_decorator
-from django.contrib import messages
 from django.views.generic import (
     CreateView, UpdateView, DeleteView, ListView, DetailView
 )
-from .models import MedicalUser, DocumentType, Specialties
-from .forms import MedicalUserForm
+from django.contrib.messages.views import SuccessMessageMixin
+from django.contrib import messages
+from .models import Medico
+from .forms import MedicoForm
 
-# Vistas para MedicalUser
-@method_decorator(permission_required(['medical.add_medicaluser'], raise_exception=True), name='dispatch')
-class CrearProfesionalView(CreateView):
-    model = MedicalUser
-    form_class = MedicalUserForm
+
+# -------------------------------------------------------------------------
+# CREAR PERFIL DE MÉDICO
+# -------------------------------------------------------------------------
+@method_decorator(permission_required(['medical.add_medico'], raise_exception=True), name='dispatch')
+class CrearMedicoView(SuccessMessageMixin, CreateView):
+    """
+    Vista para crear un perfil de médico para un usuario MEDIC existente.
+    Se selecciona el usuario mediante un buscador/selector en el formulario.
+    """
+    model = Medico
+    form_class = MedicoForm
     template_name = 'medical/register_medical.html'
     success_url = reverse_lazy('listar_profesionales')
+    success_message = "Perfil médico creado exitosamente."
 
-    def form_valid(self, form):
-        messages.success(self.request, 'Profesional agregado exitosamente.')
-        return super().form_valid(form)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['editar'] = False
+        return context
 
-@method_decorator(permission_required(['medical.change_medicaluser'], raise_exception=True), name='dispatch')
-class EditarProfesionalView(UpdateView):
-    model = MedicalUser
-    form_class = MedicalUserForm
+
+# -------------------------------------------------------------------------
+# EDITAR PERFIL DE MÉDICO
+# -------------------------------------------------------------------------
+@method_decorator(permission_required(['medical.change_medico'], raise_exception=True), name='dispatch')
+class EditarMedicoView(SuccessMessageMixin, UpdateView):
+    """
+    Vista para editar el perfil de un médico existente.
+    El campo 'user' está deshabilitado en edición.
+    """
+    model = Medico
+    form_class = MedicoForm
     template_name = 'medical/register_medical.html'
     success_url = reverse_lazy('listar_profesionales')
+    success_message = "Perfil médico actualizado exitosamente."
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['editar'] = True
+        return context
 
-    def form_valid(self, form):
-        messages.success(self.request, 'Profesional actualizado exitosamente.')
-        return super().form_valid(form)
 
-class ListarProfesionalesView(ListView):
-    model = MedicalUser
+# -------------------------------------------------------------------------
+# LISTAR MÉDICOS
+# -------------------------------------------------------------------------
+@method_decorator(login_required, name='dispatch')
+class ListarMedicoView(ListView):
+    """
+    Vista para listar todos los médicos registrados.
+    """
+    model = Medico
     template_name = 'medical/list_medical.html'
     context_object_name = 'profesionales'
-    ordering = ['name']
+    ordering = ['user__last_name', 'user__first_name']
+    
+
+    def get_queryset(self):
+        """Optimiza la consulta con select_related y prefetch_related"""
+        return super().get_queryset().select_related(
+            'user', 'user__document_type', 'specialties'
+        ).prefetch_related(
+            'especialidades_secundarias'
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['url_boton'] = reverse_lazy('crear_profesional')
         return context
 
-@method_decorator(permission_required(['medical.delete_medicaluser'], raise_exception=True), name='dispatch')
-class EliminarProfesionalView(DeleteView):
-    model = MedicalUser
+
+# -------------------------------------------------------------------------
+# ELIMINAR MÉDICO
+# -------------------------------------------------------------------------
+@method_decorator(permission_required(['medical.delete_medico'], raise_exception=True), name='dispatch')
+class EliminarMedicoView(SuccessMessageMixin, DeleteView):
+    """
+    Vista para eliminar un perfil médico.
+    """
+    model = Medico
     success_url = reverse_lazy('listar_profesionales')
+    
+    def delete(self, request, *args, **kwargs):
+        medico = self.get_object()
+        nombre = medico.user.get_full_name()
+        messages.success(request, f'El perfil médico de "{nombre}" fue eliminado correctamente.')
+        return super().delete(request, *args, **kwargs)
 
-    def form_valid(self, form):
-        name = self.get_object().name
-        response = super().form_valid(form)
-        messages.success(self.request, f'El profesional "{name}" ha sido eliminado exitosamente.')
-        return response
 
+# -------------------------------------------------------------------------
+# PERFIL DETALLADO DE MÉDICO
+# -------------------------------------------------------------------------
 @method_decorator(login_required, name='dispatch')
-class PerfilProfesionalView(DetailView):
-    model = MedicalUser
+class PerfilMedicoView(DetailView):
+    """
+    Vista para ver el perfil detallado de un médico.
+    """
+    model = Medico
     template_name = 'medical/profile_medical.html'
-    context_object_name = 'profesional'
-    pk_url_kwarg = 'pk'  # Esto es opcional ya que es el valor por defecto
-
+    context_object_name = 'medico'
+    
+    def get_queryset(self):
+        """Optimiza la consulta con select_related"""
+        return super().get_queryset().select_related(
+            'user', 'user__document_type', 'specialties'
+        ).prefetch_related('especialidades_secundarias')
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Agrega aquí cualquier contexto adicional que necesites
+        context['usuario'] = self.object.user
         return context

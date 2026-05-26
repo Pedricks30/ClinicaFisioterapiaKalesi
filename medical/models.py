@@ -2,50 +2,117 @@ from django.db import models
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from core.mixins import ImageCompressionMixin, ImageDeletionMixin
-from users.models import DocumentType, Specialties
+from users.models import CustomUser, Specialties
 
-class MedicalUser(ImageCompressionMixin, ImageDeletionMixin, models.Model):
-    # Image field
-    profile_image = models.ImageField(upload_to='profile_images/', default='profile_images_default/user_default.webp')
-    # Personal information
-    name = models.CharField(max_length=255)
-    SEXO_CHOICES = [
-        ('Masculino', 'Masculino'),
-        ('Femenino', 'Femenino'),
-        ('Otro', 'Otro')
-    ]
-    sexo = models.CharField(max_length=20, choices=SEXO_CHOICES)
-    email = models.EmailField(unique=True)
-    
-    # Address information
-    address1 = models.CharField(max_length=255, null=True, blank=True)  # Dirección 1
-    
-    phone_number = models.CharField(max_length=20, null=True, blank=True)  # Número de teléfono completo
-    document_number = models.CharField(max_length=40, unique=True)  # Asegura que el Número de documento
-    
-    # Nationality information
-    country = models.CharField(max_length=100, null=True, blank=True)  # País
-    birthdate = models.DateField(null=True, blank=True)  # Fecha de nacimiento
-    # Timestamps
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+class Medico(ImageCompressionMixin, ImageDeletionMixin, models.Model):
+    """
+    Modelo que extiende la información específica para médicos
+    """
+    user = models.OneToOneField(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name='perfil_medico',
+        limit_choices_to={'tipo_usuario__in': ['MEDIC']}  # Incluye ambos tipos
+    )
+    consultorio = models.CharField(
+        max_length=100,
+        blank=True,
+        verbose_name='Consultorio o área de trabajo'
+    )
+    registro_medico = models.CharField(
+        max_length=50,
+        unique=True,
+        verbose_name='Número de registro médico'
+    )
+    especialidades_secundarias = models.ManyToManyField(
+        'users.Specialties',
+        related_name='medicos_secundarios',
+        blank=True
+    )
 
-    # Relaciones con otras tablas
-    document_type = models.ForeignKey(DocumentType, on_delete=models.SET_NULL, null=True, blank=True)
     specialties = models.ForeignKey(Specialties, on_delete=models.SET_NULL, null=True, blank=True)
-    
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    update_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Médico'
+        verbose_name_plural = 'Médicos'
+        ordering = ['user__last_name', 'user__first_name']
 
     def __str__(self):
-        return str(self.name) if self.name is not None else ""
+        return f"{self.user.get_full_name()}"
     
-    class Meta:
-        verbose_name = 'Profesional Médico'
-        verbose_name_plural = 'Profesionales Médicos'
-
-@receiver(post_delete)
-def delete_image_on_post_delete(sender, instance, **kwargs):
+@receiver(post_delete, sender=Medico)
+def eliminar_imagen_perfil(sender, instance, **kwargs):
     """
-    Elimina la imagen asociada a un objeto cuando se elimina el objeto.
+    Elimina la imagen asociada cuando se borra un ProfesionalSalud
     """
     if hasattr(instance, 'delete_image'):
         instance.delete_image()
+
+
+
+
+
+#DEBO QUITAR ESTAS DOS TABLAS DE ESTE MODELO Y CREAR UN NUEVO MODELO PARA LOS CONSULTORIOS, 
+# ASIGNACIONES, ETC. PARA QUE NO SE ME LLENE DE COSAS QUE NO SON DE LOS MÉDICOS. SI NO, ME VA A QUEDAR 
+# UN MODELO MUY GRANDE Y DESORDENADO.
+class Consultorio(models.Model):
+    """
+    Modelo para gestionar los consultorios médicos
+    """
+    nombre = models.CharField(max_length=100, unique=True)
+    ubicacion = models.CharField(max_length=255)
+    piso = models.CharField(max_length=10, blank=True)
+    numero = models.CharField(max_length=10)
+    activo = models.BooleanField(default=True)
+    equipo_especial = models.TextField(blank=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Consultorio'
+        verbose_name_plural = 'Consultorios'
+        ordering = ['nombre']
+
+    def __str__(self):
+        return f"Consultorio {self.nombre} - Piso {self.piso}"
+
+
+class AsignacionConsultorio(models.Model):
+    """
+    Asignación de consultorios a profesionales
+    """
+    profesional = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name='asignaciones_consultorio',
+        limit_choices_to={'tipo_usuario__in': ['MEDIC', 'FISIO']}
+    )
+    consultorio = models.ForeignKey(
+        Consultorio,
+        on_delete=models.CASCADE,
+        related_name='asignaciones_profesional'
+    )
+    fecha_inicio = models.DateField()
+    fecha_fin = models.DateField(null=True, blank=True)
+    activo = models.BooleanField(default=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Asignación de Consultorio'
+        verbose_name_plural = 'Asignaciones de Consultorios'
+        ordering = ['-fecha_inicio']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['profesional', 'consultorio', 'activo'],
+                name='unique_active_assignment'
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.profesional} - {self.consultorio}"

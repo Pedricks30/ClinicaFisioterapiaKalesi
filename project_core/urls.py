@@ -23,12 +23,12 @@ urlpatterns = [
     path('', include('authentication.urls')),  # Redirige la URL raíz a la app de autenticación
     path('admin/', admin.site.urls),
     path('users/', include('users.urls')),  # URLs de usuarios
-    path('staff/', include('staff.urls')),
+    path('physiotherapist/', include('physiotherapist.urls')),
     path('dashboard/', include('dashboard.urls')),  # URLs del dashboard
     path('medical/', include('medical.urls')),  # URLs de la app médica
-    path('horario_personal/', include('horario.urls')),  # URLs de la app médica
+    path('horario/', include('horario.urls')),  # URLs de la app médica
     path('citas/', include('citas.urls')),  # URLs de la app de citas
-    #path('paciente/', include('paciente.urls')),  # URLs de la app de pacientes}
+    path('paciente/', include('paciente.urls')),  # URLs de la app de pacientes}
     #path('expedientes/', include('expedientes.urls')),  # URLs de la app de expediente
     path('notifications/', include('notifications.urls')),  # URLs de notificaciones
     

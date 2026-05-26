@@ -1,3 +1,4 @@
+# expedientes/apps.py
 from django.apps import AppConfig
 
 class ExpedientesConfig(AppConfig):
@@ -5,4 +6,4 @@ class ExpedientesConfig(AppConfig):
     name = 'expedientes'
 
     def ready(self):
-        import expedientes.signals
+        import expedientes.signals  # Importa las señales para que se registren correctamente

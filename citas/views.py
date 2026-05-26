@@ -1,118 +1,178 @@
-from django.views.generic import ListView, CreateView, UpdateView, DeleteView
-from notifications.models import Notificacion
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView, View
 from django.urls import reverse_lazy
-from .models import Cita
-from .forms import CitaForm
+from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import JsonResponse
-from django.views.decorators.http import require_GET
-from citas.models import Cita
-import json
+from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
+from users.models import Specialties
+from .models import Cita, CitaHistorico
+from .forms import CitaModalForm, BusquedaCitaForm
 
-class CitaListView(ListView):
+
+# =============================================================================
+# VISTA PRINCIPAL: CALENDARIO DE CITAS
+# =============================================================================
+class CitasCalendarioView(LoginRequiredMixin, View):
+    """
+    Página principal con:
+    - Filtro de especialidad → profesional
+    - Tabla de horarios del profesional
+    - FullCalendar con citas
+    - Modal para crear/editar citas
+    """
+    template_name = 'citas/citas_calendario.html'
+    
+    def get(self, request, *args, **kwargs):
+        context = {
+            'especialidades': Specialties.objects.all().order_by('specialties'),
+            'form': CitaModalForm(),
+        }
+        return render(request, self.template_name, context)
+
+
+# =============================================================================
+# CREAR CITA (DESDE EL MODAL - AJAX)
+# =============================================================================
+class CitaCreateAjaxView(LoginRequiredMixin, View):
+    """
+    Crea una cita desde el modal del calendario vía AJAX.
+    """
+    def post(self, request, *args, **kwargs):
+        profesional_id = request.POST.get('profesional_id')
+        if not profesional_id:
+            return JsonResponse({'success': False, 'error': 'Profesional no especificado'}, status=400)
+        
+        from users.models import CustomUser
+        profesional = get_object_or_404(CustomUser, pk=profesional_id)
+        
+        form = CitaModalForm(
+            request.POST,
+            profesional=profesional,
+            creada_por=request.user
+        )
+        
+        if form.is_valid():
+            cita = form.save()
+            return JsonResponse({
+                'success': True,
+                'message': 'Cita creada exitosamente',
+                'cita_id': cita.id
+            })
+        
+        return JsonResponse({'success': False, 'errors': form.errors}, status=400)
+
+
+# =============================================================================
+# EDITAR CITA (DESDE EL MODAL - AJAX)
+# =============================================================================
+class CitaUpdateAjaxView(LoginRequiredMixin, View):
+    """
+    Actualiza una cita desde el modal del calendario vía AJAX.
+    """
+    def post(self, request, pk, *args, **kwargs):
+        cita = get_object_or_404(Cita, pk=pk)
+        form = CitaModalForm(
+            request.POST,
+            instance=cita,
+            profesional=cita.profesional,
+            creada_por=request.user
+        )
+        
+        if form.is_valid():
+            cita = form.save()
+            return JsonResponse({
+                'success': True,
+                'message': 'Cita actualizada exitosamente',
+                'cita_id': cita.id
+            })
+        
+        return JsonResponse({'success': False, 'errors': form.errors}, status=400)
+
+
+# =============================================================================
+# ELIMINAR CITA (AJAX)
+# =============================================================================
+class CitaDeleteAjaxView(LoginRequiredMixin, View):
+    """
+    Elimina/cancela una cita vía AJAX.
+    """
+    def post(self, request, pk, *args, **kwargs):
+        cita = get_object_or_404(Cita, pk=pk)
+        
+        if not cita.puede_ser_cancelada:
+            return JsonResponse({
+                'success': False,
+                'error': 'La cita no puede ser cancelada. Mínimo 24 horas de anticipación.'
+            }, status=400)
+        
+        cita.cancelar(request.user)
+        return JsonResponse({'success': True, 'message': 'Cita cancelada exitosamente'})
+
+
+# =============================================================================
+# BÚSQUEDA GENERAL DE CITAS
+# =============================================================================
+class CitasBusquedaView(LoginRequiredMixin, ListView):
+    """
+    Página de búsqueda general de citas con tabla de resultados.
+    """
     model = Cita
-    template_name = 'citas/cita_list.html'
+    template_name = 'citas/citas_busqueda.html'
     context_object_name = 'citas'
-
+    paginate_by = 15
+    
     def get_queryset(self):
-        queryset = Cita.objects.all().select_related('paciente', 'profesional')
+        queryset = super().get_queryset().select_related('paciente', 'profesional')
         
-        # Si es un médico, filtrar solo sus citas
-        if hasattr(self.request.user, 'medical_user'):
-            return queryset.filter(profesional=self.request.user.medical_user)
+        # Filtros según tipo de usuario
+        user = self.request.user
+        if user.is_medico or user.is_fisio:
+            queryset = queryset.filter(profesional=user)
         
-        # Si es admin o staff, mostrar todas
-        elif self.request.user.is_staff:
-            return queryset
-            
-        # Para otros usuarios (como pacientes)
-        elif hasattr(self.request.user, 'patient'):
-            return queryset.filter(paciente=self.request.user.patient)
-            
-        return Cita.objects.none()
-
-class CitaCreateView(CreateView):
-    model = Cita
-    form_class = CitaForm
-    template_name = 'citas/cita_form.html'
-    success_url = reverse_lazy('citas:list')
-
+        # Filtros del formulario
+        q = self.request.GET.get('q', '')
+        estado = self.request.GET.get('estado', '')
+        fecha_desde = self.request.GET.get('fecha_desde', '')
+        fecha_hasta = self.request.GET.get('fecha_hasta', '')
+        
+        if q:
+            from django.db.models import Q
+            queryset = queryset.filter(
+                Q(paciente__nombres__icontains=q) |
+                Q(paciente__apellidos__icontains=q) |
+                Q(paciente__documento_identidad__icontains=q) |
+                Q(profesional__first_name__icontains=q) |
+                Q(profesional__last_name__icontains=q) |
+                Q(motivo__icontains=q)
+            )
+        
+        if estado:
+            queryset = queryset.filter(estado=estado)
+        
+        if fecha_desde:
+            queryset = queryset.filter(fecha__date__gte=fecha_desde)
+        if fecha_hasta:
+            queryset = queryset.filter(fecha__date__lte=fecha_hasta)
+        
+        return queryset.order_by('-fecha')
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['notificaciones'] = Notificacion.objects.filter(
-            usuario=self.request.user, leida=False
-        ).order_by('-fecha')
+        context['form'] = BusquedaCitaForm(self.request.GET or None)
+        context['estados'] = dict(Cita.ESTADO_CHOICES)
         return context
 
-    def form_valid(self, form):
-        form.instance.profesional = self.request.user
-        return super().form_valid(form)
 
-class CitaUpdateView(UpdateView):
-    model = Cita
-    form_class = CitaForm
-    template_name = 'citas/cita_form.html'
-    success_url = reverse_lazy('citas:list')
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['notificaciones'] = Notificacion.objects.filter(
-            usuario=self.request.user, leida=False
-        ).order_by('-fecha')
-        return context
-
-@require_GET
-def citas_json(request):
-    citas = Cita.objects.filter(
-        profesional=request.user  # o el filtro que necesites
-    ).select_related('paciente', 'profesional')
-    
-    events = []
-    for cita in citas:
-        events.append({
-            'id': cita.id,
-            'title': f"{cita.paciente.name} - {cita.motivo[:20]}...",
-            'start': f"{cita.fecha}T{cita.hora_inicio}",
-            'end': f"{cita.fecha}T{cita.hora_fin}",
-            'color': self.get_color_estado(cita.estado),
-            'extendedProps': {
-                'paciente': cita.paciente.name,
-                'profesional': cita.profesional.name,
-                'motivo': cita.motivo,
-                'estado': cita.get_estado_display()
-            }
-        })
-    
-    return JsonResponse(events, safe=False)
-
-def get_color_estado(self, estado):
-    colores = {
-        'P': '#ffc107',  # Amarillo (pendiente)
-        'C': '#28a745',  # Verde (confirmada)
-        'A': '#17a2b8',  # Azul (atendida)
-        'N': '#dc3545'   # Rojo (cancelada)
-    }
-    return colores.get(estado, '#6c757d')
-
-class CitaDetailView(ListView):
+# =============================================================================
+# DETALLE DE CITA
+# =============================================================================
+class CitaDetailView(LoginRequiredMixin, DetailView):
     model = Cita
     template_name = 'citas/cita_detail.html'
     context_object_name = 'cita'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['notificaciones'] = Notificacion.objects.filter(
-            usuario=self.request.user, leida=False
-        ).order_by('-fecha')
-        return context
     
-class CitaDeleteView(DeleteView):
-    model = Cita
-    template_name = 'citas/cita_confirm_delete.html'
-    success_url = reverse_lazy('citas:list')
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['notificaciones'] = Notificacion.objects.filter(
-            usuario=self.request.user, leida=False
-        ).order_by('-fecha')
+        context['historico'] = self.object.historico.all().order_by('-created_at')[:10]
         return context

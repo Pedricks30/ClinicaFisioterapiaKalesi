@@ -1,5 +1,5 @@
 {% extends "layout/base.html" %}
-{% load static %}  <!-- Esta línea debe estar al principio del archivo -->
+{% load static %}
 {% block title %}Lista de Profesionales Médicos{% endblock title %}
 {% block content %}
 <div class="container-fluid">
@@ -14,71 +14,72 @@
                 <table class="table table-bordered responsive" id="dataTable" width="100%" cellspacing="0">
                     <thead>
                         <tr>
+                            <th>#</th>
                             <th>Imagen</th>
+                            <th>Registro Médico</th>  <!-- ⬅️ Nuevo -->
+                            <th>Consultorio</th>  <!-- ⬅️ Nuevo -->
                             <th>Nombre</th>
-                            <th>Sexo</th>
-                            <th>Email</th>
+                            <th>Especialidad Principal</th>  <!-- ⬅️ Cambiado -->
                             <th>Teléfono</th>
                             <th>Documento</th>
-                            <th>Especialidad</th>
-                            <th>País</th>
+                            <th>Estado</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for profesional in profesionales %}
                         <tr>
+                            <td>{{ forloop.counter }}</td>
                             <td class="text-center">
-                                {% if profesional.profile_image %}
-                                    <img src="{{ profesional.profile_image.url }}" class="rounded-circle img-thumbnail" style="width: 50px; height: 50px; object-fit: cover;" alt="Perfil">
+                                {% if profesional.user.profile_image %}
+                                    <img src="{{ profesional.user.profile_image.url }}" class="rounded-circle img-thumbnail" style="width: 50px; height: 50px; object-fit: cover;" alt="Perfil">
                                 {% else %}
                                     <span class="text-muted">Sin imagen</span>
                                 {% endif %}
                             </td>
-                            <td>{{ profesional.name }}</td>
-                            <td>{{ profesional.get_sexo_display}}</td>
-                            <td>{{ profesional.email }}</td>
-                            <td>{{ profesional.phone_number }}</td>
+                            <td>{{ profesional.registro_medico }}</td>
+                            <td>{{ profesional.consultorio|default:"-" }}</td>
+                            <td>{{ profesional.user.get_full_name }}</td>
+                            <td>{{ profesional.specialties }}</td>
+                            <td>{{ profesional.user.phone_number }}</td>
                             <td>
-                                {% if profesional.document_type %}
-                                    {{ profesional.document_type.document_type }}: {{ profesional.document_number }}
+                                {% if profesional.user.document_type %}
+                                    {{ profesional.user.document_type.document_type }}: {{ profesional.user.document_number }}
                                 {% else %}
-                                    {{ profesional.document_number|default:"-" }}
+                                    {{ profesional.user.document_number|default:"-" }}
                                 {% endif %}
                             </td>
                             <td>
-                                {% if profesional.specialties %}
-                                    {{ profesional.specialties.specialties }}
+                                {% if profesional.user.is_active %}
+                                    <span class="badge badge-success">Activo</span>
                                 {% else %}
-                                    Sin especialidad
+                                    <span class="badge badge-danger">Inactivo</span>
                                 {% endif %}
                             </td>
-                            <td>{{ profesional.country }}</td>
                             <td class="text-center">
-                                {% if perms.medical.change_medicaluser %}
+                                {% if perms.medical.change_medico %}
                                 <a href="{% url 'editar_profesional' profesional.id %}"
-                                    class="btn btn-primary"
+                                    class="btn btn-primary btn-sm"
                                     data-toggle="tooltip"
-                                    title="Editar profesional">
+                                    title="Editar médico">
                                     <i class="fas fa-pencil-alt"></i>
                                 </a>
                                 {% endif %}
-                                {% if perms.medical.delete_medicaluser %}
+                                {% if perms.medical.delete_medico %}
                                 <button type="button"
-                                        class="btn btn-danger"
+                                        class="btn btn-danger btn-sm"
                                         data-toggle="modal"
                                         data-target="#confirmDeleteModal{{ profesional.id }}"
-                                        title="Eliminar profesional">
+                                        title="Eliminar médico">
                                     <i class="fas fa-trash"></i>
                                 </button>
                                 {% endif %}
                                 <a href="{% url 'perfil_profesional' profesional.id %}"
-                                    class="btn btn-info"
+                                    class="btn btn-info btn-sm"
                                     data-toggle="tooltip"
                                     title="Ver detalles">
                                     <i class="fas fa-eye"></i>
                                 </a>
-                              
                             </td>
                         </tr>
                         <!-- Modal de Confirmación de Eliminación -->
@@ -92,7 +93,7 @@
                                         </button>
                                     </div>
                                     <div class="modal-body">
-                                        ¿Estás seguro de que deseas eliminar al profesional "{{ profesional.name }}"?
+                                        ¿Estás seguro de que deseas eliminar al médico "{{ profesional.user.get_full_name }}"?
                                         <div class="alert alert-warning mt-2">
                                             <small><i class="fas fa-exclamation-triangle"></i> Esta acción no se puede deshacer.</small>
                                         </div>
@@ -107,6 +108,12 @@
                                 </div>
                             </div>
                         </div>
+                        {% empty %}
+                        <tr>
+                            <td colspan="11" class="text-center text-muted">
+                                No hay médicos registrados.
+                            </td>
+                        </tr>
                         {% endfor %}
                     </tbody>
                 </table>

@@ -1,0 +1,479 @@
+{% extends "layout/base.html" %}
+{% load static %}
+
+{% block title %}Calendario de Citas{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    
+    <!-- ================================================================ -->
+    <!-- FILTRO: Especialidad → Profesional                              -->
+    <!-- ================================================================ -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 bg-success">
+            <h6 class="m-0 font-weight-bold text-light">
+                <i class="fas fa-filter mr-2"></i>Seleccionar Profesional
+            </h6>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <label class="font-weight-bold">Especialidad</label>
+                    <select id="id_especialidad" class="form-control">
+                        <option value="">-- Seleccione especialidad --</option>
+                        {% for esp in especialidades %}
+                            <option value="{{ esp.id_specialty }}">{{ esp.specialties }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-5">
+                    <label class="font-weight-bold">Profesional</label>
+                    <select id="id_profesional" class="form-control" disabled>
+                        <option value="">-- Primero seleccione especialidad --</option>
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button id="btn-buscar" class="btn btn-primary btn-block" disabled>
+                        <i class="fas fa-search mr-1"></i> Buscar Disponibilidad
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================================================================ -->
+    <!-- TABLA DE HORARIOS DEL PROFESIONAL                                -->
+    <!-- ================================================================ -->
+    <div class="card shadow mb-4" id="card-horarios" style="display: none;">
+        <div class="card-header py-3 bg-info">
+            <h6 class="m-0 font-weight-bold text-light">
+                <i class="fas fa-clock mr-2"></i>Horarios del Profesional: <span id="nombre-profesional"></span>
+            </h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-sm" id="tabla-horarios">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>Días Laborables</th>
+                            <th>Hora Desde</th>
+                            <th>Hora Hasta</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody-horarios">
+                        <tr><td colspan="3" class="text-center">Cargando...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================================================================ -->
+    <!-- FULLCALENDAR                                                     -->
+    <!-- ================================================================ -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 bg-success">
+            <h6 class="m-0 font-weight-bold text-light">
+                <i class="fas fa-calendar-alt mr-2"></i>Calendario de Citas
+            </h6>
+        </div>
+        <div class="card-body">
+            <div id="calendar"></div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ================================================================ -->
+<!-- MODAL PARA CREAR/EDITAR CITA                                     -->
+<!-- ================================================================ -->
+<div class="modal fade" id="citaModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="modal-titulo">
+                    <i class="fas fa-calendar-plus mr-2"></i>Nueva Cita
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="citaForm">
+                    {% csrf_token %}
+                    <input type="hidden" id="cita_id" value="">
+                    <input type="hidden" id="profesional_id" value="">
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="font-weight-bold">Paciente *</label>
+                                <select id="id_paciente" class="form-control select2-buscar" required>
+                                    <option value="">Buscar paciente...</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="font-weight-bold">Motivo *</label>
+                                <textarea id="id_motivo" class="form-control" rows="2" required></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="font-weight-bold">Fecha *</label>
+                                <input type="date" id="id_fecha" class="form-control" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="font-weight-bold">Hora *</label>
+                                <select id="id_hora" class="form-control" required>
+                                    <option value="">-- Seleccione fecha primero --</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="font-weight-bold">Duración (min)</label>
+                                <select id="id_duracion" class="form-control">
+                                    <option value="15">15 min</option>
+                                    <option value="30" selected>30 min</option>
+                                    <option value="45">45 min</option>
+                                    <option value="60">60 min</option>
+                                    <option value="90">90 min</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="font-weight-bold">Color en calendario</label>
+                                <input type="color" id="id_color" class="form-control" value="#007BFF" style="width:80px;height:40px;padding:3px;">
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" id="btn-eliminar-cita" style="display:none;">
+                    <i class="fas fa-trash"></i> Cancelar Cita
+                </button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-primary" id="btn-guardar-cita">
+                    <i class="fas fa-save"></i> Guardar Cita
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0/dist/css/select2.min.css" rel="stylesheet">
+<style>
+    .fc-event { cursor: pointer; padding: 3px 6px; font-size: 0.8em; border-radius: 4px; }
+    .fc-toolbar-title { font-size: 1.2em !important; }
+    #calendar { min-height: 500px; }
+    .select2-container .select2-selection--single { height: 38px !important; }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/es.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0/dist/js/select2.min.js"></script>
+
+<script>
+// =========================================================================
+// VARIABLES GLOBALES
+// =========================================================================
+let profesionalSeleccionado = null;
+let calendar = null;
+let citaEditando = null;
+
+// =========================================================================
+// SELECT2 PARA BÚSQUEDA DE PACIENTES
+// =========================================================================
+$('#id_paciente').select2({
+    placeholder: 'Buscar paciente por nombre o documento...',
+    allowClear: true,
+    width: '100%',
+    dropdownParent: $('#citaModal'),
+    ajax: {
+        url: '/paciente/api/buscar-pacientes/',
+        dataType: 'json',
+        delay: 250,
+        data: function(params) { return { q: params.term }; },
+        processResults: function(data) {
+            return { results: data.results };
+        },
+        cache: true
+    },
+    minimumInputLength: 2,
+    templateResult: function(item) {
+        if (item.loading) return item.text;
+        return $('<div>' + item.text + '<br><small class="text-muted">' + (item.documento || '') + '</small></div>');
+    }
+});
+
+// =========================================================================
+// FILTRO: ESPECIALIDAD → PROFESIONAL
+// =========================================================================
+$('#id_especialidad').on('change', function() {
+    const especialidadId = $(this).val();
+    const profesionalSelect = $('#id_profesional');
+    const btnBuscar = $('#btn-buscar');
+    
+    profesionalSelect.html('<option value="">Cargando...</option>');
+    profesionalSelect.prop('disabled', true);
+    btnBuscar.prop('disabled', true);
+    
+    if (!especialidadId) {
+        profesionalSelect.html('<option value="">-- Primero seleccione especialidad --</option>');
+        return;
+    }
+    
+    fetch(`/citas/api/filtrar-profesionales/?especialidad_id=${especialidadId}`)
+        .then(response => response.json())
+        .then(data => {
+            profesionalSelect.html('<option value="">-- Seleccione profesional --</option>');
+            data.profesionales.forEach(prof => {
+                profesionalSelect.append(
+                    `<option value="${prof.id}" data-horarios="${prof.horarios}">${prof.nombre} (${prof.tipo})</option>`
+                );
+            });
+            profesionalSelect.prop('disabled', false);
+        });
+});
+
+$('#id_profesional').on('change', function() {
+    $('#btn-buscar').prop('disabled', !$(this).val());
+});
+
+// =========================================================================
+// BOTÓN BUSCAR: MUESTRA HORARIOS Y CARGA CALENDARIO
+// =========================================================================
+$('#btn-buscar').on('click', function() {
+    const profesionalId = $('#id_profesional').val();
+    const profesionalNombre = $('#id_profesional option:selected').text();
+    
+    if (!profesionalId) return;
+    
+    profesionalSeleccionado = profesionalId;
+    
+    // Mostrar horarios del profesional
+    fetch(`/citas/api/horarios-profesional/${profesionalId}/`)
+        .then(response => response.json())
+        .then(data => {
+            const tbody = $('#tbody-horarios');
+            tbody.empty();
+            
+            if (data.horarios.length === 0) {
+                tbody.append('<tr><td colspan="3" class="text-center text-danger">No tiene horarios asignados</td></tr>');
+            } else {
+                data.horarios.forEach(h => {
+                    tbody.append(`<tr><td>${h.dias.join(', ')}</td><td>${h.hora_inicio}</td><td>${h.hora_fin}</td></tr>`);
+                });
+            }
+            
+            $('#nombre-profesional').text(profesionalNombre);
+            $('#card-horarios').show();
+        });
+    
+    // Recargar calendario
+    if (calendar) {
+        calendar.refetchEvents();
+    }
+});
+
+// =========================================================================
+// FULLCALENDAR
+// =========================================================================
+document.addEventListener('DOMContentLoaded', function() {
+    const calendarEl = document.getElementById('calendar');
+    calendar = new FullCalendar.Calendar(calendarEl, {
+        locale: 'es',
+        initialView: 'dayGridMonth',
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,timeGridDay'
+        },
+        buttonText: {
+            today: 'Hoy',
+            month: 'Mes',
+            week: 'Semana',
+            day: 'Día'
+        },
+        events: function(info, successCallback, failureCallback) {
+            let url = '/citas/api/eventos/';
+            if (profesionalSeleccionado) {
+                url += `?profesional_id=${profesionalSeleccionado}`;
+            }
+            fetch(url)
+                .then(response => response.json())
+                .then(data => successCallback(data))
+                .catch(error => failureCallback(error));
+        },
+        selectable: true,
+        select: function(info) {
+            if (!profesionalSeleccionado) {
+                Swal.fire('Atención', 'Primero seleccione un profesional', 'warning');
+                return;
+            }
+            abrirModalNuevaCita(info.startStr);
+        },
+        eventClick: function(info) {
+            abrirModalEditarCita(info.event);
+        },
+        eventDidMount: function(info) {
+            info.el.setAttribute('title', info.event.extendedProps.motivo || '');
+        }
+    });
+    calendar.render();
+});
+
+// =========================================================================
+// MODAL: ABRIR PARA NUEVA CITA
+// =========================================================================
+function abrirModalNuevaCita(fechaStr) {
+    citaEditando = null;
+    $('#modal-titulo').html('<i class="fas fa-calendar-plus mr-2"></i>Nueva Cita');
+    $('#cita_id').val('');
+    $('#id_fecha').val(fechaStr.split('T')[0]);
+    $('#id_hora').html('<option value="">Cargando horas...</option>');
+    $('#id_motivo').val('');
+    $('#id_color').val('#007BFF');
+    $('#btn-eliminar-cita').hide();
+    $('#btn-guardar-cita').text('Guardar Cita');
+    
+    cargarHorasDisponibles(fechaStr.split('T')[0]);
+    $('#citaModal').modal('show');
+}
+
+// =========================================================================
+// MODAL: ABRIR PARA EDITAR CITA
+// =========================================================================
+function abrirModalEditarCita(event) {
+    citaEditando = event.id;
+    const props = event.extendedProps;
+    
+    $('#modal-titulo').html('<i class="fas fa-edit mr-2"></i>Editar Cita');
+    $('#cita_id').val(event.id);
+    $('#id_paciente').html(`<option value="${props.paciente_id}" selected>${props.paciente_nombre}</option>`).trigger('change');
+    $('#id_fecha').val(event.startStr.split('T')[0]);
+    $('#id_motivo').val(props.motivo);
+    $('#id_color').val(event.backgroundColor || '#007BFF');
+    $('#btn-eliminar-cita').show();
+    $('#btn-guardar-cita').text('Actualizar Cita');
+    
+    cargarHorasDisponibles(event.startStr.split('T')[0], event.startStr.split('T')[1].substring(0, 5));
+    $('#citaModal').modal('show');
+}
+
+// =========================================================================
+// CARGAR HORAS DISPONIBLES
+// =========================================================================
+function cargarHorasDisponibles(fechaStr, horaSeleccionada = null) {
+    if (!profesionalSeleccionado) return;
+    
+    const horaSelect = $('#id_hora');
+    horaSelect.html('<option value="">Cargando...</option>');
+    
+    fetch(`/citas/api/horas-disponibles/${profesionalSeleccionado}/${fechaStr}/`)
+        .then(response => response.json())
+        .then(data => {
+            horaSelect.html('<option value="">-- Seleccione hora --</option>');
+            data.slots.forEach(slot => {
+                const selected = horaSeleccionada && slot.hora === horaSeleccionada ? 'selected' : '';
+                horaSelect.append(`<option value="${slot.datetime}" ${selected}>${slot.hora} - ${slot.hora_fin}</option>`);
+            });
+        });
+}
+
+// =========================================================================
+// CUANDO CAMBIA LA FECHA, RECARGAR HORAS
+// =========================================================================
+$('#id_fecha').on('change', function() {
+    cargarHorasDisponibles($(this).val());
+});
+
+// =========================================================================
+// GUARDAR CITA (CREAR O EDITAR)
+// =========================================================================
+$('#btn-guardar-cita').on('click', function() {
+    const citaId = $('#cita_id').val();
+    const pacienteId = $('#id_paciente').val();
+    const fechaHora = $('#id_hora').val();
+    const motivo = $('#id_motivo').val();
+    const duracion = $('#id_duracion').val();
+    
+    if (!pacienteId || !fechaHora || !motivo) {
+        Swal.fire('Error', 'Complete todos los campos requeridos', 'error');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('profesional_id', profesionalSeleccionado);
+    formData.append('paciente', pacienteId);
+    formData.append('fecha', fechaHora);
+    formData.append('motivo', motivo);
+    formData.append('duracion', duracion);
+    formData.append('csrfmiddlewaretoken', $('[name=csrfmiddlewaretoken]').val());
+    
+    const url = citaId ? `/citas/api/editar/${citaId}/` : '/citas/api/crear/';
+    
+    fetch(url, { method: 'POST', body: formData })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                Swal.fire('Éxito', data.message, 'success');
+                $('#citaModal').modal('hide');
+                calendar.refetchEvents();
+            } else {
+                Swal.fire('Error', data.error || 'Error al guardar', 'error');
+            }
+        });
+});
+
+// =========================================================================
+// ELIMINAR CITA
+// =========================================================================
+$('#btn-eliminar-cita').on('click', function() {
+    if (!citaEditando) return;
+    
+    Swal.fire({
+        title: '¿Cancelar cita?',
+        text: 'Esta acción no se puede deshacer',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, cancelar',
+        cancelButtonText: 'No'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(`/citas/api/eliminar/${citaEditando}/`, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val() }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire('Éxito', data.message, 'success');
+                    $('#citaModal').modal('hide');
+                    calendar.refetchEvents();
+                } else {
+                    Swal.fire('Error', data.error, 'error');
+                }
+            });
+        }
+    });
+});
+</script>
+{% endblock %}

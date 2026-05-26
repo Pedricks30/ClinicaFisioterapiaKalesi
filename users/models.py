@@ -14,17 +14,6 @@ class DocumentType(models.Model):
 
     def __str__(self):
         return self.document_type
-    
-# Modelo para Nivel de Acceso (Roles)
-class AccessLevel(models.Model):
-    id_access_level = models.AutoField(primary_key=True)
-    access_level = models.CharField(max_length=50, unique=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    update_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return self.access_level
-    
 # Modelo para Especialidades de medicos
 class Specialties(models.Model):
     id_specialty = models.AutoField(primary_key=True)
@@ -38,24 +27,76 @@ class Specialties(models.Model):
 # Modelo de Usuario Personalizado
 class CustomUser(AbstractUser, ImageCompressionMixin, ImageDeletionMixin):
     # Campos adicionales
-    email = models.EmailField(unique=True) 
-    age = models.IntegerField(null=True, blank=True)  # Edad
+    # Tipos de usuario
+    TIPO_USUARIO_CHOICES = [
+        ('ADMIN', 'Administrador'),
+        ('RECEP', 'Recepcionista'),
+        ('MEDIC', 'Médico'),
+        ('FISIO', 'Fisioterapeuta'),
+    ]
+    SEXO_CHOICES = [
+        ('Masculino', 'Masculino'),
+        ('Femenino', 'Femenino'),
+        ('Otro', 'Otro'),
+    ]
+    
+    # Campos base
+    tipo_usuario = models.CharField(max_length=5, choices=TIPO_USUARIO_CHOICES)
+    email = models.EmailField(unique=True)
+    sexo = models.CharField(max_length=10, choices=SEXO_CHOICES, null=True, blank=True)  # Sexo
     phone_number = models.CharField(max_length=20, null=True, blank=True)  # Número de teléfono completo
     address1 = models.CharField(max_length=255, null=True, blank=True)  # Dirección 1
     address2 = models.CharField(max_length=255, null=True, blank=True)  # Dirección 2
-    country = models.CharField(max_length=100, null=True, blank=True)  # País
+    country = models.CharField(max_length=30, null=True, blank=True)  # País
     birthdate = models.DateField(null=True, blank=True)  # Fecha de nacimiento
     document_number = models.CharField(max_length=40, unique=True)  # Asegura que el Número de documento
     profile_image = models.ImageField(upload_to='profile_images/', default='profile_images_default/user_default.webp')
-    created_at = models.DateTimeField(auto_now_add=True)
-    update_at = models.DateTimeField(auto_now=True)
     # Relaciones con otras tablas
     document_type = models.ForeignKey(DocumentType, on_delete=models.SET_NULL, null=True, blank=True)
-    access_level = models.ForeignKey(AccessLevel, on_delete=models.SET_NULL, null=True, blank=True)
-    specialties = models.ForeignKey(Specialties, on_delete=models.SET_NULL, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    update_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.username
+        return f"{self.get_full_name() or self.username} ({self.get_tipo_usuario_display()})"
+
+    @property
+    def is_medico(self):
+        return self.tipo_usuario == 'MEDIC'
+    
+    @property
+    def is_fisio(self):  # Cambiado de is_fisioterapeuta a is_fisio para coincidir con tu tipo_usuario
+        return self.tipo_usuario == 'FISIO'
+    
+    @property
+    def is_recepcionista(self):
+        return self.tipo_usuario == 'RECEP'
+
+    @property
+    def registro_profesional(self):
+        if hasattr(self, 'perfil_medico'):
+            return self.perfil_medico.registro_profesional
+        return None
+    
+    @property
+    def horarios_activos(self):
+        if self.is_medico:
+            return self.horarios.filter(activo=True)
+        return None
+    
+    '''Así puedes acceder a la especialidad desde cualquier vista con user.perfil_profesional.specialties.'''
+    # users/models.py
+
+    @property
+    def perfil_profesional(self):
+        """
+        Retorna el perfil extendido del profesional (Médico o Fisioterapeuta)
+        según corresponda su tipo de usuario.
+        """
+        if self.is_medico and hasattr(self, 'perfil_medico'):
+            return self.perfil_medico
+        elif self.is_fisio and hasattr(self, 'perfil_fisioterapeuta'):
+            return self.perfil_fisioterapeuta # Retorna el objeto completo, igual que arriba
+        return None
 
 @receiver(post_delete)
 def delete_image_on_post_delete(sender, instance, **kwargs):

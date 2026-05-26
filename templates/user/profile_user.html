@@ -1,6 +1,7 @@
 {% extends "layout/base.html" %} <!-- Extiende la plantilla base -->
 {% block title %}{% if is_from_list %}Detalle de Usuario{% else %}Mi Perfil{% endif %}{% endblock title %} <!-- Título de la página -->
 {% load static %}
+{% load core_tags %}
 {% block content %}
 <!-- Contenedor principal que asegura que el contenido ocupe toda la altura disponible -->
 <div id="content-wrapper" class="d-flex flex-column">
@@ -9,9 +10,15 @@
       <div class="col-md-12"> 
         <div class="card shadow"> 
           <div class="card-header py-3 bg-success"> 
-            <h6 class="m-0 font-weight-bold text-light text-left">
+            <div class="d-flex justify-content-between align-items-center">
+              <h6 class="m-0 font-weight-bold text-light text-left">
               {% if is_from_list %}Detalle de Usuario{% else %}Mi Perfil{% endif %}
             </h6>
+            <button class="btn btn-sm btn-light" onclick="window.history.back();">
+                <i class="fas fa-arrow-left"></i> Volver
+            </button>
+            </div>
+            
           </div>
           <div class="card-body">
             <div class="row">
@@ -41,8 +48,18 @@
                     </div>
                     <hr>
                     <div class="row mb-3">
+                      <div class="col-sm-5 font-weight-bold">Género</div>
+                      <div class="col-sm-7 text-muted">{{ user.sexo }}</div>
+                    </div>
+                    <hr>
+                    <div class="row mb-3">
                       <div class="col-sm-5 font-weight-bold">Teléfono</div>
                       <div class="col-sm-7 text-muted">{{ user.phone_number }}</div>
+                    </div>
+                    <hr>
+                    <div class="row mb-3">
+                      <div class="col-sm-5 font-weight-bold">Dirección Principal</div>
+                      <div class="col-sm-7 text-muted">{{ user.address1 }}</div>
                     </div>
                   </div>
                   <div class="col-md-6">
@@ -54,17 +71,22 @@
                     <div class="row mb-3">
                       <div class="col-sm-5 font-weight-bold">Edad</div>
                       <div class="col-sm-7 text-muted">
-                        {% if age %}
-                          {{ age }} años
-                        {% else %}
-                          No disponible
-                        {% endif %}
+                          {% if user.birthdate %}
+                              {{ user.birthdate|calcular_edad }} años
+                          {% else %}
+                              No disponible
+                          {% endif %}
                       </div>
-                    </div>
+                  </div>
                     <hr>
                     <div class="row mb-3">
                       <div class="col-sm-5 font-weight-bold">Dirección Secundaria</div>
                       <div class="col-sm-7 text-muted">{{ user.address2 }}</div>
+                    </div>
+                    <hr>
+                    <div class="row mb-3">
+                      <div class="col-sm-5 font-weight-bold">Documento</div>
+                      <div class="col-sm-7 text-muted">{{ user.document_type }} - {{ user.document_number }}</div>
                     </div>
                   </div>
                 </div>
@@ -72,35 +94,21 @@
                 <div class="row">
                   <div class="col-md-6">
                     <div class="row mb-3">
-                      <div class="col-sm-5 font-weight-bold">Tipo de Documento</div>
-                      <div class="col-sm-7 text-muted">{{ user.document_type }}</div>
-                    </div>
-                    <hr>
-                    <div class="row mb-3">
                       <div class="col-sm-5 font-weight-bold">Nivel de Acceso</div>
-                      <div class="col-sm-7 text-muted">{{ user.access_level }}</div>
-                    </div>
-                  </div>
-                  <div class="col-md-6">
-                    <div class="row mb-3">
-                      <div class="col-sm-5 font-weight-bold">Número de Documento</div>
-                      <div class="col-sm-7 text-muted">{{ user.document_number }}</div>
+                      <div class="col-sm-7 text-muted">{{ user.tipo_usuario }}</div>
                     </div>
                     <hr>
                     <div class="row mb-3">
                       <div class="col-sm-5 font-weight-bold">Fecha de Creación</div>
                       <div class="col-sm-7 text-muted">{{ user.created_at }}</div>
                     </div>
-                  </div>
-                </div>
-                <hr>
-                <div class="row">
-                  <div class="col-md-6">
-                    <div class="row mb-3">
-                      <div class="col-sm-5 font-weight-bold">Especialidad</div>
-                      <div class="col-sm-7 text-muted">{{ user.specialties }}</div>
-                    </div>
                     <hr>
+                    <div class="row mb-3">
+                      <div class="col-sm-5 font-weight-bold">Última Actualización</div>
+                      <div class="col-sm-7 text-muted">{{ user.update_at }}</div>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
                     <div class="row mb-3">
                       <div class="col-sm-5 font-weight-bold">Estado del Usuario</div>
                       <div class="col-sm-7">
@@ -111,8 +119,7 @@
                         {% endif %}
                       </div>
                     </div>
-                  </div>
-                  <div class="col-md-6">
+                    <hr>
                     <div class="row mb-3">
                       <div class="col-sm-5 font-weight-bold">Estado del Superusuario</div>
                       <div class="col-sm-7">

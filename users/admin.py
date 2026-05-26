@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import CustomUser, DocumentType, AccessLevel, Specialties
+from .models import CustomUser, DocumentType, Specialties
 from django.utils.html import format_html
 
 # Registrar el modelo CustomUser con UserAdmin
@@ -13,9 +13,9 @@ class CustomUserAdmin(UserAdmin):
         (None, {'fields': ('username', 'password')}),
         ('Información personal', {
             'fields': (
-                'first_name', 'last_name', 'email', 'age', 'phone_number', 
+                'first_name', 'last_name', 'email','sexo', 'phone_number', 
                 'address1', 'address2', 'country', 'birthdate', 'document_type', 
-                'document_number', 'access_level', 'specialties','profile_image'
+                'document_number', 'tipo_usuario','profile_image'
             )
         }),
         ('Permisos', {
@@ -31,8 +31,8 @@ class CustomUserAdmin(UserAdmin):
             'classes': ('wide',),
             'fields': (
                 'username', 'email', 'password1', 'password2', 'first_name', 'last_name', 
-                'age', 'phone_number', 'address1', 'address2', 'country', 
-                'birthdate', 'document_type', 'document_number', 'access_level','specialties', 
+                'phone_number', 'address1', 'address2', 'country', 
+                'birthdate', 'document_type', 'document_number','sexo', 'tipo_usuario', 
                 'is_staff', 'is_superuser', 'profile_image'
             ),
         }),
@@ -48,5 +48,4 @@ class CustomUserAdmin(UserAdmin):
 # Registrar los modelos en el admin
 admin.site.register(CustomUser, CustomUserAdmin)
 admin.site.register(DocumentType)
-admin.site.register(AccessLevel)
 admin.site.register(Specialties)

@@ -1,10 +1,11 @@
 {% extends "layout/base.html" %}
+{% load static %}
 {% block title %}{% if editar %}Editar Usuario{% else %}Registrar Usuario{% endif %}{% endblock title %}
 
 {% block content %}
 <div class="container-fluid">
     <div class="row justify-content-center">
-        <div class="col-md-9">
+        <div class="col-md-11">
             <div class="card shadow">
                 <div class="card-header py-3 bg-success">
                     <h6 class="m-0 font-weight-bold text-light text-left">
@@ -14,50 +15,320 @@
                 <div class="card-body">
                     <form method="post" class="border p-4 rounded" enctype="multipart/form-data">
                         {% csrf_token %}
-
-                        <!-- Contenedor grid para los campos -->
-                        <div class="form-grid">
-                            {% for field in form %}
-                                <div class="mb-3">
-                                    <label for="{{ field.id_for_label }}" class="form-label">
-                                        {{ field.label }}
-                                    </label>
-                                    {{ field }}
-                                    <!-- Mostrar errores de validación -->
-                                    {% if field.errors %}
-                                        <div class="text-danger">
-                                            {{ field.errors }}
-                                        </div>
-                                    {% endif %}
-                                    <!-- Mostrar texto de ayuda (si existe) -->
-                                    {% if field.help_text %}
-                                        <small class="form-text text-muted">
-                                            {{ field.help_text }}
-                                        </small>
-                                    {% endif %}
-                                </div>
+                        
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form.non_field_errors %}
+                                {{ error }}
                             {% endfor %}
-                            <!-- Campo para subir archivo -->
-                            <div class="mb-3">
-                                <label class="form-label">Subir Archivo</label>
-                                <div class="input-group">
-                                    <input type="text" class="form-control" id="file-name" readonly>
-                                    <label class="input-group-text btn btn-danger">
-                                        <i class="fas fa-folder-open"></i> Seleccionar archivo
-                                        <input type="file" class="d-none" id="file-input" name="profile_image">
-                                    </label>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="row">
+                            <!-- Columna 1 -->
+                            <div class="col-md-6">
+                                <!-- Tarjeta Información de Cuenta -->
+                                <div class="card mb-4">
+                                    <div class="card-header bg-light">
+                                        <h5 class="mb-0">
+                                            <i class="fas fa-user-circle"></i> Información de Cuenta
+                                        </h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <!-- Campo Username -->
+                                        <div class="mb-3">
+                                            <label for="{{ form.username.id_for_label }}" class="form-label">
+                                                {{ form.username.label }}
+                                            </label>
+                                            {{ form.username }}
+                                            {% if form.username.errors %}
+                                                <div class="text-danger">{{ form.username.errors }}</div>
+                                            {% endif %}
+                                            {% if form.username.help_text %}
+                                                <small class="form-text text-muted">{{ form.username.help_text }}</small>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <!-- Campo Email -->
+                                        <div class="mb-3">
+                                            <label for="{{ form.email.id_for_label }}" class="form-label">
+                                                {{ form.email.label }}
+                                            </label>
+                                            {{ form.email }}
+                                            {% if form.email.errors %}
+                                                <div class="text-danger">{{ form.email.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <!-- Campo Contraseña -->
+                                        <div class="mb-3">
+                                            <label for="{{ form.password1.id_for_label }}" class="form-label">
+                                                {{ form.password1.label }}
+                                            </label>
+                                            {{ form.password1 }}
+                                            {% if form.password1.errors %}
+                                                <div class="text-danger">{{ form.password1.errors }}</div>
+                                            {% endif %}
+                                            {% if form.password1.help_text %}
+                                                <small class="form-text text-muted">{{ form.password1.help_text }}</small>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <!-- Campo Confirmar Contraseña -->
+                                        <div class="mb-3">
+                                            <label for="{{ form.password2.id_for_label }}" class="form-label">
+                                                {{ form.password2.label }}
+                                            </label>
+                                            {{ form.password2 }}
+                                            {% if form.password2.errors %}
+                                                <div class="text-danger">{{ form.password2.errors }}</div>
+                                            {% endif %}
+                                            {% if form.password2.help_text %}
+                                                <small class="form-text text-muted">{{ form.password2.help_text }}</small>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Tarjeta Datos Personales -->
+                                <div class="card mb-4">
+                                    <div class="card-header bg-light">
+                                        <h5 class="mb-0">
+                                            <i class="fas fa-id-card"></i> Datos Personales
+                                        </h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <!-- Campo Nombres -->
+                                        <div class="mb-3">
+                                            <label for="{{ form.first_name.id_for_label }}" class="form-label">
+                                                {{ form.first_name.label }}
+                                            </label>
+                                            {{ form.first_name }}
+                                            {% if form.first_name.errors %}
+                                                <div class="text-danger">{{ form.first_name.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <!-- Campo Apellidos -->
+                                        <div class="mb-3">
+                                            <label for="{{ form.last_name.id_for_label }}" class="form-label">
+                                                {{ form.last_name.label }}
+                                            </label>
+                                            {{ form.last_name }}
+                                            {% if form.last_name.errors %}
+                                                <div class="text-danger">{{ form.last_name.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <!-- Campo Tipo Documento y Número (2 columnas) -->
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="{{ form.document_type.id_for_label }}" class="form-label">
+                                                        {{ form.document_type.label }}
+                                                    </label>
+                                                    {{ form.document_type }}
+                                                    {% if form.document_type.errors %}
+                                                        <div class="text-danger">{{ form.document_type.errors }}</div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="{{ form.document_number.id_for_label }}" class="form-label">
+                                                        {{ form.document_number.label }}
+                                                    </label>
+                                                    {{ form.document_number }}
+                                                    {% if form.document_number.errors %}
+                                                        <div class="text-danger">{{ form.document_number.errors }}</div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Campo Fecha Nacimiento -->
+                                        <div class="mb-3">
+                                            <label for="{{ form.birthdate.id_for_label }}" class="form-label">
+                                                {{ form.birthdate.label }}
+                                            </label>
+                                            {{ form.birthdate }}
+                                            {% if form.birthdate.errors %}
+                                                <div class="text-danger">{{ form.birthdate.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <!-- Campo Sexo -->
+                                        <div class="mb-3">
+                                            <label for="{{ form.sexo.id_for_label }}" class="form-label">
+                                                {{ form.sexo.label }}
+                                            </label>
+                                            {{ form.sexo }}
+                                            {% if form.sexo.errors %}
+                                                <div class="text-danger">{{ form.sexo.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Columna 2 -->
+                            <div class="col-md-6">
+                                <!-- Tarjeta Datos de Contacto y Ubicación -->
+                                <div class="card mb-4">
+                                    <div class="card-header bg-light">
+                                        <h5 class="mb-0">
+                                            <i class="fas fa-address-card"></i> Datos de Contacto y Ubicación
+                                        </h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <!-- Campo Celular -->
+                                        <div class="mb-3">
+                                            <label for="{{ form.phone_number.id_for_label }}" class="form-label">
+                                                {{ form.phone_number.label }}
+                                            </label>
+                                            {{ form.phone_number }}
+                                            {% if form.phone_number.errors %}
+                                                <div class="text-danger">{{ form.phone_number.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <!-- Campo País -->
+                                        <div class="mb-3">
+                                            <label for="{{ form.country.id_for_label }}" class="form-label">
+                                                {{ form.country.label }}
+                                            </label>
+                                            {{ form.country }}
+                                            {% if form.country.errors %}
+                                                <div class="text-danger">{{ form.country.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <!-- Campo Dirección 1 -->
+                                        <div class="mb-3">
+                                            <label for="{{ form.address1.id_for_label }}" class="form-label">
+                                                {{ form.address1.label }}
+                                            </label>
+                                            {{ form.address1 }}
+                                            {% if form.address1.errors %}
+                                                <div class="text-danger">{{ form.address1.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <!-- Campo Dirección 2 -->
+                                        <div class="mb-3">
+                                            <label for="{{ form.address2.id_for_label }}" class="form-label">
+                                                {{ form.address2.label }}
+                                            </label>
+                                            {{ form.address2 }}
+                                            {% if form.address2.errors %}
+                                                <div class="text-danger">{{ form.address2.errors }}</div>
+                                            {% endif %}
+                                            {% if form.address2.help_text %}
+                                                <small class="form-text text-muted">{{ form.address2.help_text }}</small>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Tarjeta Permisos y Accesos -->
+                                <div class="card mb-4">
+                                    <div class="card-header bg-light">
+                                        <h5 class="mb-0">
+                                            <i class="fas fa-lock"></i> Permisos y Accesos
+                                        </h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <!-- Campo Nivel de Acceso Usuario -->
+                                        <div class="mb-3">
+                                            <label for="{{ form.tipo_usuario.id_for_label }}" class="form-label">
+                                                {{ form.tipo_usuario.label }}
+                                            </label>
+                                            {{ form.tipo_usuario }}
+                                            {% if form.tipo_usuario.errors %}
+                                                <div class="text-danger">{{ form.tipo_usuario.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <!-- Campo Estado de Usuario -->
+                                        <div class="mb-3">
+                                            <label for="{{ form.is_active.id_for_label }}" class="form-label">
+                                                {{ form.is_active.label }}
+                                            </label>
+                                            {{ form.is_active }}
+                                            {% if form.is_active.errors %}
+                                                <div class="text-danger">{{ form.is_active.errors }}</div>
+                                            {% endif %}
+                                            {% if form.is_active.help_text %}
+                                                <small class="form-text text-muted">{{ form.is_active.help_text }}</small>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <!-- Campo Es Staff -->
+                                        <div class="mb-3">
+                                            <label for="{{ form.is_staff.id_for_label }}" class="form-label">
+                                                {{ form.is_staff.label }}
+                                            </label>
+                                            {{ form.is_staff }}
+                                            {% if form.is_staff.errors %}
+                                                <div class="text-danger">{{ form.is_staff.errors }}</div>
+                                            {% endif %}
+                                            {% if form.is_staff.help_text %}
+                                                <small class="form-text text-muted">{{ form.is_staff.help_text }}</small>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <!-- Campo Superusuario -->
+                                        <div class="mb-3">
+                                            <label for="{{ form.is_superuser.id_for_label }}" class="form-label">
+                                                {{ form.is_superuser.label }}
+                                            </label>
+                                            {{ form.is_superuser }}
+                                            {% if form.is_superuser.errors %}
+                                                <div class="text-danger">{{ form.is_superuser.errors }}</div>
+                                            {% endif %}
+                                            {% if form.is_superuser.help_text %}
+                                                <small class="form-text text-muted">{{ form.is_superuser.help_text }}</small>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Tarjeta Imagen de Perfil -->
+                                <div class="card mb-4">
+                                    <div class="card-header bg-light">
+                                        <h5 class="mb-0">
+                                            <i class="fas fa-image"></i> Imagen de Perfil
+                                        </h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <label class="form-label">Foto de Perfil</label>
+                                            <div class="input-group">
+                                                <input type="text" class="form-control" id="file-name" readonly>
+                                                <label class="input-group-text btn btn-danger">
+                                                    <i class="fas fa-folder-open"></i> Seleccionar archivo
+                                                    <input type="file" class="d-none" id="file-input" name="profile_image" onchange="document.getElementById('file-name').value = this.files[0]?.name || '';">
+                                                </label>
+                                            </div>
+                                            {% if form.profile_image.value and form.profile_image.value.url %}
+                                            <div class="mt-2">
+                                                <small>Imagen actual:</small>
+                                                <img src="{{ form.profile_image.value.url }}" class="img-thumbnail" style="max-height: 100px;">
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        <!-- Contenedor de los botones -->
-                        <div class="form-buttons">
-                            <!-- Botón Cancelar con redirección a la página anterior -->
+                        
+                        <!-- Botones -->
+                        <div class="form-buttons mt-4 text-right">
                             <button type="button" class="btn btn-danger" onclick="window.history.back();">
-                                Cancelar
+                                <i class="fas fa-times"></i> Cancelar
                             </button>
-                            <!-- Botón Registrar o Guardar Cambios -->
-                            <button type="submit" class="btn btn-primary"> 
-                                {% if editar %}Guardar Cambios{% else %}Registrar{% endif %}
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> {% if editar %}Guardar Cambios{% else %}Registrar{% endif %}
                             </button>
                         </div>
                     </form>
@@ -66,4 +337,12 @@
         </div>
     </div>
 </div>
+
+<!-- Script para actualizar el nombre del archivo seleccionado -->
+<script>
+    document.getElementById('file-input').addEventListener('change', function(e) {
+        const fileName = e.target.files[0]?.name || '';
+        document.getElementById('file-name').value = fileName;
+    });
+</script>
 {% endblock content %}

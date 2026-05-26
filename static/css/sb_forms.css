@@ -44,6 +44,12 @@
     border-color: #b8daff;
 }
 
+/* Estilos para los campos de formulario */
+input[readonly], select[readonly] {
+    background-color: #a2a9b0;
+    cursor: not-allowed;
+}
+
 /* Estilos para el contenedor grid */
 .form-grid {
     display: grid;

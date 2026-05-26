@@ -1,6 +1,6 @@
 {% extends "layout/base.html" %}
 {% load static %}
-{% block title %}{% if editar %}Editar Profesional Médico{% else %}Registrar Profesional Médico{% endif %}{% endblock title %}
+{% block title %}{% if editar %}Editar Perfil Médico{% else %}Registrar Perfil Médico{% endif %}{% endblock title %}
 
 {% block content %}
 <div class="container-fluid">
@@ -9,50 +9,111 @@
             <div class="card shadow">
                 <div class="card-header py-3 bg-success">
                     <h6 class="m-0 font-weight-bold text-light text-left">
-                        {% if editar %}Editar Profesional Médico{% else %}Registrar Profesional Médico{% endif %}
+                        {% if editar %}Editar Perfil Médico{% else %}Registrar Perfil Médico{% endif %}
                     </h6>
                 </div>
                 <div class="card-body">
-                    <form method="post" class="border p-4 rounded" enctype="multipart/form-data">
+                    <form method="post" enctype="multipart/form-data">
                         {% csrf_token %}
-
-                        <div class="form-grid">
-                            {% for field in form %}
-                                <div class="mb-3">
-                                    <label for="{{ field.id_for_label }}" class="form-label">
-                                        {{ field.label }}
-                                    </label>
-                                    {{ field }}
-                                    {% if field.errors %}
-                                        <div class="text-danger">
-                                            {{ field.errors }}
+                        
+                        <!-- Campo de selección de usuario MEDIC con buscador -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h6 class="text-primary mb-3">
+                                            <i class="fas fa-search"></i> 
+                                            {% if editar %}
+                                                Médico seleccionado
+                                            {% else %}
+                                                Buscar y seleccionar Médico
+                                            {% endif %}
+                                        </h6>
+                                        <div class="form-group">
+                                            <label for="id_user_select" class="form-label font-weight-bold">
+                                                {{ form.user.label }}
+                                            </label>
+                                            {{ form.user }}
+                                            {% if form.user.errors %}
+                                                <div class="text-danger mt-1">
+                                                    {{ form.user.errors }}
+                                                </div>
+                                            {% endif %}
+                                            {% if form.user.help_text %}
+                                                <small class="form-text text-muted">{{ form.user.help_text }}</small>
+                                            {% endif %}
                                         </div>
-                                    {% endif %}
-                                    {% if field.help_text %}
-                                        <small class="form-text text-muted">
-                                            {{ field.help_text }}
+                                        {% if not editar %}
+                                        <small class="text-info">
+                                            <i class="fas fa-info-circle"></i> 
+                                            Use el selector para buscar por nombre, apellido o email del médico.
                                         </small>
-                                    {% endif %}
-                                </div>
-                            {% endfor %}
-                            <!-- Campo para subir archivo de imagen de perfil -->
-                            <div class="mb-3">
-                                <label class="form-label">Imagen de Perfil</label>
-                                <div class="input-group">
-                                    <input type="text" class="form-control" id="file-name" readonly>
-                                    <label class="input-group-text btn btn-danger">
-                                        <i class="fas fa-folder-open"></i> Seleccionar imagen
-                                        <input type="file" class="d-none" id="file-input" name="profile_image">
-                                    </label>
+                                        {% endif %}
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="form-buttons">
+
+                        <!-- Campos específicos del perfil médico -->
+                        <div class="row">
+                            <!-- Columna izquierda -->
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="{{ form.specialties.id_for_label }}" class="form-label font-weight-bold">
+                                        {{ form.specialties.label }}
+                                    </label>
+                                    {{ form.specialties }}
+                                    {% if form.specialties.errors %}
+                                        <div class="text-danger">{{ form.specialties.errors }}</div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="form-group mb-3">
+                                    <label for="{{ form.registro_medico.id_for_label }}" class="form-label font-weight-bold">
+                                        {{ form.registro_medico.label }}
+                                    </label>
+                                    {{ form.registro_medico }}
+                                    {% if form.registro_medico.errors %}
+                                        <div class="text-danger">{{ form.registro_medico.errors }}</div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="form-group mb-3">
+                                    <label for="{{ form.consultorio.id_for_label }}" class="form-label font-weight-bold">
+                                        {{ form.consultorio.label }}
+                                    </label>
+                                    {{ form.consultorio }}
+                                    {% if form.consultorio.errors %}
+                                        <div class="text-danger">{{ form.consultorio.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Columna derecha -->
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="id_especialidades_secundarias" class="form-label font-weight-bold">
+                                        {{ form.especialidades_secundarias.label }}
+                                    </label>
+                                    {{ form.especialidades_secundarias }}
+                                    {% if form.especialidades_secundarias.errors %}
+                                        <div class="text-danger">{{ form.especialidades_secundarias.errors }}</div>
+                                    {% endif %}
+                                    {% if form.especialidades_secundarias.help_text %}
+                                        <small class="form-text text-muted">{{ form.especialidades_secundarias.help_text }}</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Botones de acción -->
+                        <div class="form-buttons text-right mt-4">
                             <button type="button" class="btn btn-danger" onclick="window.history.back();">
-                                Cancelar
+                                <i class="fas fa-times"></i> Cancelar
                             </button>
                             <button type="submit" class="btn btn-primary">
-                                {% if editar %}Guardar Cambios{% else %}Registrar{% endif %}
+                                <i class="fas fa-save"></i> 
+                                {% if editar %}Guardar Cambios{% else %}Registrar Perfil{% endif %}
                             </button>
                         </div>
                     </form>
@@ -62,4 +123,79 @@
     </div>
 </div>
 {% endblock content %}
-}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Inicializar Select2 en el campo de usuario para mejor búsqueda
+        $('#id_user_select').select2({
+            placeholder: 'Buscar médico por nombre, apellido o email...',
+            allowClear: true,
+            width: '100%',
+            language: {
+                noResults: function() {
+                    return "No se encontraron médicos. <br>Primero debe crear el usuario de tipo MEDIC.";
+                },
+                searching: function() {
+                    return "Buscando...";
+                }
+            },
+            ajax: {
+                url: "{% url 'api_buscar_medicos' %}",
+                dataType: 'json',
+                delay: 250,
+                data: function(params) {
+                    return {
+                        q: params.term,
+                        page: params.page || 1
+                    };
+                },
+                processResults: function(data) {
+                    return {
+                        results: data.results,
+                        pagination: {
+                            more: data.more
+                        }
+                    };
+                },
+                cache: true
+            },
+            minimumInputLength: 2,
+            templateResult: formatUserResult,
+            templateSelection: formatUserSelection
+        });
+
+        // Inicializar Select2 para especialidades secundarias
+        $('#id_especialidades_secundarias').select2({
+            placeholder: 'Seleccione especialidades adicionales...',
+            allowClear: true,
+            width: '100%',
+            language: {
+                noResults: function() {
+                    return "No se encontraron especialidades.";
+                }
+            }
+        });
+
+        function formatUserResult(user) {
+            if (user.loading) {
+                return user.text;
+            }
+            var $container = $(
+                "<div class='select2-result-user clearfix'>" +
+                    "<div class='select2-result-user__avatar'><img src='" + (user.profile_image_url || '/static/img/default-user.png') + "' style='width:40px;height:40px;border-radius:50%;object-fit:cover;'/></div>" +
+                    "<div class='select2-result-user__meta'>" +
+                        "<div class='select2-result-user__title'>" + user.text + "</div>" +
+                        "<div class='select2-result-user__email'><small>" + (user.email || '') + "</small></div>" +
+                    "</div>" +
+                "</div>"
+            );
+            return $container;
+        }
+
+        function formatUserSelection(user) {
+            return user.text || user.id;
+        }
+    });
+</script>
+{% endblock extra_js %}

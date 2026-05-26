@@ -10,8 +10,8 @@ from django.views import View
 from django.views.generic import (
     CreateView, UpdateView, DeleteView, ListView, DetailView
 )
-from .models import AccessLevel, CustomUser, DocumentType, Specialties
-from .forms import AccessLevelForm, CustomUserCreationForm, CustomPasswordChangeForm, DocumentTypeForm, SpecialtiesForm
+from .models import CustomUser, DocumentType, Specialties
+from .forms import CustomUserCreationForm, CustomPasswordChangeForm, DocumentTypeForm, SpecialtiesForm
 from django.contrib.auth.views import PasswordChangeView
 
 User = get_user_model()
@@ -292,114 +292,6 @@ class EliminarEspecialidadView(DeleteView):
         return JsonResponse({
             'success': True,
             'message': 'Especialidad eliminada correctamente'
-        })
-
-
-@method_decorator(permission_required(['user.add_accesslevel', 'user.change_accesslevel'], raise_exception=True), name='dispatch')
-class GestionarNivelAccesoView(CreateView):
-    model = AccessLevel
-    form_class = AccessLevelForm
-    template_name = 'access_level/registration_access_level.html'
-    success_url = reverse_lazy('listar_nivel_acceso')
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['editar'] = False  # Indica que es creación
-        return context
-
-    def form_valid(self, form):
-        response = super().form_valid(form)
-        if self.request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return JsonResponse({
-                'success': True, 
-                'message': 'Nivel de acceso creado correctamente'
-            })
-        return response
-
-    def form_invalid(self, form):
-        if self.request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return JsonResponse({
-                'success': False, 
-                'errors': form.errors
-            })
-        return super().form_invalid(form)
-
-@method_decorator(permission_required('user.change_accesslevel', raise_exception=True), name='dispatch')
-class EditarNivelAccesoView(UpdateView):
-    model = AccessLevel
-    form_class = AccessLevelForm
-    template_name = 'access_level/registration_access_level.html'
-    success_url = reverse_lazy('listar_nivel_acceso')
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['editar'] = True  # Indica que es edición
-        return context
-
-    def form_valid(self, form):
-        response = super().form_valid(form)
-        if self.request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return JsonResponse({
-                'success': True, 
-                'message': 'Nivel de acceso actualizado correctamente'
-            })
-        return response
-
-    def form_invalid(self, form):
-        if self.request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return JsonResponse({
-                'success': False, 
-                'errors': form.errors
-            })
-        return super().form_invalid(form)
-
-class ListarNivelAccesoView(ListView):
-    model = AccessLevel
-    template_name = 'access_level/list_access_levels.html'
-    context_object_name = 'access_levels'
-    ordering = ['access_level']
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['form'] = AccessLevelForm()
-        context['url_boton'] = reverse_lazy('gestionar_nivel_acceso')
-        context['accionBoton'] = 'modal'
-        return context
-
-    def get(self, request, *args, **kwargs):
-        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            queryset = self.get_queryset()
-            
-            data = [{
-                'id_access_level': nivel.id_access_level,
-                'access_level': nivel.access_level,
-                'created_at': nivel.created_at.strftime("%Y-%m-%d %H:%M:%S") if nivel.created_at else None,
-                'update_at': nivel.update_at.strftime("%Y-%m-%d %H:%M:%S") if nivel.update_at else None,
-            } for nivel in queryset]
-            
-            return JsonResponse(
-                {
-                    'data': data,
-                    'recordsTotal': queryset.count(),
-                    'recordsFiltered': queryset.count(),
-                    'draw': request.GET.get('draw', 1)
-                },
-                safe=False
-            )
-        
-        return super().get(request, *args, **kwargs)
-
-@method_decorator(permission_required('user.delete_accesslevel', raise_exception=True), name='dispatch')
-class EliminarNivelAccesoView(DeleteView):
-    model = AccessLevel
-    success_url = reverse_lazy('listar_nivel_acceso')
-
-    def post(self, request, *args, **kwargs):
-        self.object = self.get_object()
-        self.object.delete()
-        return JsonResponse({
-            'success': True,
-            'message': 'Nivel de acceso eliminado correctamente'
         })
 
 class CambiarContrasenaView(PasswordChangeView):
