@@ -1,0 +1,60 @@
+<!-- expedientes/templates/expedientes/actos/base_form.html -->
+{% extends 'layout/base.html' %}
+{% load static %}
+
+{% block title %}{{ titulo }} - {{ paciente.get_full_name }}{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid">
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 bg-success">
+            <h6 class="m-0 font-weight-bold text-light">
+                <i class="fas fa-file-medical mr-2"></i>{{ titulo }} - {{ accion }}
+                <small class="text-light-50 ml-2">{{ paciente.get_full_name }}</small>
+            </h6>
+        </div>
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data" id="actoForm">
+                {% csrf_token %}
+                
+                {% if es_admin %}
+                <div class="alert alert-warning mb-3">
+                    <i class="fas fa-user-shield"></i> 
+                    <strong>Modo Administrador:</strong> Tienes permisos especiales. 
+                    Puedes editar esta historia clínica sin límite de tiempo.
+                </div>
+                {% endif %}
+
+                {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {% for error in form.non_field_errors %}
+                        {{ error }}
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                {% block form_content %}
+                {% endblock %}
+                
+                <div class="row mt-4">
+                    <div class="col-md-12 text-right">
+                        {% if expediente and expediente.id %}
+                        <a href="{% url 'expedientes:expediente_actos' expediente.id %}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Cancelar
+                        </a>
+                        {% else %}
+                        <a href="javascript:history.back()" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Cancelar
+                        </a>
+                        {% endif %}
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Guardar {{ titulo }}
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

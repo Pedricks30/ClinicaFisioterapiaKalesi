@@ -1,0 +1,409 @@
+{% extends 'expedientes/actos/base_form.html' %}
+{% load static %}
+
+{% block form_content %}
+
+<!-- Header de Información de la Cita -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="alert {% if es_admin %}alert-warning{% else %}alert-danger{% endif %}">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <i class="fas fa-exclamation-triangle"></i> 
+                    <strong>Información de la cita:</strong> 
+                    {{ cita.fecha|date:"d/m/Y H:i" }} - Profesional: {{ cita.profesional.get_full_name }}
+                    {% if cita.tipo_cita == 'FINALIZACION' %}
+                        <span class="badge badge-danger ml-2">Finalización de Tratamiento</span>
+                    {% endif %}
+                </div>
+                {% if es_admin %}
+                <div>
+                    <span class="badge badge-warning">
+                        <i class="fas fa-crown"></i> Modo Administrador: Tienes permisos especiales
+                    </span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Alerta de Advertencia -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="alert alert-warning text-center">
+            <i class="fas fa-hourglass-end fa-2x mb-2 d-block"></i>
+            <strong>¡Atención!</strong> Al crear esta finalización, el expediente del paciente se marcará como <strong>FINALIZADO</strong> 
+            y no se podrán crear más sesiones de seguimiento.
+        </div>
+    </div>
+</div>
+
+<!-- Evaluación Final del Dolor con Slider -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-chart-line"></i> Evaluación Final del Paciente
+        </h6>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label>Escala Visual Analógica (EVA) - Nivel de Dolor Final</label>
+                    <div class="pain-slider-container mt-2">
+                        <input type="range" id="painSlider" min="0" max="10" value="{{ form.nivel_dolor_final.value|default:0 }}" step="1" class="pain-slider">
+                        <div class="pain-labels">
+                            <div class="d-flex justify-content-between mt-2">
+                                <span class="pain-label-0">0<br><small>Sin dolor</small></span>
+                                <span class="pain-label-1">1</span>
+                                <span class="pain-label-2">2</span>
+                                <span class="pain-label-3">3</span>
+                                <span class="pain-label-4">4</span>
+                                <span class="pain-label-5">5<br><small>Moderado</small></span>
+                                <span class="pain-label-6">6</span>
+                                <span class="pain-label-7">7</span>
+                                <span class="pain-label-8">8</span>
+                                <span class="pain-label-9">9</span>
+                                <span class="pain-label-10">10<br><small>Peor dolor</small></span>
+                            </div>
+                        </div>
+                        <div class="pain-value-display text-center mt-3">
+                            <h3>Nivel de dolor final: <span id="painValue" class="font-weight-bold">{{ form.nivel_dolor_final.value|default:0 }}</span>/10</h3>
+                        </div>
+                    </div>
+                    {{ form.nivel_dolor_final }}
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label>{{ form.localizacion_dolor.label }}</label>
+                    {{ form.localizacion_dolor }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Motivo de Finalización -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-question-circle"></i> Motivo de Finalización
+        </h6>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="form-group">
+                    <label>{{ form.motivos_finalizacion.label }} <span class="text-danger">*</span></label>
+                    {{ form.motivos_finalizacion }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Resumen del Tratamiento -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-clipboard-list"></i> Resumen del Tratamiento
+        </h6>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="form-group">
+                    <label>{{ form.descripcion_tratamiento.label }}</label>
+                    {{ form.descripcion_tratamiento }}
+                </div>
+            </div>
+            <div class="col-md-12">
+                <div class="form-group">
+                    <label>{{ form.objetivos_alcanzados.label }} <span class="text-danger">*</span></label>
+                    {{ form.objetivos_alcanzados }}
+                </div>
+            </div>
+            <div class="col-md-12">
+                <div class="form-group">
+                    <label>{{ form.recomendaciones_finales.label }}</label>
+                    {{ form.recomendaciones_finales }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Evaluación Muscular (Opcional) -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-dumbbell"></i> Evaluación Muscular Final (Opcional)
+        </h6>
+    </div>
+    <div class="card-body">
+        <div class="row align-items-center">
+            <div class="col-md-3 muscular-image-wrapper mb-3 mb-md-0">
+                <img src="{% static 'img/evaluacion_muscular.webp' %}" alt="Referencia evaluación muscular" class="img-fluid muscular-image">
+                <p class="mt-2 mb-0 small text-muted">Escala de Daniels: 0=Sin contracción, 5=Fuerza normal</p>
+            </div>
+            <div class="col-md-9">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-sm">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Región</th>
+                                <th>Izquierda</th>
+                                <th>Derecha</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Miembros Superiores</strong></td>
+                                <td>{{ form.ms_eval1_izquierda }}</td>
+                                <td>{{ form.ms_eval1_derecha }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Miembros Inferiores</strong></td>
+                                <td>{{ form.mi_eval1_izquierda }}</td>
+                                <td>{{ form.mi_eval1_derecha }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Tronco</strong></td>
+                                <td>{{ form.tronco_eval1_izquierda }}</td>
+                                <td>{{ form.tronco_eval1_derecha }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Cuello</strong></td>
+                                <td>{{ form.cuello_eval1_izquierda }}</td>
+                                <td>{{ form.cuello_eval1_derecha }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Evaluación Goniométrica Final (Opcional) -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-ruler"></i> Evaluación Goniométrica Final (Opcional)
+        </h6>
+    </div>
+    <div class="card-body">
+        <ul class="nav nav-tabs" id="goniometricTabs" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link active" data-toggle="tab" href="#miembrosSuperiores">Miembros Superiores</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-toggle="tab" href="#miembrosInferiores">Miembros Inferiores</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-toggle="tab" href="#troncoCuello">Tronco y Cuello</a>
+            </li>
+        </ul>
+        
+        <div class="tab-content mt-3">
+            <!-- Miembros Superiores -->
+            <div class="tab-pane fade show active" id="miembrosSuperiores">
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Movimiento</th>
+                                <th>Izquierda (°)</th>
+                                <th>Derecha (°)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Flexión</td>
+                                <td>{{ form.ms_flexion_eval1_izq }}</td>
+                                <td>{{ form.ms_flexion_eval1_der }}</td>
+                            </tr>
+                            <tr>
+                                <td>Extensión</td>
+                                <td>{{ form.ms_extension_eval1_izq }}</td>
+                                <td>{{ form.ms_extension_eval1_der }}</td>
+                            </tr>
+                            <tr>
+                                <td>Abducción</td>
+                                <td>{{ form.ms_abduccion_eval1_izq }}</td>
+                                <td>{{ form.ms_abduccion_eval1_der }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Miembros Inferiores -->
+            <div class="tab-pane fade" id="miembrosInferiores">
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered">
+                        <thead class="thead-light">
+                            <tr><th>Movimiento</th><th>Izquierda (°)</th><th>Derecha (°)</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>Flexión</td><td>{{ form.mi_flexion_eval1_izq }}</td><td>{{ form.mi_flexion_eval1_der }}</td></tr>
+                            <tr><td>Extensión</td><td>{{ form.mi_extension_eval1_izq }}</td><td>{{ form.mi_extension_eval1_der }}</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Tronco y Cuello -->
+            <div class="tab-pane fade" id="troncoCuello">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="font-weight-bold">Tronco</h6>
+                        <table class="table table-sm table-bordered">
+                            <thead class="thead-light"><tr><th>Movimiento</th><th>Grados</th></tr></thead>
+                            <tbody>
+                                <tr><td>Flexión</td><td>{{ form.tronco_flexion_eval1 }}</td></tr>
+                                <tr><td>Extensión</td><td>{{ form.tronco_extension_eval1 }}</td></tr>
+                                <tr><td>Lateral Izquierdo</td><td>{{ form.tronco_lateral_izq_eval1 }}</td></tr>
+                                <tr><td>Lateral Derecho</td><td>{{ form.tronco_lateral_der_eval1 }}</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="font-weight-bold">Cuello</h6>
+                        <table class="table table-sm table-bordered">
+                            <thead class="thead-light"><tr><th>Movimiento</th><th>Grados</th></tr></thead>
+                            <tbody>
+                                <tr><td>Flexión</td><td>{{ form.cuello_flexion_eval1 }}</td></tr>
+                                <tr><td>Extensión</td><td>{{ form.cuello_extension_eval1 }}</td></tr>
+                                <tr><td>Lateral Izquierdo</td><td>{{ form.cuello_lateral_izq_eval1 }}</td></tr>
+                                <tr><td>Lateral Derecho</td><td>{{ form.cuello_lateral_der_eval1 }}</td></tr>
+                                <tr><td>Rotación Izquierda</td><td>{{ form.cuello_rotacion_izq_eval1 }}</td></tr>
+                                <tr><td>Rotación Derecha</td><td>{{ form.cuello_rotacion_der_eval1 }}</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Observaciones -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-comment-dots"></i> Observaciones Adicionales
+        </h6>
+    </div>
+    <div class="card-body">
+        <div class="form-group">
+            {{ form.observaciones }}
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        border-radius: .85rem;
+    }
+    .card-header {
+        padding: 0.9rem 1rem;
+        background-color: #f8f9ff;
+        border-bottom: 1px solid #dee2e6;
+    }
+    .card-header h6 {
+        margin: 0;
+    }
+    .muscular-image-wrapper {
+        text-align: center;
+    }
+    .muscular-image-wrapper img {
+        max-height: 180px;
+        width: auto;
+        border-radius: .75rem;
+        box-shadow: 0 10px 30px rgba(78, 115, 223, 0.12);
+    }
+    .pain-slider-container {
+        background: #ffffff;
+        border: 1px solid #dee2e6;
+        border-radius: 1rem;
+        padding: 1rem;
+    }
+    .pain-slider {
+        -webkit-appearance: none;
+        width: 100%;
+        height: 12px;
+        border-radius: 10px;
+        background: linear-gradient(to right, #28a745, #ffc107, #fd7e14, #dc3545);
+        outline: none;
+    }
+    .pain-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: white;
+        border: 2px solid #333;
+        cursor: pointer;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+    .pain-slider::-webkit-slider-thumb:hover {
+        transform: scale(1.12);
+    }
+    .pain-labels > div > span {
+        text-align: center;
+        flex: 1;
+        font-size: 11px;
+        font-weight: 600;
+    }
+    .pain-label-0 { color: #28a745; }
+    .pain-label-1, .pain-label-2, .pain-label-3, .pain-label-4 { color: #ffc107; }
+    .pain-label-5, .pain-label-6 { color: #fd7e14; }
+    .pain-label-7, .pain-label-8, .pain-label-9, .pain-label-10 { color: #dc3545; }
+    .pain-value-display h3 {
+        margin: 0;
+        font-size: 1.3rem;
+        color: #1f2d5a;
+    }
+    .nav-tabs .nav-link {
+        color: #4e73df;
+    }
+    .nav-tabs .nav-link.active {
+        font-weight: bold;
+        border-color: #4e73df #4e73df #fff;
+    }
+    table select, table input {
+        width: 100%;
+        min-width: 70px;
+    }
+    .table-sm td, .table-sm th {
+        padding: 6px;
+        vertical-align: middle;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Slider de dolor
+        const painSlider = document.getElementById('painSlider');
+        const painValue = document.getElementById('painValue');
+        const nivelDolorInput = document.getElementById('id_nivel_dolor_final');
+        
+        if (painSlider && painValue && nivelDolorInput) {
+            if (nivelDolorInput.value) {
+                painSlider.value = nivelDolorInput.value;
+                painValue.textContent = nivelDolorInput.value;
+            }
+            
+            painSlider.addEventListener('input', function() {
+                const value = this.value;
+                painValue.textContent = value;
+                nivelDolorInput.value = value;
+            });
+        }
+    });
+</script>
+
+{% endblock %}

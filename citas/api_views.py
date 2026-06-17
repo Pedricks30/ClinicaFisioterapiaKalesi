@@ -3,7 +3,9 @@ from django.views.decorators.http import require_GET
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404
 from datetime import datetime, timedelta
+from django.utils import timezone  # ← IMPORTANTE: usar django.utils.timezone
 from django.db import models
+from paciente.models import Patient
 from users.models import CustomUser, Specialties
 from medical.models import Medico
 from physiotherapist.models import Fisioterapeuta
@@ -21,28 +23,36 @@ def filtrar_profesionales_por_especialidad(request):
     if not especialidad_id:
         return JsonResponse({'profesionales': []})
     
-    # Médicos con esta especialidad
-    medicos_ids = Medico.objects.filter(specialties_id=especialidad_id).values_list('user_id', flat=True)
-    # Fisioterapeutas con esta especialidad
-    fisios_ids = Fisioterapeuta.objects.filter(specialties_id=especialidad_id).values_list('user_id', flat=True)
+    profesionales = []
     
-    todos_ids = list(medicos_ids) + list(fisios_ids)
+    # Obtener médicos con esta especialidad
+    medicos = Medico.objects.filter(specialties_id=especialidad_id).select_related('user', 'specialties')
+    for medico in medicos:
+        if medico.user.is_active:
+            profesionales.append({
+                'id': medico.user.id,
+                'nombre': medico.user.get_full_name(),
+                'tipo': 'Médico',
+                'especialidad': medico.specialties.specialties if medico.specialties else '',
+                'horarios': _get_horarios_resumen(medico.user)
+            })
     
-    profesionales = CustomUser.objects.filter(
-        id__in=todos_ids,
-        tipo_usuario__in=['MEDIC', 'FISIO'],
-        is_active=True
-    ).order_by('first_name', 'last_name')
+    # Obtener fisioterapeutas con esta especialidad
+    fisioterapeutas = Fisioterapeuta.objects.filter(specialties_id=especialidad_id).select_related('user', 'specialties')
+    for fisio in fisioterapeutas:
+        if fisio.user.is_active:
+            profesionales.append({
+                'id': fisio.user.id,
+                'nombre': fisio.user.get_full_name(),
+                'tipo': 'Fisioterapeuta',
+                'especialidad': fisio.specialties.specialties if fisio.specialties else '',
+                'horarios': _get_horarios_resumen(fisio.user)
+            })
     
-    data = [{
-        'id': p.id,
-        'nombre': p.get_full_name(),
-        'tipo': p.get_tipo_usuario_display(),
-        'especialidad': p.perfil_profesional.specialties.specialties if p.perfil_profesional and p.perfil_profesional.specialties else '',
-        'horarios': _get_horarios_resumen(p)
-    } for p in profesionales]
+    # Ordenar por nombre
+    profesionales.sort(key=lambda x: x['nombre'])
     
-    return JsonResponse({'profesionales': data})
+    return JsonResponse({'profesionales': profesionales})
 
 
 @require_GET
@@ -58,15 +68,19 @@ def get_horarios_profesional(request, profesional_id):
     
     data = []
     for h in horarios:
+        dias = h.get_dias_display()
+        # Si dias es una lista, convertir a string
+        if isinstance(dias, list):
+            dias = ', '.join(dias)
+        
         data.append({
             'id': h.id,
-            'dias': h.get_dias_display(),
+            'dias': dias,
             'hora_inicio': h.hora_inicio.strftime('%H:%M'),
             'hora_fin': h.hora_fin.strftime('%H:%M'),
         })
     
     return JsonResponse({'horarios': data})
-
 
 @require_GET
 @login_required
@@ -80,6 +94,9 @@ def get_horas_disponibles(request, profesional_id, fecha_str):
         return JsonResponse({'error': 'Formato de fecha inválido'}, status=400)
     
     profesional = get_object_or_404(CustomUser, pk=profesional_id)
+    
+    # Obtener el ID de la cita que se está editando
+    cita_editando_id = request.GET.get('cita_id', None)
     
     # Mapear día de la semana
     weekday_map = {0: 'LUN', 1: 'MAR', 2: 'MIE', 3: 'JUE', 4: 'VIE', 5: 'SAB', 6: 'DOM'}
@@ -96,36 +113,59 @@ def get_horas_disponibles(request, profesional_id, fecha_str):
     citas_existentes = Cita.objects.filter(
         profesional=profesional,
         fecha__date=fecha,
-        estado__in=['PENDIENTE', 'CONFIRMADA', 'EN_PROCESO']
+        estado__in=['PENDIENTE', 'CONFIRMADA', 'EN_PROCESO', 'NO_ASISTIO']
     )
+    
+    # Excluir la cita que se está editando
+    if cita_editando_id:
+        citas_existentes = citas_existentes.exclude(id=cita_editando_id)
+    
+    # Obtener la hora de la cita que se está editando (si existe)
+    hora_cita_editando = None
+    if cita_editando_id:
+        try:
+            cita_editando = Cita.objects.get(id=cita_editando_id)
+            hora_cita_editando = cita_editando.fecha.strftime('%H:%M')
+        except Cita.DoesNotExist:
+            pass
     
     slots_disponibles = []
     for horario in horarios:
         inicio = datetime.combine(fecha, horario.hora_inicio)
         fin = datetime.combine(fecha, horario.hora_fin)
+        
         current = inicio
         
         while current + timedelta(minutes=30) <= fin:
             slot_fin = current + timedelta(minutes=30)
             
+            # Convertir a timezone-aware
+            current_aware = timezone.make_aware(current) if timezone.is_naive(current) else current
+            slot_fin_aware = timezone.make_aware(slot_fin) if timezone.is_naive(slot_fin) else slot_fin
+            
+            # Verificar si este slot es la hora de la cita que se está editando
+            es_hora_actual = (hora_cita_editando == current.strftime('%H:%M'))
+            
             disponible = True
             for cita in citas_existentes:
                 cita_fin = cita.fecha + timedelta(minutes=cita.duracion)
-                if (current < cita_fin) and (slot_fin > cita.fecha):
+                if (current_aware < cita_fin) and (slot_fin_aware > cita.fecha):
                     disponible = False
                     break
             
-            if disponible:
+            # Si es la hora actual de la cita, siempre incluirla aunque no esté disponible
+            if es_hora_actual or disponible:
                 slots_disponibles.append({
                     'hora': current.strftime('%H:%M'),
                     'hora_fin': slot_fin.strftime('%H:%M'),
-                    'datetime': current.strftime('%Y-%m-%dT%H:%M'),
+                    'datetime': current.isoformat(),
+                    'es_hora_actual': es_hora_actual,  # Marcar si es la hora actual
+                    'disponible': disponible
                 })
             
             current += timedelta(minutes=30)
     
     return JsonResponse({'slots': slots_disponibles})
-
 
 @require_GET
 @login_required
@@ -142,38 +182,44 @@ def get_eventos_calendario(request):
     if profesional_id:
         citas = citas.filter(profesional_id=profesional_id)
     
-    # Filtros según tipo de usuario
     user = request.user
-    if user.is_medico or user.is_fisio:
+    if user.tipo_usuario == 'MEDIC' or user.tipo_usuario == 'FISIO':
         citas = citas.filter(profesional=user)
-    elif user.is_recepcionista or user.is_admin:
-        pass  # Ve todas
+    elif user.tipo_usuario == 'ADMIN' or user.tipo_usuario == 'RECEP':
+        pass
     else:
         citas = citas.none()
     
     events = []
     for cita in citas:
+        paciente_text = f"{cita.paciente.get_full_name()} - {cita.paciente.tipo_documento} ({cita.paciente.documento_identidad})"
+        
+        # 🔴 Usar formato local sin zona horaria
+        start_local = cita.fecha.strftime('%Y-%m-%dT%H:%M:%S')
+        end_local = (cita.fecha + timedelta(minutes=cita.duracion)).strftime('%Y-%m-%dT%H:%M:%S')
+        
         events.append({
             'id': cita.id,
             'title': f"{cita.paciente.apellidos}, {cita.paciente.nombres[:1]}. - {cita.motivo[:30]}",
-            'start': cita.fecha.isoformat(),
-            'end': (cita.fecha + timedelta(minutes=cita.duracion)).isoformat(),
-            'backgroundColor': cita.notas_internas if cita.notas_internas and cita.notas_internas.startswith('#') else '#007BFF',
-            'borderColor': '#000',
+            'start': start_local,
+            'end': end_local,
+            'backgroundColor': cita.color if cita.color else "#007BFF",
+            'borderColor': "#039425FF",
             'extendedProps': {
                 'paciente_id': cita.paciente.id,
                 'paciente_nombre': cita.paciente.get_full_name(),
+                'paciente_text': paciente_text,
                 'profesional_id': cita.profesional.id,
                 'profesional_nombre': cita.profesional.get_full_name(),
                 'motivo': cita.motivo,
                 'estado': cita.estado,
                 'duracion': cita.duracion,
-                'tipo_cita': cita.get_tipo_cita_display(),
+                'tipo_cita': cita.tipo_cita,
+                'hora_cita': cita.fecha.strftime('%H:%M'),  # Nueva propiedad
             }
         })
     
     return JsonResponse(events, safe=False)
-
 
 @require_GET
 @login_required
@@ -190,7 +236,7 @@ def buscar_citas(request):
     
     # Filtros según tipo de usuario
     user = request.user
-    if user.is_medico or user.is_fisio:
+    if user.tipo_usuario == 'MEDIC' or user.tipo_usuario == 'FISIO':
         queryset = queryset.filter(profesional=user)
     
     if q:
@@ -236,11 +282,20 @@ def buscar_citas(request):
 
 def _get_horarios_resumen(profesional):
     """Resumen de horarios para mostrar en el selector de profesional"""
-    horarios = Horario.objects.filter(profesional=profesional, disponible=True)
-    if horarios.exists():
-        h = horarios.first()
-        return f"{', '.join(h.get_dias_display())} | {h.hora_inicio.strftime('%H:%M')}-{h.hora_fin.strftime('%H:%M')}"
-    return "Sin horario asignado"
+    try:
+        horarios = Horario.objects.filter(profesional=profesional, disponible=True)
+        if horarios.exists():
+            h = horarios.first()
+            dias = h.get_dias_display()
+            if isinstance(dias, list):
+                dias = ', '.join(dias[:3])  # Mostrar solo primeros 3 días
+                if len(h.get_dias_display()) > 3:
+                    dias += '...'
+            return f"{dias} | {h.hora_inicio.strftime('%H:%M')}-{h.hora_fin.strftime('%H:%M')}"
+        return "Sin horario asignado"
+    except Exception as e:
+        print(f"Error en _get_horarios_resumen: {e}")
+        return "Horario no disponible"
 
 
 def _get_estado_class(estado):
@@ -255,5 +310,171 @@ def _get_estado_class(estado):
     }
     return clases.get(estado, 'secondary')
 
+@require_GET
+@login_required
+def verificar_puede_finalizar(request):
+    """
+    Verifica si un paciente puede ser finalizado (tiene al menos una sesión de seguimiento)
+    """
+    paciente_id = request.GET.get('paciente_id')
+    profesional_id = request.GET.get('profesional_id')
+    
+    if not paciente_id or not profesional_id:
+        return JsonResponse({'puede_finalizar': False, 'error': 'Faltan parámetros'})
+    
+    try:
+        paciente = Patient.objects.get(pk=paciente_id)
+        
+        # ✅ Verificar que NO tenga citas pendientes (EXCLUYENDO NO_ASISTIO)
+        tiene_citas_pendientes = Cita.objects.filter(
+            paciente_id=paciente_id,
+            profesional_id=profesional_id,
+            estado__in=['PENDIENTE', 'CONFIRMADA', 'EN_PROCESO']  # 👈 Solo estos estados
+        ).exists()
+        
+        # Verificar si tiene al menos una cita de seguimiento completada
+        tiene_seguimiento = Cita.objects.filter(
+            paciente_id=paciente_id,
+            profesional_id=profesional_id,
+            tipo_cita='SEGUIMIENTO',
+            estado='COMPLETADA'
+        ).exists()
+        
+        # Verificar si ya tiene finalización
+        tiene_finalizacion = Cita.objects.filter(
+            paciente_id=paciente_id,
+            profesional_id=profesional_id,
+            tipo_cita='FINALIZACION',
+            estado__in=['PENDIENTE', 'CONFIRMADA', 'COMPLETADA']
+        ).exists()
+        
+        # Verificar que tenga primera consulta COMPLETADA
+        tiene_primera_consulta = Cita.objects.filter(
+            paciente_id=paciente_id,
+            profesional_id=profesional_id,
+            tipo_cita='PRIMERA_CONSULTA',
+            estado='COMPLETADA'
+        ).exists()
+        
+        # ✅ CORREGIDO: También verificar que NO tenga una finalización ya creada
+        puede_finalizar = (
+            tiene_primera_consulta and 
+            tiene_seguimiento and 
+            not tiene_finalizacion and 
+            not tiene_citas_pendientes
+        )
+        
+        return JsonResponse({
+            'puede_finalizar': puede_finalizar,
+            'tiene_primera_consulta': tiene_primera_consulta,
+            'tiene_seguimiento': tiene_seguimiento,
+            'tiene_finalizacion': tiene_finalizacion,
+            'tiene_citas_pendientes': tiene_citas_pendientes
+        })
+    except Patient.DoesNotExist:
+        return JsonResponse({'puede_finalizar': False, 'error': 'Paciente no encontrado'})
 
-# Necesario para la búsqueda
+@require_GET
+@login_required
+def verificar_estado_paciente(request):
+    """
+    Verifica si el paciente tiene citas pendientes y su estado general
+    """
+    paciente_id = request.GET.get('paciente_id')
+    profesional_id = request.GET.get('profesional_id')
+    
+    if not paciente_id or not profesional_id:
+        return JsonResponse({'error': 'Faltan parámetros'}, status=400)
+    
+    paciente = get_object_or_404(Patient, pk=paciente_id)
+    
+    # ✅ EXCLUIR NO_ASISTIO y CANCELADA de las citas pendientes
+    citas_pendientes = Cita.objects.filter(
+        paciente=paciente,
+        profesional_id=profesional_id,
+        estado__in=['PENDIENTE', 'CONFIRMADA', 'EN_PROCESO']  # 👈 Solo estos estados
+    )
+    
+    # Verificar citas completadas
+    citas_completadas = Cita.objects.filter(
+        paciente=paciente,
+        profesional_id=profesional_id,
+        estado='COMPLETADA'
+    )
+    
+    tiene_primera_consulta = citas_completadas.filter(tipo_cita='PRIMERA_CONSULTA').exists()
+    tiene_finalizacion = citas_completadas.filter(tipo_cita='FINALIZACION').exists()
+    sesiones_seguimiento = citas_completadas.filter(tipo_cita='SEGUIMIENTO').count()
+    
+    return JsonResponse({
+        'tiene_citas_pendientes': citas_pendientes.exists(),
+        'cantidad_citas_pendientes': citas_pendientes.count(),
+        'citas_pendientes': [
+            {
+                'id': c.id,
+                'fecha': c.fecha.strftime('%d/%m/%Y %H:%M'),
+                'tipo': c.get_tipo_cita_display(),
+                'estado': c.get_estado_display()
+            }
+            for c in citas_pendientes
+        ],
+        'tiene_primera_consulta': tiene_primera_consulta,
+        'tiene_finalizacion': tiene_finalizacion,
+        'sesiones_seguimiento_completadas': sesiones_seguimiento,
+        'puede_crear_nueva_cita': not citas_pendientes.exists()
+    })
+
+@require_GET
+@login_required
+def calcular_tipo_cita(request):
+    """
+    Calcula el tipo de cita que se asignaría a un paciente con un profesional específico.
+    """
+    paciente_id = request.GET.get('paciente_id')
+    profesional_id = request.GET.get('profesional_id')
+    
+    if not paciente_id or not profesional_id:
+        return JsonResponse({'error': 'Faltan parámetros'}, status=400)
+    
+    try:
+        paciente = Patient.objects.get(pk=paciente_id)
+        profesional = CustomUser.objects.get(pk=profesional_id)
+        
+        # Obtener citas existentes
+        citas_existentes = Cita.objects.filter(
+            paciente=paciente,
+            profesional=profesional,
+        )
+        
+        # Verificar citas completadas
+        citas_completadas = citas_existentes.filter(estado='COMPLETADA')
+        
+        tiene_primera_consulta = citas_completadas.filter(
+            tipo_cita='PRIMERA_CONSULTA'
+        ).exists()
+        
+        tiene_finalizacion = citas_completadas.filter(
+            tipo_cita='FINALIZACION'
+        ).exists()
+        
+        # Determinar el tipo
+        if tiene_finalizacion:
+            tipo = 'REVISION'
+            label = 'Revisión - Control Post-Alta'
+        elif not tiene_primera_consulta:
+            tipo = 'PRIMERA_CONSULTA'
+            label = 'Primera Consulta - Evaluación Inicial'
+        else:
+            tipo = 'SEGUIMIENTO'
+            label = 'Seguimiento - Sesión de Tratamiento'
+        
+        return JsonResponse({
+            'tipo_cita': tipo,
+            'label': label,
+            'tiene_primera_consulta': tiene_primera_consulta,
+            'tiene_finalizacion': tiene_finalizacion,
+        })
+    except Patient.DoesNotExist:
+        return JsonResponse({'error': 'Paciente no encontrado'}, status=404)
+    except CustomUser.DoesNotExist:
+        return JsonResponse({'error': 'Profesional no encontrado'}, status=404)

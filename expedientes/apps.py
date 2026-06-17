@@ -4,6 +4,7 @@ from django.apps import AppConfig
 class ExpedientesConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'expedientes'
+    verbose_name = 'Expedientes de Fisioterapia'
 
     def ready(self):
-        import expedientes.signals  # Importa las señales para que se registren correctamente
+        import expedientes.signals  # Carga las señales

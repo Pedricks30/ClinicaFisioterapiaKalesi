@@ -25,7 +25,7 @@ class Specialties(models.Model):
         return self.specialties
 
 # Modelo de Usuario Personalizado
-class CustomUser(AbstractUser, ImageCompressionMixin, ImageDeletionMixin):
+class CustomUser(AbstractUser, ImageCompressionMixin, ImageDeletionMixin): 
     # Campos adicionales
     # Tipos de usuario
     TIPO_USUARIO_CHOICES = [
@@ -98,10 +98,42 @@ class CustomUser(AbstractUser, ImageCompressionMixin, ImageDeletionMixin):
             return self.perfil_fisioterapeuta # Retorna el objeto completo, igual que arriba
         return None
 
-@receiver(post_delete)
-def delete_image_on_post_delete(sender, instance, **kwargs):
+    @property
+    def especialidad_nombre(self):
+        """Retorna el nombre de la especialidad según el tipo de usuario"""
+        try:
+            if self.tipo_usuario == 'MEDIC' and hasattr(self, 'perfil_medico'):
+                especialidad = self.perfil_medico.specialties
+                if especialidad:
+                    return especialidad.specialties
+                return "Médico General"
+            elif self.tipo_usuario == 'FISIO' and hasattr(self, 'perfil_fisioterapeuta'):
+                especialidad = self.perfil_fisioterapeuta.specialties
+                if especialidad:
+                    return especialidad.specialties
+                return "Fisioterapeuta"
+        except Exception as e:
+            print(f"Error al obtener especialidad: {e}")
+        return self.get_tipo_usuario_display()
+    
+    def clear_profile_image(self):
+        """
+        Método auxiliar para limpiar la imagen de perfil desde el formulario o vista
+        """
+        if self.profile_image:
+            # Eliminar el archivo físico
+            self.profile_image.delete(save=False)
+            # Asignar None o la imagen por defecto
+            self.profile_image = None
+            # Guardar el cambio
+            self.save(update_fields=['profile_image'])
+            return True
+        return False
+
+@receiver(post_delete, sender=CustomUser)
+def delete_user_image_on_post_delete(sender, instance, **kwargs):
     """
-    Elimina la imagen asociada a un objeto cuando se elimina el objeto.
+    Elimina la imagen asociada al usuario cuando se elimina el objeto.
     """
     if hasattr(instance, 'delete_image'):
         instance.delete_image()

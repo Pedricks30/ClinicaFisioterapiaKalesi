@@ -22,12 +22,7 @@ class Patient(ImageCompressionMixin, ImageDeletionMixin, models.Model):
         ('Femenino', 'Femenino'),
         ('Otro', 'Otro'),
     ]
-    TIPO_SANGRE_CHOICES = [
-        ('A+', 'A+'), ('A-', 'A-'),
-        ('B+', 'B+'), ('B-', 'B-'),
-        ('AB+', 'AB+'), ('AB-', 'AB-'),
-        ('O+', 'O+'), ('O-', 'O-'),
-    ]
+
     
     # Relación con el usuario del sistema (si tiene)
     user = models.OneToOneField(
@@ -69,15 +64,6 @@ class Patient(ImageCompressionMixin, ImageDeletionMixin, models.Model):
     email = models.EmailField(blank=True)
     direccion = models.TextField()
     
-    # Datos médicos importantes
-    tipo_sangre = models.CharField(
-        max_length=3,
-        choices=TIPO_SANGRE_CHOICES,
-        blank=True
-    )
-    alergias = models.TextField(blank=True)
-    condiciones_medicas = models.TextField(blank=True)
-    
     # Datos del acompañante/responsable
     nombre_acompanante = models.CharField(max_length=200, blank=True)
     parentesco_acompanante = models.CharField(max_length=50, blank=True)
@@ -105,7 +91,11 @@ class Patient(ImageCompressionMixin, ImageDeletionMixin, models.Model):
         ]
 
     def __str__(self):
-        return f"{self.apellidos}, {self.nombres} ({self.documento_identidad})"
+        return f"{self.apellidos}, {self.nombres} ({self.tipo_documento}) ({self.documento_identidad})"
+
+    def get_full_name(self):
+        """Retorna el nombre completo del paciente"""
+        return f"{self.nombres} {self.apellidos}"
 
     @property
     def edad(self):
@@ -136,21 +126,31 @@ class Patient(ImageCompressionMixin, ImageDeletionMixin, models.Model):
         return None
     
     def save(self, *args, **kwargs):
-        # Si es un nuevo paciente y no tiene foto, asignar la imagen por defecto
-        if not self.pk and not self.foto_perfil:
-            # La imagen por defecto ya está configurada en el campo
-            pass
-        
-        # Comprimir imagen si es necesario
+    # Si es un nuevo paciente y no tiene foto, asignar la imagen por defecto
+        is_new = not self.pk
+
+        # Solo procesar la imagen si es nueva o ha cambiado
         if self.foto_perfil and hasattr(self.foto_perfil, 'file'):
-            try:
-                compressed = compress_image(self.foto_perfil)
-                if compressed:
-                    self.foto_perfil = compressed
-            except Exception as e:
-                print(f"Error compressing image: {e}")
-        
+            # Verificar si la imagen ha cambiado
+            if is_new or self._has_image_changed():
+                try:
+                    compressed = compress_image(self.foto_perfil)
+                    if compressed:
+                        self.foto_perfil = compressed
+                except Exception as e:
+                    print(f"Error compressing image: {e}")
+
         super().save(*args, **kwargs)
+
+    def _has_image_changed(self):
+        """Verifica si la imagen de perfil ha cambiado"""
+        if not self.pk:
+            return True
+        try:
+            old = Patient.objects.get(pk=self.pk)
+            return old.foto_perfil != self.foto_perfil
+        except Patient.DoesNotExist:
+            return True
 
 @receiver(post_delete, sender=Patient)
 def eliminar_imagen_perfil(sender, instance, **kwargs):

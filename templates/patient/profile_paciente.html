@@ -133,36 +133,7 @@
                   </div>
                 </div>
 
-                <hr>
-
-                <!-- Datos Médicos -->
-                <h5 class="mb-3 text-success">Datos Médicos</h5>
-                <div class="row">
-                  <div class="col-md-6">
-                    <div class="row mb-3">
-                      <div class="col-sm-5 font-weight-bold">Tipo de Sangre</div>
-                      <div class="col-sm-7 text-muted">{{ paciente.tipo_sangre|default:"No especificado" }}</div>
-                    </div>
-                    {% if paciente.alergias %}
-                    <hr>
-                    <div class="row mb-3">
-                      <div class="col-sm-5 font-weight-bold">Alergias</div>
-                      <div class="col-sm-7 text-muted">{{ paciente.alergias }}</div>
-                    </div>
-                    {% endif %}
-                  </div>
-
-                  <div class="col-md-6">
-                    {% if paciente.condiciones_medicas %}
-                    <div class="row mb-3">
-                      <div class="col-sm-5 font-weight-bold">Condiciones Médicas</div>
-                      <div class="col-sm-7 text-muted">{{ paciente.condiciones_medicas }}</div>
-                    </div>
-                    {% endif %}
-                  </div>
-                </div>
-
-                <hr>
+                
 
                 <!-- Datos del Acompañante/Responsable -->
                 <h5 class="mb-3 text-success">Datos del Acompañante/Responsable</h5>

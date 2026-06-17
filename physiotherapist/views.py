@@ -7,8 +7,6 @@ from django.contrib import messages
 from django.shortcuts import redirect
 from .forms import FisioterapeutaForm
 from .models import Fisioterapeuta
-
-
 # -------------------------------------------------------------------------
 # CREAR PERFIL DE FISIOTERAPEUTA
 # -------------------------------------------------------------------------

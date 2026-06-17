@@ -1,64 +1,152 @@
 from django.db import models
-from django.db.models.signals import post_save
-from django.dispatch import receiver
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 from paciente.models import Patient
 from users.models import CustomUser
-from citas.models import Cita
+# =============================================================================
+# MODELOS ABSTRACTOS BASE PARA REUTILIZACIÓN
+# =============================================================================
+class BaseEvaluacionDolor(models.Model):
+    """Modelo abstracto para evaluación de dolor"""
+    
+    NIVEL_DOLOR = [
+        (0, '0 - Sin dolor'), (1, '1 - Dolor muy leve'), (2, '2 - Dolor leve'),
+        (3, '3 - Dolor moderado'), (4, '4 - Dolor moderado-alto'),
+        (5, '5 - Dolor alto'), (6, '6 - Dolor muy alto'), (7, '7 - Dolor severo'),
+        (8, '8 - Dolor muy severo'), (9, '9 - Dolor extremadamente severo'),
+        (10, '10 - Máximo dolor imaginable'),
+    ]
+    
+    nivel_dolor = models.IntegerField(choices=NIVEL_DOLOR, null=True, blank=True, verbose_name='Nivel de dolor')
+    localizacion_dolor = models.TextField(blank=True, verbose_name='Localización del dolor')
+    
+    class Meta:
+        abstract = True
 
+class BaseEvaluacionMuscular(models.Model):
+    """Modelo abstracto para evaluación muscular (grados 0-5)"""
+    
+    GRADO_FUERZA_MUSCULAR = [
+        (0, '0 - Ausencia de contracción muscular'),
+        (1, '1 - Esbozo de contracción muscular'),
+        (2, '2 - Movimiento activo que no puede vencer la gravedad'),
+        (3, '3 - Movimiento contra gravedad sin resistencia'),
+        (4, '4 - Movimiento contra resistencia reducida'),
+        (5, '5 - Fuerza muscular normal contra resistencia completa'),
+    ]
+    
+    # Miembros Superiores - Evaluación 1 y 2
+    ms_eval1_izquierda = models.IntegerField(choices=GRADO_FUERZA_MUSCULAR, null=True, blank=True, verbose_name='M. SUP. Evaluación 1 - Izquierda')
+    ms_eval1_derecha = models.IntegerField(choices=GRADO_FUERZA_MUSCULAR, null=True, blank=True, verbose_name='M. SUP. Evaluación 1 - Derecha')
+    ms_eval2_izquierda = models.IntegerField(choices=GRADO_FUERZA_MUSCULAR, null=True, blank=True, verbose_name='M. SUP. Evaluación 2 - Izquierda')
+    ms_eval2_derecha = models.IntegerField(choices=GRADO_FUERZA_MUSCULAR, null=True, blank=True, verbose_name='M. SUP. Evaluación 2 - Derecha')
+    
+    # Miembros Inferiores - Evaluación 1 y 2
+    mi_eval1_izquierda = models.IntegerField(choices=GRADO_FUERZA_MUSCULAR, null=True, blank=True, verbose_name='M. INF. Evaluación 1 - Izquierda')
+    mi_eval1_derecha = models.IntegerField(choices=GRADO_FUERZA_MUSCULAR, null=True, blank=True, verbose_name='M. INF. Evaluación 1 - Derecha')
+    mi_eval2_izquierda = models.IntegerField(choices=GRADO_FUERZA_MUSCULAR, null=True, blank=True, verbose_name='M. INF. Evaluación 2 - Izquierda')
+    mi_eval2_derecha = models.IntegerField(choices=GRADO_FUERZA_MUSCULAR, null=True, blank=True, verbose_name='M. INF. Evaluación 2 - Derecha')
+    
+    # Tronco - Evaluación 1 y 2
+    tronco_eval1_izquierda = models.IntegerField(choices=GRADO_FUERZA_MUSCULAR, null=True, blank=True, verbose_name='Tronco Evaluación 1 - Izquierda')
+    tronco_eval1_derecha = models.IntegerField(choices=GRADO_FUERZA_MUSCULAR, null=True, blank=True, verbose_name='Tronco Evaluación 1 - Derecha')
+    tronco_eval2_izquierda = models.IntegerField(choices=GRADO_FUERZA_MUSCULAR, null=True, blank=True, verbose_name='Tronco Evaluación 2 - Izquierda')
+    tronco_eval2_derecha = models.IntegerField(choices=GRADO_FUERZA_MUSCULAR, null=True, blank=True, verbose_name='Tronco Evaluación 2 - Derecha')
+    
+    # Cuello - Evaluación 1 y 2
+    cuello_eval1_izquierda = models.IntegerField(choices=GRADO_FUERZA_MUSCULAR, null=True, blank=True, verbose_name='Cuello Evaluación 1 - Izquierda')
+    cuello_eval1_derecha = models.IntegerField(choices=GRADO_FUERZA_MUSCULAR, null=True, blank=True, verbose_name='Cuello Evaluación 1 - Derecha')
+    cuello_eval2_izquierda = models.IntegerField(choices=GRADO_FUERZA_MUSCULAR, null=True, blank=True, verbose_name='Cuello Evaluación 2 - Izquierda')
+    cuello_eval2_derecha = models.IntegerField(choices=GRADO_FUERZA_MUSCULAR, null=True, blank=True, verbose_name='Cuello Evaluación 2 - Derecha')
+    
+    class Meta:
+        abstract = True
 
+class BaseEvaluacionGoniometrica(models.Model):
+    """Modelo abstracto para evaluación goniométrica (rangos de movimiento)"""
+    
+    # ==================== MIEMBROS SUPERIORES ====================
+    # Evaluación 1
+    ms_flexion_eval1_izq = models.IntegerField(null=True, blank=True, verbose_name='M. SUP. Eval1 - Flexión Izq (°)')
+    ms_flexion_eval1_der = models.IntegerField(null=True, blank=True, verbose_name='M. SUP. Eval1 - Flexión Der (°)')
+    ms_extension_eval1_izq = models.IntegerField(null=True, blank=True, verbose_name='M. SUP. Eval1 - Extensión Izq (°)')
+    ms_extension_eval1_der = models.IntegerField(null=True, blank=True, verbose_name='M. SUP. Eval1 - Extensión Der (°)')
+    ms_abduccion_eval1_izq = models.IntegerField(null=True, blank=True, verbose_name='M. SUP. Eval1 - Abducción Izq (°)')
+    ms_abduccion_eval1_der = models.IntegerField(null=True, blank=True, verbose_name='M. SUP. Eval1 - Abducción Der (°)')
+    
+    # Evaluación 2
+    ms_flexion_eval2_izq = models.IntegerField(null=True, blank=True, verbose_name='M. SUP. Eval2 - Flexión Izq (°)')
+    ms_flexion_eval2_der = models.IntegerField(null=True, blank=True, verbose_name='M. SUP. Eval2 - Flexión Der (°)')
+    ms_extension_eval2_izq = models.IntegerField(null=True, blank=True, verbose_name='M. SUP. Eval2 - Extensión Izq (°)')
+    ms_extension_eval2_der = models.IntegerField(null=True, blank=True, verbose_name='M. SUP. Eval2 - Extensión Der (°)')
+    ms_abduccion_eval2_izq = models.IntegerField(null=True, blank=True, verbose_name='M. SUP. Eval2 - Abducción Izq (°)')
+    ms_abduccion_eval2_der = models.IntegerField(null=True, blank=True, verbose_name='M. SUP. Eval2 - Abducción Der (°)')
+    
+    # ==================== MIEMBROS INFERIORES ====================
+    # Evaluación 1
+    mi_flexion_eval1_izq = models.IntegerField(null=True, blank=True, verbose_name='M. INF. Eval1 - Flexión Izq (°)')
+    mi_flexion_eval1_der = models.IntegerField(null=True, blank=True, verbose_name='M. INF. Eval1 - Flexión Der (°)')
+    mi_extension_eval1_izq = models.IntegerField(null=True, blank=True, verbose_name='M. INF. Eval1 - Extensión Izq (°)')
+    mi_extension_eval1_der = models.IntegerField(null=True, blank=True, verbose_name='M. INF. Eval1 - Extensión Der (°)')
+    
+    # Evaluación 2
+    mi_flexion_eval2_izq = models.IntegerField(null=True, blank=True, verbose_name='M. INF. Eval2 - Flexión Izq (°)')
+    mi_flexion_eval2_der = models.IntegerField(null=True, blank=True, verbose_name='M. INF. Eval2 - Flexión Der (°)')
+    mi_extension_eval2_izq = models.IntegerField(null=True, blank=True, verbose_name='M. INF. Eval2 - Extensión Izq (°)')
+    mi_extension_eval2_der = models.IntegerField(null=True, blank=True, verbose_name='M. INF. Eval2 - Extensión Der (°)')
+    
+    # ==================== TRONCO ====================
+    # Evaluación 1
+    tronco_flexion_eval1 = models.IntegerField(null=True, blank=True, verbose_name='Tronco Eval1 - Flexión (°)')
+    tronco_extension_eval1 = models.IntegerField(null=True, blank=True, verbose_name='Tronco Eval1 - Extensión (°)')
+    tronco_lateral_izq_eval1 = models.IntegerField(null=True, blank=True, verbose_name='Tronco Eval1 - Lateral Izq (°)')
+    tronco_lateral_der_eval1 = models.IntegerField(null=True, blank=True, verbose_name='Tronco Eval1 - Lateral Der (°)')
+    
+    # Evaluación 2
+    tronco_flexion_eval2 = models.IntegerField(null=True, blank=True, verbose_name='Tronco Eval2 - Flexión (°)')
+    tronco_extension_eval2 = models.IntegerField(null=True, blank=True, verbose_name='Tronco Eval2 - Extensión (°)')
+    tronco_lateral_izq_eval2 = models.IntegerField(null=True, blank=True, verbose_name='Tronco Eval2 - Lateral Izq (°)')
+    tronco_lateral_der_eval2 = models.IntegerField(null=True, blank=True, verbose_name='Tronco Eval2 - Lateral Der (°)')
+    
+    # ==================== CUELLO ====================
+    # Evaluación 1
+    cuello_flexion_eval1 = models.IntegerField(null=True, blank=True, verbose_name='Cuello Eval1 - Flexión (°)')
+    cuello_extension_eval1 = models.IntegerField(null=True, blank=True, verbose_name='Cuello Eval1 - Extensión (°)')
+    cuello_lateral_izq_eval1 = models.IntegerField(null=True, blank=True, verbose_name='Cuello Eval1 - Lateral Izq (°)')
+    cuello_lateral_der_eval1 = models.IntegerField(null=True, blank=True, verbose_name='Cuello Eval1 - Lateral Der (°)')
+    cuello_rotacion_izq_eval1 = models.IntegerField(null=True, blank=True, verbose_name='Cuello Eval1 - Rotación Izq (°)')
+    cuello_rotacion_der_eval1 = models.IntegerField(null=True, blank=True, verbose_name='Cuello Eval1 - Rotación Der (°)')
+    
+    # Evaluación 2
+    cuello_flexion_eval2 = models.IntegerField(null=True, blank=True, verbose_name='Cuello Eval2 - Flexión (°)')
+    cuello_extension_eval2 = models.IntegerField(null=True, blank=True, verbose_name='Cuello Eval2 - Extensión (°)')
+    cuello_lateral_izq_eval2 = models.IntegerField(null=True, blank=True, verbose_name='Cuello Eval2 - Lateral Izq (°)')
+    cuello_lateral_der_eval2 = models.IntegerField(null=True, blank=True, verbose_name='Cuello Eval2 - Lateral Der (°)')
+    cuello_rotacion_izq_eval2 = models.IntegerField(null=True, blank=True, verbose_name='Cuello Eval2 - Rotación Izq (°)')
+    cuello_rotacion_der_eval2 = models.IntegerField(null=True, blank=True, verbose_name='Cuello Eval2 - Rotación Der (°)')
+    
+    class Meta:
+        abstract = True
+# =============================================================================
+# MODELO PRINCIPAL EXPEDIENTE
+# =============================================================================
 class Expediente(models.Model):
-    """
-    Modelo principal del expediente de fisioterapia de un paciente.
-    Se crea automáticamente al registrar un nuevo paciente.
-    """
+    """Expediente principal del paciente"""
     paciente = models.OneToOneField(
-        Patient,
-        on_delete=models.CASCADE,
-        related_name='expediente',
-        verbose_name='Paciente'
+        Patient, on_delete=models.CASCADE, related_name='expediente', verbose_name='Paciente'
     )
+    numero_expediente = models.CharField(max_length=20, unique=True, verbose_name='Número de expediente')
     
-    # Información general del expediente
-    numero_expediente = models.CharField(
-        max_length=20,
-        unique=True,
-        verbose_name='Número de expediente',
-        help_text='Número único de identificación del expediente'
-    )
-    
-    # Estado del expediente
     ESTADO_EXPEDIENTE = [
         ('ACTIVO', 'En tratamiento'),
         ('FINALIZADO', 'Tratamiento finalizado'),
         ('PAUSADO', 'Tratamiento pausado'),
         ('ABANDONADO', 'Abandonó tratamiento'),
     ]
-    estado = models.CharField(
-        max_length=15,
-        choices=ESTADO_EXPEDIENTE,
-        default='ACTIVO',
-        verbose_name='Estado del tratamiento'
-    )
-    
-    # Notas generales del expediente
-    notas_generales = models.TextField(
-        blank=True,
-        verbose_name='Notas generales del expediente'
-    )
-    
-    # Resumen del tratamiento
-    fecha_inicio_tratamiento = models.DateField(
-        null=True,
-        blank=True,
-        verbose_name='Fecha de inicio del tratamiento'
-    )
-    fecha_fin_tratamiento = models.DateField(
-        null=True,
-        blank=True,
-        verbose_name='Fecha de finalización del tratamiento'
-    )
+    estado = models.CharField(max_length=15, choices=ESTADO_EXPEDIENTE, default='ACTIVO', verbose_name='Estado del tratamiento')
+    notas_generales = models.TextField(blank=True, verbose_name='Notas generales del expediente')
+    fecha_inicio_tratamiento = models.DateField(null=True, blank=True, verbose_name='Fecha de inicio del tratamiento')
+    fecha_fin_tratamiento = models.DateField(null=True, blank=True, verbose_name='Fecha de finalización del tratamiento')
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -81,647 +169,285 @@ class Expediente(models.Model):
         return f"Exp. {self.numero_expediente} - {self.paciente}"
 
     def save(self, *args, **kwargs):
-        """Genera automáticamente el número de expediente si es nuevo"""
         if not self.numero_expediente:
             year = timezone.now().year
             last_exp = Expediente.objects.filter(
                 numero_expediente__startswith=f'EXP-FIS-{year}'
             ).order_by('-numero_expediente').first()
-            
-            if last_exp:
-                last_number = int(last_exp.numero_expediente.split('-')[-1])
-                new_number = last_number + 1
-            else:
-                new_number = 1
-            
-            self.numero_expediente = f'EXP-FIS-{year}-{new_number:05d}'
-        
+            last_number = int(last_exp.numero_expediente.split('-')[-1]) + 1 if last_exp else 1
+            self.numero_expediente = f'EXP-FIS-{year}-{last_number:05d}'
         super().save(*args, **kwargs)
 
     @property
-    def cantidad_sesiones(self):
-        """Total de sesiones realizadas"""
-        return self.historias.filter(
-            tipo_historia__in=['SEGUIMIENTO', 'FINALIZACION']
-        ).count()
-
+    def tiene_primera_consulta(self):
+        return hasattr(self, 'primera_consulta')
+    
     @property
-    def sesiones_completadas(self):
-        """Sesiones de seguimiento completadas"""
-        return self.historias.filter(tipo_historia='SEGUIMIENTO').count()
-
+    def sesiones_seguimiento(self):
+        return self.seguimientos.all().order_by('numero_sesion')
+    
     @property
-    def primera_consulta_realizada(self):
-        """Verifica si ya se realizó la primera consulta"""
-        return self.historias.filter(tipo_historia='PRIMERA_CONSULTA').exists()
-
+    def total_sesiones(self):
+        return self.seguimientos.count()
+    
+    @property
+    def tiene_finalizacion(self):
+        return hasattr(self, 'finalizacion')
+    
     @property
     def tratamiento_finalizado(self):
-        """Verifica si el tratamiento ya fue finalizado"""
-        return self.historias.filter(tipo_historia='FINALIZACION').exists()
-
-
-class HistoriaClinicaFisioterapia(models.Model):
-    """
-    Modelo para los tres tipos de historias clínicas de fisioterapia:
-    1. PRIMERA CONSULTA: Evaluación inicial completa
-    2. CONSULTA DE SEGUIMIENTO: Sesiones de tratamiento
-    3. CONSULTA DE FINALIZACIÓN: Alta y plan de ejercicios
-    """
-    TIPO_HISTORIA = [
-        ('PRIMERA_CONSULTA', 'Primera Consulta - Evaluación Inicial'),
-        ('SEGUIMIENTO', 'Consulta de Seguimiento - Sesión de Tratamiento'),
-        ('FINALIZACION', 'Consulta de Finalización - Alta del Paciente'),
-    ]
+        return hasattr(self, 'finalizacion')
+# =============================================================================
+# 1. PRIMERA CONSULTA - SOLO UNA VEZ POR EXPEDIENTE
+# =============================================================================
+class PrimeraConsulta(BaseEvaluacionDolor, BaseEvaluacionMuscular, BaseEvaluacionGoniometrica):
+    """Evaluación inicial del paciente - Se crea UNA SOLA VEZ"""
     
-    NIVEL_DOLOR = [
-        (0, '0 - Sin dolor'),
-        (1, '1 - Dolor muy leve'),
-        (2, '2 - Dolor leve'),
-        (3, '3 - Dolor moderado'),
-        (4, '4 - Dolor moderado-alto'),
-        (5, '5 - Dolor alto'),
-        (6, '6 - Dolor muy alto'),
-        (7, '7 - Dolor severo'),
-        (8, '8 - Dolor muy severo'),
-        (9, '9 - Dolor extremadamente severo'),
-        (10, '10 - Máximo dolor imaginable'),
+    TIPO_SANGRE_CHOICES = [
+        ('A+', 'A+'), ('A-', 'A-'), ('B+', 'B+'), ('B-', 'B-'),
+        ('AB+', 'AB+'), ('AB-', 'AB-'), ('O+', 'O+'), ('O-', 'O-'),
     ]
     
     # Relaciones
-    expediente = models.ForeignKey(
-        Expediente,
-        on_delete=models.CASCADE,
-        related_name='historias',
-        verbose_name='Expediente'
+    expediente = models.OneToOneField(
+        Expediente, on_delete=models.CASCADE, related_name='primera_consulta', verbose_name='Expediente'
+    )
+    profesional = models.ForeignKey(
+        CustomUser, on_delete=models.PROTECT, related_name='primeras_consultas',
+        limit_choices_to={'tipo_usuario__in': ['FISIO', 'MEDIC']}, verbose_name='Profesional tratante'
     )
     cita = models.OneToOneField(
-        Cita,
+        'citas.Cita',
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='historia_fisioterapia',
+        related_name='primera_consulta',
         verbose_name='Cita asociada'
     )
-    profesional = models.ForeignKey(
-        CustomUser,
-        on_delete=models.PROTECT,
-        related_name='historias_fisioterapia',
-        limit_choices_to={'tipo_usuario__in': ['FISIO', 'MEDIC']},
-        verbose_name='Fisioterapeuta tratante'
-    )
+    fecha_consulta = models.DateTimeField(default=timezone.now, verbose_name='Fecha de consulta')
     
-    # Datos comunes a todas las consultas
-    tipo_historia = models.CharField(
-        max_length=20,
-        choices=TIPO_HISTORIA,
-        verbose_name='Tipo de consulta'
-    )
-    fecha_consulta = models.DateTimeField(
-        default=timezone.now,
-        verbose_name='Fecha de consulta'
-    )
-    numero_sesion = models.PositiveIntegerField(
-        default=1,
-        verbose_name='Número de sesión',
-        help_text='Número de sesión del tratamiento'
-    )
+    # Datos básicos del paciente
+    peso = models.FloatField(null=True, blank=True, verbose_name='Peso (kg)')
+    estatura = models.FloatField(null=True, blank=True, verbose_name='Estatura (cm)')
+    tipo_sangre = models.CharField(max_length=3, choices=TIPO_SANGRE_CHOICES, blank=True, verbose_name='Tipo de sangre')
+
+    # Motivo y diagnóstico
+    motivo_consulta = models.TextField(verbose_name='Motivo de consulta')
+    tiempo_evolucion = models.CharField(max_length=100, blank=True, verbose_name='Tiempo de evolución')
+    mecanismo_lesion = models.TextField(blank=True, verbose_name='Mecanismo de lesión')
+    tratamientos_previos = models.TextField(blank=True, verbose_name='Tratamientos previos')
+
+    # ==================== ANTECEDENTES PATOLÓGICOS Y HEREDOPERSONALES ====================
+    diabetes = models.TextField(blank=True, verbose_name='Diabetes')
+    alergias = models.TextField(blank=True, verbose_name='Alergias')
+    hipertension = models.TextField(blank=True, verbose_name='Hipertensión')
+    cancer = models.TextField(blank=True, verbose_name='Cáncer')
+    traumatismos_previos = models.TextField(blank=True, verbose_name='Traumatismos previos')
+    cirugias_previas = models.TextField(blank=True, verbose_name='Cirugías previas')
+    transfusiones_sanguineas = models.TextField(blank=True, verbose_name='Transfusiones sanguíneas')
+    enf_reumaticas = models.TextField(blank=True, verbose_name='Enfermedades reumáticas')
+    accidentes = models.TextField(blank=True, verbose_name='Accidentes')
+    cardiopatias = models.TextField(blank=True, verbose_name='Cardiopatías')
+    fracturas = models.TextField(blank=True, verbose_name='Fracturas')
+    espasmos_o_contracturas = models.TextField(blank=True, verbose_name='Espasmos o contracturas musculares')
     
-    # ============ CAMPOS PARA PRIMERA CONSULTA ============
-    # Motivo de consulta
-    motivo_consulta = models.TextField(
-        blank=True,
-        verbose_name='Motivo de consulta',
-        help_text='Razón principal por la que el paciente acude a fisioterapia'
-    )
+    # Campos especiales
+    signos_vitales = models.TextField(blank=True, verbose_name='Signos vitales', help_text='T/A.. TEMP.. FC.. FR..')
+    condiciones_medicas = models.TextField(blank=True, verbose_name='Condiciones médicas adicionales')
+    antecedentes_traumatologicos = models.TextField(blank=True, verbose_name='Antecedentes traumatológicos')
+    antecedentes_quirurgicos = models.TextField(blank=True, verbose_name='Antecedentes quirúrgicos')
+    enfermedades_cronicas = models.TextField(blank=True, verbose_name='Enfermedades crónicas')
+    medicacion_actual = models.TextField(blank=True, verbose_name='Medicación actual')
+
+    # ==================== HÁBITOS DE SALUD ====================
+    actividad_fisica = models.CharField(max_length=200, blank=True, verbose_name='Actividad física')
+    consumo_tabaco = models.CharField(max_length=200, blank=True, verbose_name='Consumo de tabaco')
+    consumo_alcohol = models.CharField(max_length=200, blank=True, verbose_name='Consumo de alcohol')
+    consumo_drogas = models.CharField(max_length=200, blank=True, verbose_name='Consumo de drogas')
+    automedicacion = models.CharField(max_length=200, blank=True, verbose_name='Automedicación')
+    esta_embarazada = models.CharField(max_length=200, blank=True, verbose_name='¿Está embarazada?')
     
-    # Historia de la condición actual
-    tiempo_evolucion = models.CharField(
-        max_length=100,
-        blank=True,
-        verbose_name='Tiempo de evolución',
-        help_text='¿Desde cuándo presenta el problema?'
-    )
-    mecanismo_lesion = models.TextField(
-        blank=True,
-        verbose_name='Mecanismo de lesión',
-        help_text='¿Cómo ocurrió la lesión o problema?'
-    )
-    tratamientos_previos = models.TextField(
-        blank=True,
-        verbose_name='Tratamientos previos',
-        help_text='¿Ha recibido tratamiento anterior para esta condición?'
-    )
+    pasatiempos = models.CharField(max_length=200, blank=True, verbose_name='Pasatiempos')
+    estado_ingravidez = models.CharField(max_length=200, blank=True, verbose_name='Estado de ingravidez')
+    cuantos_hijos_tiene = models.PositiveIntegerField(null=True, blank=True, verbose_name='Número de hijos')
+
+    # Diagnostico Medico en Rehabilitacion
+    reflejos = models.TextField(blank=True, verbose_name='Reflejos')
+    sensibilidad = models.TextField(blank=True, verbose_name='Sensibilidad')
+    Lenguaje_orientacion = models.TextField(blank=True, verbose_name='Lenguaje y orientación')
+    otros_diagnosticos = models.TextField(blank=True, verbose_name='Otros diagnósticos médicos')
+
+    # Evaluación del dolor inicial (campos adicionales específicos)
+    nivel_dolor_inicial = models.IntegerField(choices=BaseEvaluacionDolor.NIVEL_DOLOR, verbose_name='Nivel de dolor inicial')
+    tipo_dolor = models.CharField(max_length=100, blank=True, verbose_name='Tipo de dolor')
+    factores_agravantes = models.TextField(blank=True, verbose_name='Factores que agravan el dolor')
+    factores_atenuantes = models.TextField(blank=True, verbose_name='Factores que alivian el dolor')
     
-    # Antecedentes médicos relevantes
-    antecedentes_traumatologicos = models.TextField(
-        blank=True,
-        verbose_name='Antecedentes traumatológicos',
-        help_text='Fracturas, luxaciones, esguinces previos, etc.'
-    )
-    antecedentes_quirurgicos = models.TextField(
-        blank=True,
-        verbose_name='Antecedentes quirúrgicos',
-        help_text='Cirugías previas relacionadas'
-    )
-    enfermedades_cronicas = models.TextField(
-        blank=True,
-        verbose_name='Enfermedades crónicas',
-        help_text='Diabetes, hipertensión, artritis, etc.'
-    )
-    medicacion_actual = models.TextField(
-        blank=True,
-        verbose_name='Medicación actual',
-        help_text='Medicamentos que toma actualmente'
-    )
+    # Diagnóstico y plan
+    diagnostico_fisioterapia = models.TextField(verbose_name='Diagnóstico fisioterapéutico')
+    objetivos_tratamiento = models.TextField(blank=True, verbose_name='Objetivos del tratamiento')
+    plan_tratamiento = models.TextField(blank=True, verbose_name='Plan de acción')
+    frecuencia_sesiones = models.CharField(max_length=100, blank=True, verbose_name='Frecuencia de sesiones recomendada')
+    numero_sesiones_recomendadas = models.PositiveIntegerField(null=True, blank=True, verbose_name='Número de sesiones recomendadas')
     
-    # Evaluación del dolor inicial
-    nivel_dolor_inicial = models.IntegerField(
-        choices=NIVEL_DOLOR,
-        null=True,
-        blank=True,
-        verbose_name='Nivel de dolor (Escala EVA)',
-        help_text='Escala Visual Analógica del Dolor (0-10)'
-    )
-    localizacion_dolor = models.TextField(
-        blank=True,
-        verbose_name='Localización del dolor',
-        help_text='¿Dónde duele exactamente?'
-    )
-    tipo_dolor = models.CharField(
-        max_length=100,
-        blank=True,
-        verbose_name='Tipo de dolor',
-        help_text='Punzante, quemante, sordo, etc.'
-    )
-    factores_agravantes = models.TextField(
-        blank=True,
-        verbose_name='Factores que agravan el dolor',
-        help_text='Movimientos, posiciones o actividades que aumentan el dolor'
-    )
-    factores_atenuantes = models.TextField(
-        blank=True,
-        verbose_name='Factores que alivian el dolor',
-        help_text='Posiciones, medicamentos o acciones que disminuyen el dolor'
-    )
+    # Nota clínica
+    nota_subjetivo = models.TextField(blank=True, verbose_name='Subjetivo')
+    nota_analisis = models.TextField(blank=True, verbose_name='Análisis')
+    nota_observacion = models.TextField(blank=True, verbose_name='Observación')
     
-    # Evaluación física inicial
-    inspeccion_visual = models.TextField(
-        blank=True,
-        verbose_name='Inspección visual',
-        help_text='Observaciones sobre postura, deformidades, inflamación, etc.'
-    )
-    palpacion = models.TextField(
-        blank=True,
-        verbose_name='Palpación',
-        help_text='Hallazgos a la palpación: tensión muscular, puntos gatillo, etc.'
-    )
-    evaluacion_postural = models.TextField(
-        blank=True,
-        verbose_name='Evaluación postural',
-        help_text='Análisis de la postura del paciente'
-    )
-    rango_movimiento = models.TextField(
-        blank=True,
-        verbose_name='Rango de movimiento (ROM)',
-        help_text='Evaluación de la movilidad articular'
-    )
-    fuerza_muscular = models.TextField(
-        blank=True,
-        verbose_name='Fuerza muscular',
-        help_text='Evaluación de la fuerza muscular (Escala Daniels)'
-    )
-    pruebas_especiales = models.TextField(
-        blank=True,
-        verbose_name='Pruebas especiales',
-        help_text='Resultados de pruebas ortopédicas específicas'
-    )
-    
-    # Diagnóstico fisioterapéutico
-    diagnostico_fisioterapia = models.TextField(
-        blank=True,
-        verbose_name='Diagnóstico fisioterapéutico',
-        help_text='Diagnóstico desde la perspectiva de la fisioterapia'
-    )
-    objetivos_tratamiento = models.TextField(
-        blank=True,
-        verbose_name='Objetivos del tratamiento',
-        help_text='Metas a alcanzar con el tratamiento fisioterapéutico'
-    )
-    plan_tratamiento = models.TextField(
-        blank=True,
-        verbose_name='Plan de tratamiento',
-        help_text='Descripción general del plan de tratamiento'
-    )
-    frecuencia_sesiones = models.CharField(
-        max_length=100,
-        blank=True,
-        verbose_name='Frecuencia de sesiones recomendada',
-        help_text='Ej: 2 veces por semana'
-    )
-    numero_sesiones_recomendadas = models.PositiveIntegerField(
-        null=True,
-        blank=True,
-        verbose_name='Número de sesiones recomendadas',
-        help_text='Cantidad total de sesiones estimadas'
-    )
-    
-    # ============ CAMPOS PARA CONSULTA DE SEGUIMIENTO ============
-    # Evaluación del progreso
-    nivel_dolor_actual = models.IntegerField(
-        choices=NIVEL_DOLOR,
-        null=True,
-        blank=True,
-        verbose_name='Nivel de dolor actual (EVA)',
-        help_text='Escala EVA del dolor en esta sesión'
-    )
-    evolucion_paciente = models.TextField(
-        blank=True,
-        verbose_name='Evolución del paciente',
-        help_text='¿Cómo ha evolucionado desde la última sesión?'
-    )
-    respuesta_tratamiento = models.TextField(
-        blank=True,
-        verbose_name='Respuesta al tratamiento',
-        help_text='¿Cómo ha respondido al tratamiento aplicado?'
-    )
-    
-    # Tratamiento aplicado en la sesión
-    tecnicas_aplicadas = models.TextField(
-        blank=True,
-        verbose_name='Técnicas aplicadas',
-        help_text='Técnicas de fisioterapia utilizadas en esta sesión'
-    )
-    ejercicios_realizados = models.TextField(
-        blank=True,
-        verbose_name='Ejercicios realizados',
-        help_text='Ejercicios terapéuticos ejecutados en la sesión'
-    )
-    terapia_manual = models.TextField(
-        blank=True,
-        verbose_name='Terapia manual',
-        help_text='Técnicas de terapia manual aplicadas'
-    )
-    agentes_fisicos = models.TextField(
-        blank=True,
-        verbose_name='Agentes físicos',
-        help_text='Ultrasonido, electroterapia, calor, frío, etc.'
-    )
-    duracion_sesion = models.PositiveIntegerField(
-        null=True,
-        blank=True,
-        verbose_name='Duración de la sesión (minutos)',
-        help_text='Tiempo total de la sesión en minutos'
-    )
-    
-    # Reevaluación
-    reevaluacion_rango_movimiento = models.TextField(
-        blank=True,
-        verbose_name='Reevaluación ROM',
-        help_text='Nuevos hallazgos en rango de movimiento'
-    )
-    reevaluacion_fuerza = models.TextField(
-        blank=True,
-        verbose_name='Reevaluación fuerza muscular',
-        help_text='Progreso en fuerza muscular'
-    )
-    reevaluacion_funcional = models.TextField(
-        blank=True,
-        verbose_name='Reevaluación funcional',
-        help_text='Evaluación de actividades funcionales'
-    )
-    
-    # ============ CAMPOS PARA CONSULTA DE FINALIZACIÓN ============
-    # Evaluación final
-    nivel_dolor_final = models.IntegerField(
-        choices=NIVEL_DOLOR,
-        null=True,
-        blank=True,
-        verbose_name='Nivel de dolor final (EVA)',
-        help_text='Escala EVA del dolor al finalizar tratamiento'
-    )
-    objetivos_alcanzados = models.TextField(
-        blank=True,
-        verbose_name='Objetivos alcanzados',
-        help_text='¿Se cumplieron los objetivos del tratamiento?'
-    )
-    mejorias_observadas = models.TextField(
-        blank=True,
-        verbose_name='Mejorías observadas',
-        help_text='Cambios positivos observados durante el tratamiento'
-    )
-    limitaciones_residuales = models.TextField(
-        blank=True,
-        verbose_name='Limitaciones residuales',
-        help_text='Limitaciones que aún persisten (si las hay)'
-    )
-    
-    # Plan de alta
-    plan_ejercicios_casa = models.TextField(
-        blank=True,
-        verbose_name='Plan de ejercicios para casa',
-        help_text='Ejercicios que el paciente debe realizar en casa'
-    )
-    frecuencia_ejercicios = models.CharField(
-        max_length=200,
-        blank=True,
-        verbose_name='Frecuencia de ejercicios',
-        help_text='¿Con qué frecuencia debe realizar los ejercicios?'
-    )
-    duracion_ejercicios = models.CharField(
-        max_length=100,
-        blank=True,
-        verbose_name='Duración de la rutina',
-        help_text='Tiempo estimado de la rutina de ejercicios'
-    )
-    recomendaciones_finales = models.TextField(
-        blank=True,
-        verbose_name='Recomendaciones finales',
-        help_text='Consejos y precauciones post-tratamiento'
-    )
-    actividades_permitidas = models.TextField(
-        blank=True,
-        verbose_name='Actividades permitidas',
-        help_text='Actividades que el paciente puede realizar'
-    )
-    actividades_restringidas = models.TextField(
-        blank=True,
-        verbose_name='Actividades restringidas',
-        help_text='Actividades que debe evitar temporalmente'
-    )
-    seguimiento_recomendado = models.CharField(
-        max_length=200,
-        blank=True,
-        verbose_name='Seguimiento recomendado',
-        help_text='¿Se recomienda seguimiento? ¿En cuánto tiempo?'
-    )
-    
-    # Evaluación de satisfacción
-    satisfaccion_paciente = models.CharField(
-        max_length=50,
-        blank=True,
-        verbose_name='Satisfacción del paciente',
-        help_text='Nivel de satisfacción con el tratamiento'
-    )
-    
-    # Observaciones generales
-    observaciones = models.TextField(
-        blank=True,
-        verbose_name='Observaciones adicionales'
-    )
-    
-    # Archivos adjuntos (imágenes, estudios, etc.)
-    imagen_lesion = models.ImageField(
-        upload_to='expedientes/imagenes_lesiones/%Y/%m/',
-        blank=True,
-        null=True,
-        verbose_name='Imagen de la lesión'
-    )
-    imagen_evolucion = models.ImageField(
-        upload_to='expedientes/imagenes_evolucion/%Y/%m/',
-        blank=True,
-        null=True,
-        verbose_name='Imagen de evolución'
-    )
-    estudios_complementarios = models.FileField(
-        upload_to='expedientes/estudios/%Y/%m/',
-        blank=True,
-        null=True,
-        verbose_name='Estudios complementarios',
-        help_text='Radiografías, resonancias, etc.'
-    )
-    archivo_ejercicios = models.FileField(
-        upload_to='expedientes/ejercicios/%Y/%m/',
-        blank=True,
-        null=True,
-        verbose_name='Archivo de ejercicios',
-        help_text='PDF o imagen con la rutina de ejercicios'
-    )
+    # Archivos adjuntos
+    imagen_lesion = models.ImageField(upload_to='expedientes/primera_consulta/', blank=True, null=True, verbose_name='Imagen de la lesión')
+    estudios_complementarios = models.FileField(upload_to='expedientes/estudios/', blank=True, null=True, verbose_name='Estudios complementarios')
     
     # Metadatos
+    observaciones = models.TextField(blank=True, verbose_name='Observaciones adicionales')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
+    
     class Meta:
-        verbose_name = 'Historia Clínica de Fisioterapia'
-        verbose_name_plural = 'Historias Clínicas de Fisioterapia'
-        ordering = ['-fecha_consulta']
-        indexes = [
-            models.Index(fields=['expediente', '-fecha_consulta']),
-            models.Index(fields=['profesional', '-fecha_consulta']),
-            models.Index(fields=['tipo_historia']),
-            models.Index(fields=['cita']),
-        ]
-        permissions = [
-            ("can_view_full_history", "Puede ver historia clínica completa"),
-            ("can_create_initial_consultation", "Puede crear primera consulta"),
-            ("can_finalize_treatment", "Puede finalizar tratamientos"),
-        ]
-
+        verbose_name = 'Primera Consulta'
+        verbose_name_plural = 'Primeras Consultas'
+    
     def __str__(self):
-        tipo = dict(self.TIPO_HISTORIA).get(self.tipo_historia, '')
-        return f"{tipo} - {self.expediente.paciente} (Sesión {self.numero_sesion})"
-
-    def clean(self):
-        """Validaciones personalizadas"""
-        super().clean()
-        
-        # Validar que solo haya una primera consulta por expediente
-        if self.tipo_historia == 'PRIMERA_CONSULTA':
-            existe_primera = HistoriaClinicaFisioterapia.objects.filter(
-                expediente=self.expediente,
-                tipo_historia='PRIMERA_CONSULTA'
-            ).exclude(pk=self.pk if self.pk else None)
-            
-            if existe_primera.exists():
-                raise ValidationError(
-                    'Ya existe una primera consulta para este expediente'
-                )
-        
-        # Validar que no se pueda crear seguimiento sin primera consulta
-        if self.tipo_historia in ['SEGUIMIENTO', 'FINALIZACION']:
-            if not self.expediente.primera_consulta_realizada:
-                raise ValidationError(
-                    'Debe realizar la primera consulta antes de crear seguimientos'
-                )
-        
-        # Validar que no se pueda crear finalización si ya existe una
-        if self.tipo_historia == 'FINALIZACION':
-            existe_finalizacion = HistoriaClinicaFisioterapia.objects.filter(
-                expediente=self.expediente,
-                tipo_historia='FINALIZACION'
-            ).exclude(pk=self.pk if self.pk else None)
-            
-            if existe_finalizacion.exists():
-                raise ValidationError(
-                    'Ya existe una consulta de finalización para este expediente'
-                )
-        
-        # Validar campos requeridos según tipo de historia
-        if self.tipo_historia == 'PRIMERA_CONSULTA':
-            if not self.motivo_consulta:
-                raise ValidationError({
-                    'motivo_consulta': 'El motivo de consulta es obligatorio en la primera consulta'
-                })
-            if not self.diagnostico_fisioterapia:
-                raise ValidationError({
-                    'diagnostico_fisioterapia': 'El diagnóstico es obligatorio en la primera consulta'
-                })
-        
-        if self.tipo_historia == 'SEGUIMIENTO':
-            if self.nivel_dolor_actual is None:
-                raise ValidationError({
-                    'nivel_dolor_actual': 'Debe evaluar el nivel de dolor en cada seguimiento'
-                })
-            if not self.tecnicas_aplicadas:
-                raise ValidationError({
-                    'tecnicas_aplicadas': 'Debe registrar las técnicas aplicadas en la sesión'
-                })
-        
-        if self.tipo_historia == 'FINALIZACION':
-            if self.nivel_dolor_final is None:
-                raise ValidationError({
-                    'nivel_dolor_final': 'Debe evaluar el nivel de dolor final'
-                })
-            if not self.plan_ejercicios_casa:
-                raise ValidationError({
-                    'plan_ejercicios_casa': 'Debe proporcionar un plan de ejercicios'
-                })
-
+        return f"Primera Consulta - {self.expediente.paciente} - {self.fecha_consulta.date()}"
+    
     def save(self, *args, **kwargs):
-        """Lógica personalizada al guardar"""
-        is_new = self.pk is None
-        
-        # Si es nuevo, actualizar el número de sesión automáticamente
-        if is_new:
-            if self.tipo_historia == 'PRIMERA_CONSULTA':
-                self.numero_sesion = 1
-                # Marcar fecha de inicio de tratamiento
-                if not self.expediente.fecha_inicio_tratamiento:
-                    self.expediente.fecha_inicio_tratamiento = self.fecha_consulta.date()
-                    self.expediente.save(update_fields=['fecha_inicio_tratamiento'])
-            else:
-                # Para seguimientos y finalización, incrementar número de sesión
-                ultima_sesion = HistoriaClinicaFisioterapia.objects.filter(
-                    expediente=self.expediente
-                ).order_by('-numero_sesion').first()
-                
-                if ultima_sesion:
-                    self.numero_sesion = ultima_sesion.numero_sesion + 1
-        
-        # Si es finalización, actualizar estado del expediente
-        if self.tipo_historia == 'FINALIZACION':
-            self.expediente.estado = 'FINALIZADO'
-            self.expediente.fecha_fin_tratamiento = self.fecha_consulta.date()
-            self.expediente.save(update_fields=['estado', 'fecha_fin_tratamiento'])
-        
+        if not self.pk:
+            if not self.expediente.fecha_inicio_tratamiento:
+                self.expediente.fecha_inicio_tratamiento = self.fecha_consulta.date()
+                self.expediente.save(update_fields=['fecha_inicio_tratamiento'])
         super().save(*args, **kwargs)
 
-    @property
-    def porcentaje_mejoria_dolor(self):
-        """Calcula el porcentaje de mejoría del dolor comparando con la primera consulta"""
-        if self.tipo_historia in ['SEGUIMIENTO', 'FINALIZACION']:
-            primera_consulta = HistoriaClinicaFisioterapia.objects.filter(
-                expediente=self.expediente,
-                tipo_historia='PRIMERA_CONSULTA'
-            ).first()
-            
-            if primera_consulta and primera_consulta.nivel_dolor_inicial:
-                dolor_actual = self.nivel_dolor_actual if self.tipo_historia == 'SEGUIMIENTO' else self.nivel_dolor_final
-                if dolor_actual is not None:
-                    mejoria = primera_consulta.nivel_dolor_inicial - dolor_actual
-                    porcentaje = (mejoria / primera_consulta.nivel_dolor_inicial) * 100
-                    return round(max(0, porcentaje), 2)
-        return None
-
-    @property
-    def es_primera_consulta(self):
-        return self.tipo_historia == 'PRIMERA_CONSULTA'
-
-    @property
-    def es_seguimiento(self):
-        return self.tipo_historia == 'SEGUIMIENTO'
-
-    @property
-    def es_finalizacion(self):
-        return self.tipo_historia == 'FINALIZACION'
-
-
-class PlanEjercicios(models.Model):
-    """
-    Modelo para almacenar los planes de ejercicios detallados
-    que se entregan al paciente en la finalización
-    """
-    historia_finalizacion = models.ForeignKey(
-        HistoriaClinicaFisioterapia,
-        on_delete=models.CASCADE,
-        related_name='planes_ejercicios',
-        limit_choices_to={'tipo_historia': 'FINALIZACION'},
-        verbose_name='Historia de finalización'
+# =============================================================================
+# 2. CONSULTA DE SEGUIMIENTO - MÚLTIPLES SESIONES
+# =============================================================================
+class ConsultaSegumiento(BaseEvaluacionDolor, BaseEvaluacionMuscular, BaseEvaluacionGoniometrica):
+    """Sesiones de seguimiento - Se pueden crear MÚLTIPLES registros"""
+    
+    # Relaciones
+    expediente = models.ForeignKey(
+        Expediente, on_delete=models.CASCADE, related_name='seguimientos', verbose_name='Expediente'
     )
-    nombre_ejercicio = models.CharField(
-        max_length=200,
-        verbose_name='Nombre del ejercicio'
+    profesional = models.ForeignKey(
+        CustomUser, on_delete=models.PROTECT, related_name='seguimientos',
+        limit_choices_to={'tipo_usuario__in': ['FISIO', 'MEDIC']}, verbose_name='Profesional tratante'
     )
-    descripcion = models.TextField(
-        verbose_name='Descripción del ejercicio'
-    )
-    series = models.CharField(
-        max_length=50,
-        verbose_name='Series',
-        help_text='Ej: 3 series'
-    )
-    repeticiones = models.CharField(
-        max_length=50,
-        verbose_name='Repeticiones',
-        help_text='Ej: 10-12 repeticiones'
-    )
-    frecuencia_diaria = models.CharField(
-        max_length=100,
-        verbose_name='Frecuencia diaria',
-        help_text='Ej: 2 veces al día'
-    )
-    duracion = models.CharField(
-        max_length=100,
-        blank=True,
-        verbose_name='Duración',
-        help_text='Tiempo de mantenimiento del ejercicio'
-    )
-    imagen_ejercicio = models.ImageField(
-        upload_to='expedientes/ejercicios/imagenes/',
-        blank=True,
+    cita = models.ForeignKey(
+        'citas.Cita',
+        on_delete=models.SET_NULL,
         null=True,
-        verbose_name='Imagen del ejercicio'
-    )
-    video_ejercicio = models.FileField(
-        upload_to='expedientes/ejercicios/videos/',
         blank=True,
-        null=True,
-        verbose_name='Video demostrativo'
+        related_name='seguimientos',
+        verbose_name='Cita asociada'
     )
-    observaciones = models.TextField(
-        blank=True,
-        verbose_name='Observaciones del ejercicio'
-    )
-    orden = models.PositiveIntegerField(
-        default=1,
-        verbose_name='Orden',
-        help_text='Orden de ejecución de los ejercicios'
-    )
+    fecha_consulta = models.DateTimeField(default=timezone.now, verbose_name='Fecha de consulta')
+    numero_sesion = models.PositiveIntegerField(verbose_name='Número de sesión')
+    
+    # Evaluación del progreso en ESTA sesión
+    nivel_dolor_actual = models.IntegerField(choices=BaseEvaluacionDolor.NIVEL_DOLOR, verbose_name='Nivel de dolor actual')
+    evolucion_paciente = models.TextField(verbose_name='Evolución desde última sesión')
+    respuesta_tratamiento = models.TextField(blank=True, verbose_name='Respuesta al tratamiento')
+    
+    # Tratamiento aplicado en ESTA sesión
+    tecnicas_aplicadas = models.TextField(verbose_name='Técnicas aplicadas')
+    ejercicios_realizados = models.TextField(blank=True, verbose_name='Ejercicios realizados')
+    duracion_sesion = models.PositiveIntegerField(null=True, blank=True, verbose_name='Duración (minutos)')
+    
+    # Reevaluación
+    reevaluacion_rango_movimiento = models.TextField(blank=True, verbose_name='Reevaluación ROM')
+    
+    # Tratamiento realizado en esta sesión
+    tratamiento_realizado = models.TextField(blank=True, verbose_name='Tratamiento realizado en esta sesión')
+    
+    # Observaciones y plan
+    observaciones = models.TextField(blank=True, verbose_name='Observaciones')
+    plan_proxima_sesion = models.TextField(blank=True, verbose_name='Plan para próxima sesión')
+    imagen_evolucion = models.ImageField(upload_to='expedientes/evolucion/', blank=True, null=True, verbose_name='Imagen de evolución')
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
+    
     class Meta:
-        verbose_name = 'Plan de Ejercicio'
-        verbose_name_plural = 'Planes de Ejercicios'
-        ordering = ['orden']
-        indexes = [
-            models.Index(fields=['historia_finalizacion']),
-        ]
-
+        verbose_name = 'Consulta de Seguimiento'
+        verbose_name_plural = 'Consultas de Seguimiento'
+        ordering = ['expediente', 'numero_sesion']
+        unique_together = [['expediente', 'numero_sesion']]
+    
     def __str__(self):
-        return f"Ejercicio: {self.nombre_ejercicio} - Orden {self.orden}"
-
-
-# Señal para crear expediente automáticamente al crear paciente lo estoy trabajando desde el archivo signals.py para evitar problemas de importación circular
+        return f"Sesión {self.numero_sesion} - {self.expediente.paciente} - {self.fecha_consulta.date()}"
+    
+    def save(self, *args, **kwargs):
+        if self.pk is None:
+            ultima_sesion = ConsultaSegumiento.objects.filter(
+                expediente=self.expediente
+            ).order_by('-numero_sesion').first()
+            self.numero_sesion = (ultima_sesion.numero_sesion + 1) if ultima_sesion else 1
+        super().save(*args, **kwargs)
+    
+    @property
+    def porcentaje_mejoria(self):
+        if hasattr(self.expediente, 'primera_consulta'):
+            dolor_inicial = self.expediente.primera_consulta.nivel_dolor_inicial
+            if dolor_inicial and self.nivel_dolor_actual:
+                mejoria = dolor_inicial - self.nivel_dolor_actual
+                return round((mejoria / dolor_inicial) * 100, 2)
+        return None
+# =============================================================================
+# 3. CONSULTA DE FINALIZACIÓN - SOLO UNA VEZ POR EXPEDIENTE
+# =============================================================================
+class ConsultaFinalizacion(BaseEvaluacionDolor, BaseEvaluacionMuscular, BaseEvaluacionGoniometrica):
+    """Alta del paciente y plan de ejercicios - Se crea UNA SOLA VEZ"""
+    
+    MOTIVOS_FINALIZACION = [
+        ('ALTA', 'Alta por mejoría completa'),
+        ('MEJORIA', 'Mejoría significativa pero no completa'),
+        ('NO_MEJORIA', 'No mejoría o empeoramiento'),
+        ('RENUNCIA', 'Renuncia voluntaria del paciente'),
+        ('TRASLADO', 'Traslado a otro centro o profesional'),
+        ('FALLECIMIENTO', 'Fallecimiento del paciente'),
+    ]
+    # Relaciones
+    expediente = models.OneToOneField(
+        Expediente, on_delete=models.CASCADE, related_name='finalizacion', verbose_name='Expediente'
+    )
+    profesional = models.ForeignKey(
+        CustomUser, on_delete=models.PROTECT, related_name='finalizaciones',
+        limit_choices_to={'tipo_usuario__in': ['FISIO', 'MEDIC']}, verbose_name='Profesional tratante'
+    )
+    cita = models.OneToOneField(
+        'citas.Cita',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='finalizacion',
+        verbose_name='Cita asociada'
+    )
+    fecha_consulta = models.DateTimeField(default=timezone.now, verbose_name='Fecha de consulta')
+    
+    # Datos de finalizacion tratamiento
+    motivos_finalizacion = models.CharField(max_length=20, choices=MOTIVOS_FINALIZACION, verbose_name='Motivos de finalización')
+    
+    # Evaluación final
+    nivel_dolor_final = models.IntegerField(choices=BaseEvaluacionDolor.NIVEL_DOLOR, verbose_name='Nivel de dolor final')
+    
+    # Resumen del tratamiento
+    descripcion_tratamiento = models.TextField(blank=True, verbose_name='Descripción del tratamiento realizado')
+    objetivos_alcanzados = models.TextField(verbose_name='Objetivos alcanzados')
+    recomendaciones_finales = models.TextField(blank=True, verbose_name='Recomendaciones finales')
+    observaciones = models.TextField(blank=True, null=True, verbose_name='Observaciones adicionales')
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = 'Consulta de Finalización'
+        verbose_name_plural = 'Consultas de Finalización'
+    
+    def __str__(self):
+        return f"Finalización - {self.expediente.paciente} - {self.fecha_consulta.date()}"
+    
+    def save(self, *args, **kwargs):
+        self.expediente.estado = 'FINALIZADO'
+        self.expediente.fecha_fin_tratamiento = self.fecha_consulta.date()
+        self.expediente.save(update_fields=['estado', 'fecha_fin_tratamiento'])
+        super().save(*args, **kwargs)

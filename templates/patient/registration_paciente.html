@@ -173,47 +173,6 @@
                             
                             <!-- Columna 2 -->
                             <div class="col-md-6">
-                                <!-- Tarjeta Datos Médicos -->
-                                <div class="card mb-4">
-                                    <div class="card-header bg-light">
-                                        <h5 class="mb-0">Datos Médicos</h5>
-                                    </div>
-                                    <div class="card-body">
-                                        <!-- Campo Tipo Sangre -->
-                                        <div class="mb-3">
-                                            <label for="{{ form.tipo_sangre.id_for_label }}" class="form-label">{{ form.tipo_sangre.label }}</label>
-                                            {{ form.tipo_sangre }}
-                                            {% if form.tipo_sangre.errors %}
-                                                <div class="text-danger">{{ form.tipo_sangre.errors }}</div>
-                                            {% endif %}
-                                            {% if form.tipo_sangre.help_text %}
-                                                <small class="form-text text-muted">{{ form.tipo_sangre.help_text }}</small>
-                                            {% endif %}
-                                        </div>
-                                        
-                                        <!-- Campo Alergias -->
-                                        <div class="mb-3">
-                                            <label for="{{ form.alergias.id_for_label }}" class="form-label">{{ form.alergias.label }}</label>
-                                            {{ form.alergias }}
-                                            {% if form.alergias.errors %}
-                                                <div class="text-danger">{{ form.alergias.errors }}</div>
-                                            {% endif %}
-                                        </div>
-                                        
-                                        <!-- Campo Condiciones Médicas -->
-                                        <div class="mb-3">
-                                            <label for="{{ form.condiciones_medicas.id_for_label }}" class="form-label">{{ form.condiciones_medicas.label }}</label>
-                                            {{ form.condiciones_medicas }}
-                                            {% if form.condiciones_medicas.errors %}
-                                                <div class="text-danger">{{ form.condiciones_medicas.errors }}</div>
-                                            {% endif %}
-                                            {% if form.condiciones_medicas.help_text %}
-                                                <small class="form-text text-muted">{{ form.condiciones_medicas.help_text }}</small>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                </div>
-                                
                                 <!-- Tarjeta Imagen de Perfil -->
                                 <div class="card mb-4">
                                     <div class="card-header bg-light">
@@ -224,20 +183,35 @@
                                             <label class="form-label">Imagen de Perfil</label>
                                             <div class="input-group">
                                                 <input type="text" class="form-control" id="file-name" readonly value="{% if form.foto_perfil.value %}{{ form.foto_perfil.value }}{% endif %}">
-                                                <label class="input-group-text btn btn-danger">
-                                                    <i class="fas fa-folder-open"></i> Seleccionar archivo
-                                                    <input type="file" class="d-none" id="file-input" name="foto_perfil" onchange="document.getElementById('file-name').value = this.files[0]?.name || '';">
+                                                <label class="input-group-text btn btn-primary">
+                                                    <i class="fas fa-folder-open"></i> Seleccionar
+                                                    <input type="file" class="d-none" id="file-input" name="foto_perfil" accept="image/*" onchange="handleImageSelect(this)">
                                                 </label>
+                                                <button type="button" class="btn btn-danger" id="clearImageBtn" onclick="clearImage()" style="display: {% if form.foto_perfil.value %}inline-block{% else %}none{% endif %};">
+                                                    <i class="fas fa-trash-alt"></i> Limpiar
+                                                </button>
                                             </div>
-                                            {% if form.foto_perfil.value and form.foto_perfil.value.url %}
-                                            <div class="mt-2">
-                                                <small>Imagen actual:</small>
-                                                <img src="{{ form.foto_perfil.value.url }}" class="img-thumbnail" style="max-height: 100px;">
+
+                                            <!-- Previsualización de la imagen -->
+                                            <div id="imagePreview" class="mt-3 text-center">
+                                                {% if form.foto_perfil.value and form.foto_perfil.value.url %}
+                                                <div id="currentImageContainer">
+                                                    <small>Imagen actual:</small><br>
+                                                    <img src="{{ form.foto_perfil.value.url }}" class="img-thumbnail" style="max-height: 150px; max-width: 100%;">
+                                                </div>
+                                                {% endif %}
+                                                <div id="newImagePreview" style="display: none;">
+                                                    <small>Nueva imagen:</small><br>
+                                                    <img id="previewImg" class="img-thumbnail" style="max-height: 150px; max-width: 100%;">
+                                                </div>
                                             </div>
-                                            {% endif %}
+
                                             {% if form.foto_perfil.errors %}
                                                 <div class="text-danger">{{ form.foto_perfil.errors }}</div>
                                             {% endif %}
+
+                                            <!-- Campo oculto para indicar que se debe limpiar la imagen -->
+                                            <input type="hidden" name="clear_image" id="clearImageFlag" value="false">
                                         </div>
                                     </div>
                                 </div>
@@ -343,18 +317,57 @@
 </div>
 
 <script>
+    // Función para manejar la selección de imagen
+    function handleImageSelect(input) {
+        const fileName = input.files[0]?.name || '';
+        document.getElementById('file-name').value = fileName;
+        
+        // Limpiar la bandera de limpiar imagen
+        document.getElementById('clearImageFlag').value = 'false';
+        
+        // Mostrar previsualización
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('currentImageContainer').style.display = 'none';
+                document.getElementById('newImagePreview').style.display = 'block';
+                document.getElementById('previewImg').src = e.target.result;
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+        
+        // Mostrar botón de limpiar
+        document.getElementById('clearImageBtn').style.display = 'inline-block';
+    }
+    
+    // Función para limpiar la imagen
+    function clearImage() {
+        // Limpiar el input file
+        const fileInput = document.getElementById('file-input');
+        fileInput.value = '';
+        document.getElementById('file-name').value = '';
+        
+        // Activar la bandera de limpiar imagen
+        document.getElementById('clearImageFlag').value = 'true';
+        
+        // Ocultar previsualizaciones
+        document.getElementById('currentImageContainer').style.display = 'none';
+        document.getElementById('newImagePreview').style.display = 'none';
+        
+        // Ocultar el botón de limpiar
+        document.getElementById('clearImageBtn').style.display = 'none';
+    }
+    
     // Función para calcular edad y actualizar obligatoriedad de campos de acompañante
     function calcularEdadYActualizar() {
         const fechaNacimiento = document.getElementById('{{ form.fecha_nacimiento.id_for_label }}').value;
         
         if (!fechaNacimiento) {
-            // Si no hay fecha, mostrar como opcional (sin mostrar badges)
             document.getElementById('obligatorioBadge').style.display = 'none';
             document.getElementById('opcionalBadge').style.display = 'none';
             return;
         }
         
-        // Calcular edad
         const hoy = new Date();
         const fechaNac = new Date(fechaNacimiento);
         let edad = hoy.getFullYear() - fechaNac.getFullYear();
@@ -366,12 +379,10 @@
         
         const esMenor = edad < 18;
         
-        // Actualizar badges
         if (esMenor) {
             document.getElementById('obligatorioBadge').style.display = 'inline-block';
             document.getElementById('opcionalBadge').style.display = 'none';
             
-            // Marcar campos como requeridos visualmente
             const nombreInput = document.getElementById('{{ form.nombre_acompanante.id_for_label }}');
             const parentescoInput = document.getElementById('{{ form.parentesco_acompanante.id_for_label }}');
             const telefonoInput = document.getElementById('{{ form.telefono_acompanante.id_for_label }}');
@@ -382,10 +393,10 @@
             if (telefonoInput) telefonoInput.required = true;
             if (direccionInput) direccionInput.required = true;
             
-            // Cambiar estilo de labels
             const labels = document.querySelectorAll('#acompananteCard .form-label');
             labels.forEach(label => {
-                if (label.innerText.includes('Nombre') || label.innerText.includes('Parentesco') || label.innerText.includes('Teléfono') || label.innerText.includes('Dirección')) {
+                if (label.innerText.includes('Nombre') || label.innerText.includes('Parentesco') || 
+                    label.innerText.includes('Teléfono') || label.innerText.includes('Dirección')) {
                     label.style.fontWeight = 'bold';
                     label.style.color = '#dc3545';
                 }
@@ -394,7 +405,6 @@
             document.getElementById('obligatorioBadge').style.display = 'none';
             document.getElementById('opcionalBadge').style.display = 'inline-block';
             
-            // Quitar required de campos
             const nombreInput = document.getElementById('{{ form.nombre_acompanante.id_for_label }}');
             const parentescoInput = document.getElementById('{{ form.parentesco_acompanante.id_for_label }}');
             const telefonoInput = document.getElementById('{{ form.telefono_acompanante.id_for_label }}');
@@ -405,7 +415,6 @@
             if (telefonoInput) telefonoInput.required = false;
             if (direccionInput) direccionInput.required = false;
             
-            // Restaurar estilo de labels
             const labels = document.querySelectorAll('#acompananteCard .form-label');
             labels.forEach(label => {
                 label.style.fontWeight = 'normal';
@@ -419,7 +428,6 @@
         const fechaNacimientoInput = document.getElementById('{{ form.fecha_nacimiento.id_for_label }}');
         if (fechaNacimientoInput) {
             fechaNacimientoInput.addEventListener('change', calcularEdadYActualizar);
-            // Calcular al cargar la página también
             calcularEdadYActualizar();
         }
     });

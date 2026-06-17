@@ -112,7 +112,7 @@
     <!-- RESULTADOS DE BÚSQUEDA                                          -->
     <!-- ================================================================ -->
     <div class="card shadow mb-4">
-        <div class="card-header py-3 bg-info d-flex justify-content-between align-items-center">
+        <div class="card-header py-3 bg-success d-flex justify-content-between align-items-center">
             <h6 class="m-0 font-weight-bold text-light">
                 <i class="fas fa-list mr-2"></i>Resultados
                 {% if is_paginated %}
@@ -163,7 +163,7 @@
                                     <div>
                                         <span class="font-weight-bold">{{ cita.profesional.get_full_name }}</span>
                                         <br>
-                                        <small class="text-muted">{{ cita.profesional.get_tipo_usuario_display }}</small>
+                                        <small class="text-muted">{{ cita.profesional.especialidad_nombre }}</small>
                                     </div>
                                 </div>
                             </td>
@@ -172,7 +172,7 @@
                                     {{ cita.paciente.apellidos }}, {{ cita.paciente.nombres }}
                                 </a>
                                 <br>
-                                <small class="text-muted">{{ cita.paciente.documento_identidad }}</small>
+                                <small class="text-muted">{{ cita.paciente.tipo_documento.document_type }}: {{ cita.paciente.documento_identidad }}</small>
                             </td>
                             <td>
                                 <span title="{{ cita.motivo }}">

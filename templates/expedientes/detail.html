@@ -1,0 +1,164 @@
+<!-- expedientes/templates/expedientes/detail.html  Panel de control para el médico (template):-->
+{% extends "layout/base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4>Expediente: {{ expediente.numero_expediente }}</h4>
+                    <p>Paciente: {{ expediente.paciente.nombres }} {{ expediente.paciente.apellidos }}</p>
+                </div>
+                
+                <div class="card-body">
+                    <!-- Resumen de tratamiento -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="card bg-info text-white">
+                                <div class="card-body">
+                                    <h5>Sesiones Realizadas</h5>
+                                    <h2>{{ total_sesiones }}</h2>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-success text-white">
+                                <div class="card-body">
+                                    <h5>Mejoría Total</h5>
+                                    <h2>{{ porcentaje_mejoria|default:"0" }}%</h2>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-warning text-white">
+                                <div class="card-body">
+                                    <h5>Estado</h5>
+                                    <h2>{{ expediente.get_estado_display }}</h2>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-secondary text-white">
+                                <div class="card-body">
+                                    <h5>Duración</h5>
+                                    <h2>{{ expediente.fecha_inicio_tratamiento|timesince }}</h2>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Gráfica de evolución -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5>Evolución del Dolor (Escala EVA 0-10)</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="evolucionDolor" 
+                                    data-evolucion='{{ evolucion_dolor|json_script:"evolucion-data" }}'>
+                            </canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- Lista de sesiones -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Sesiones de Seguimiento</h5>
+                            <button class="btn btn-sm btn-primary" 
+                                    onclick="location.href='{% url 'crear_seguimiento' expediente.id %}'">
+                                <i class="fas fa-plus"></i> Nueva Sesión
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Sesión #</th>
+                                            <th>Fecha</th>
+                                            <th>Dolor (EVA)</th>
+                                            <th>Técnicas Aplicadas</th>
+                                            <th>Duración</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for sesion in seguimientos %}
+                                        <tr>
+                                            <td>{{ sesion.numero_sesion }}</td>
+                                            <td>{{ sesion.fecha_consulta|date:"d/m/Y H:i" }}</td>
+                                            <td>
+                                                <div class="progress">
+                                                    <div class="progress-bar bg-danger" 
+                                                         style="width: {{ sesion.nivel_dolor_actual|floatformat:0 }}0%">
+                                                        {{ sesion.nivel_dolor_actual }}/10
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>{{ sesion.tecnicas_aplicadas|truncatechars:50 }}</td>
+                                            <td>{{ sesion.duracion_sesion }} min</td>
+                                            <td>
+                                                <a href="{% url 'detalle_seguimiento' sesion.id %}" 
+                                                   class="btn btn-sm btn-info">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <a href="{% url 'editar_seguimiento' sesion.id %}" 
+                                                   class="btn btn-sm btn-warning">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="6" class="text-center">
+                                                No hay sesiones de seguimiento registradas
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Gráfica de evolución del dolor
+    const evolucionData = JSON.parse(document.getElementById('evolucion-data').textContent);
+    
+    if (evolucionData && evolucionData.length > 0) {
+        const ctx = document.getElementById('evolucionDolor').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: evolucionData.map(d => `Sesión ${d.sesion}`),
+                datasets: [{
+                    label: 'Nivel de Dolor (EVA)',
+                    data: evolucionData.map(d => d.dolor),
+                    borderColor: 'rgb(255, 99, 132)',
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 10,
+                        title: {
+                            display: true,
+                            text: 'Nivel de Dolor (0-10)'
+                        }
+                    }
+                }
+            }
+        });
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,59 @@
+<div class="si-no-especificacion-widget">
+    <div class="row">
+        <div class="col-auto">
+            <label class="form-label fw-bold">{{ widget.etiqueta_si_no }}</label>
+            <div class="d-flex gap-3">
+                <div class="form-check">
+                    <input type="radio" 
+                           name="{{ widget.name_si_no }}" 
+                           value="si" 
+                           id="{{ widget.name }}_si"
+                           class="form-check-input"
+                           {% if widget.estado == 'si' %}checked{% endif %}>
+                    <label class="form-check-label" for="{{ widget.name }}_si">Sí</label>
+                </div>
+                <div class="form-check">
+                    <input type="radio" 
+                           name="{{ widget.name_si_no }}" 
+                           value="no" 
+                           id="{{ widget.name }}_no"
+                           class="form-check-input"
+                           {% if widget.estado == 'no' %}checked{% endif %}>
+                    <label class="form-check-label" for="{{ widget.name }}_no">No</label>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <input type="text" 
+                   name="{{ widget.name_especificacion }}" 
+                   id="{{ widget.name }}_especificacion"
+                   class="form-control"
+                   placeholder="{{ widget.placeholder }}"
+                   value="{{ widget.especificacion }}"
+                   {% if widget.estado == 'no' %}disabled{% endif %}>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        const radioSi = document.getElementById('{{ widget.name }}_si');
+        const radioNo = document.getElementById('{{ widget.name }}_no');
+        const inputEspecificacion = document.getElementById('{{ widget.name }}_especificacion');
+        
+        function actualizarEstadoEspecificacion() {
+            if (radioSi && radioSi.checked) {
+                inputEspecificacion.disabled = false;
+            } else if (radioNo && radioNo.checked) {
+                inputEspecificacion.disabled = true;
+                inputEspecificacion.value = '';
+            }
+        }
+        
+        if (radioSi && radioNo && inputEspecificacion) {
+            radioSi.addEventListener('change', actualizarEstadoEspecificacion);
+            radioNo.addEventListener('change', actualizarEstadoEspecificacion);
+            actualizarEstadoEspecificacion();
+        }
+    })();
+</script>

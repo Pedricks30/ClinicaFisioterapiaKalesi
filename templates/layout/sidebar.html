@@ -1,6 +1,6 @@
 {% load static %}
 <!-- Sidebar -->
-<ul class="navbar-nav sidebar sidebar-dark accordion" id="accordionSidebar" style="background-color: #198754;">
+<ul class="navbar-nav sidebar sidebar-dark accordion collapse show" id="accordionSidebar" style="background-color: #198754;">
     <!-- Divider -->
     <hr class="sidebar-divider my-1">
     <!-- Logo container -->
@@ -64,7 +64,6 @@
             <a class="collapse-item" href="{% url 'listar_fisioterapeuta' %}">Gestion Fisioterapeutas</a>
             <a class="collapse-item" href="{% url 'listar_horarios' %}">Asignar Horarios</a>
             <a class="collapse-item" href="{% url 'citas:calendario' %}"> Calendario de citas</a>
-           
             
         </div>
     </div>
@@ -131,7 +130,7 @@
 
     <!-- Sidebar Toggler (Sidebar) -->
     <div class="text-center d-none d-md-inline">
-        <button class="rounded-circle border-0" id="sidebarToggle"></button>
+        <button type="button" class="rounded-circle border-0" id="sidebarToggle" data-toggle="collapse" data-target="#accordionSidebar" aria-controls="accordionSidebar" aria-expanded="true" aria-label="Toggle sidebar"></button>
     </div>
 </ul>
 <!-- End of Sidebar -->

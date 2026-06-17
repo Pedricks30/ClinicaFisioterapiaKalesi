@@ -1,0 +1,48 @@
+[
+  {
+    "model": "cuestionarios.cuestionario",
+    "pk": 1,
+    "fields": {
+      "nombre": "Evaluación de Hombro y Pectoral",
+      "descripcion": "Cuestionario completo para evaluar dolor, funcionalidad y progreso en pacientes con afecciones de hombro y pectoral.",
+      "tipo_cuestionario": "HOMBRO_PECTORAL",
+      "activo": true,
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "cuestionarios.preguntacuestionario",
+    "pk": 1,
+    "fields": {
+      "cuestionario": 1,
+      "texto_pregunta": "¿Sientes dolor en el hombro o pectoral en reposo?",
+      "tipo_pregunta": "ESCALA_NUMERICA",
+      "orden": 1,
+      "obligatorio": true,
+      "escala_min": 0,
+      "escala_max": 10,
+      "etiqueta_min": "Sin dolor",
+      "etiqueta_max": "Máximo dolor",
+      "es_indicador_clave": true,
+      "umbral_alarma": 5
+    }
+  },
+  {
+    "model": "cuestionarios.preguntacuestionario",
+    "pk": 2,
+    "fields": {
+      "cuestionario": 1,
+      "texto_pregunta": "¿Sientes dolor al levantar el brazo o al realizar movimientos específicos?",
+      "tipo_pregunta": "ESCALA_NUMERICA",
+      "orden": 2,
+      "obligatorio": true,
+      "escala_min": 0,
+      "escala_max": 10,
+      "etiqueta_min": "Sin dolor",
+      "etiqueta_max": "Dolor incapacitante",
+      "es_indicador_clave": true,
+      "umbral_alarma": 5
+    }
+  }
+]

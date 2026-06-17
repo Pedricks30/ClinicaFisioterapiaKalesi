@@ -11,7 +11,7 @@ from django.views.generic import (
     CreateView, UpdateView, DeleteView, ListView, DetailView
 )
 from .models import CustomUser, DocumentType, Specialties
-from .forms import CustomUserCreationForm, CustomPasswordChangeForm, DocumentTypeForm, SpecialtiesForm
+from .forms import CustomUserCreationForm, CustomUserChangeForm, CustomPasswordChangeForm, DocumentTypeForm, SpecialtiesForm
 from django.contrib.auth.views import PasswordChangeView
 
 User = get_user_model()
@@ -19,7 +19,7 @@ User = get_user_model()
 @method_decorator(permission_required(['user.add_customuser', 'user.change_customuser'], raise_exception=True), name='dispatch')
 class GestionarUsuarioView(CreateView):
     model = CustomUser
-    form_class = CustomUserCreationForm
+    form_class = CustomUserCreationForm  # Usar el formulario de creación
     template_name = 'user/registration_user.html'
     success_url = reverse_lazy('listar_usuarios')
 
@@ -34,7 +34,7 @@ class GestionarUsuarioView(CreateView):
 
 class EditarUsuarioView(UpdateView):
     model = CustomUser
-    form_class = CustomUserCreationForm
+    form_class = CustomUserChangeForm  # ¡Cambiado! Usar el formulario de edición
     template_name = 'user/registration_user.html'
     success_url = reverse_lazy('listar_usuarios')
     
@@ -54,10 +54,8 @@ class ListarUsuariosView(ListView):
     ordering = ['username']
 
     def get_context_data(self, **kwargs):
-        # Llama al método get_context_data de la clase padre
         context = super().get_context_data(**kwargs)
-        # Agrega la URL del botón "Crear" al contexto
-        context['url_boton'] = reverse('gestionar_usuario')  # Cambia 'gestionar_usuario' por el nombre de tu URL
+        context['url_boton'] = reverse('gestionar_usuario')
         return context
 
 @method_decorator(permission_required('user.delete_customuser', raise_exception=True), name='dispatch')
@@ -78,30 +76,25 @@ class PerfilUsuarioView(DetailView):
     context_object_name = 'user'
 
     def get_object(self, queryset=None):
-        # Si se proporciona un user_id, obtener ese usuario
         if 'user_id' in self.kwargs:
             return get_object_or_404(User, id=self.kwargs['user_id'])
-        # Si no, devolver el usuario actual
         return self.request.user
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Determinar si la vista se está usando para ver el perfil de otro usuario
         context['is_from_list'] = 'user_id' in self.kwargs
         return context
 
 @method_decorator(permission_required(['user.add_documenttype', 'user.change_documenttype'], raise_exception=True), name='dispatch')
-# Crear DocumentType (AJAX)
 class GestionarDocumentTypeView(CreateView):
     model = DocumentType
     form_class = DocumentTypeForm
     template_name = 'document/registration_document.html'
     success_url = reverse_lazy('listar_documentos')
 
-    # En GestionarDocumentTypeView (CreateView)
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['editar'] = False  # Indica que es creación
+        context['editar'] = False
         return context
 
     def form_valid(self, form):
@@ -115,17 +108,15 @@ class GestionarDocumentTypeView(CreateView):
             return JsonResponse({'success': False, 'errors': form.errors})
         return super().form_invalid(form)
 
-# Editar DocumentType (AJAX)
 class EditarDocumentTypeView(UpdateView):
     model = DocumentType
     form_class = DocumentTypeForm
     template_name = 'document/registration_document.html'
     success_url = reverse_lazy('listar_documentos')
 
-    # En EditarDocumentTypeView (UpdateView)
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['editar'] = True  # Indica que es edición
+        context['editar'] = True
         return context
 
     def form_valid(self, form):
@@ -147,9 +138,9 @@ class ListarDocumentTypesView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['form'] = DocumentTypeForm()  # Agregar el formulario al contexto
+        context['form'] = DocumentTypeForm()
         context['url_boton'] = reverse_lazy('gestionar_documento')
-        context['accionBoton'] = 'modal'  # Cambia a 'redirect' si quieres redirigir
+        context['accionBoton'] = 'modal'
         return context
 
     def get(self, request, *args, **kwargs):
@@ -169,12 +160,11 @@ class ListarDocumentTypesView(ListView):
             return super().get(request, *args, **kwargs)
 
 @method_decorator(permission_required('user.delete_documenttype', raise_exception=True), name='dispatch')
-# Eliminar DocumentType (AJAX)
 class EliminarDocumentTypeView(DeleteView):
     model = DocumentType
     success_url = reverse_lazy('listar_documentos')
 
-    def post(self, request, *args, **kwargs):  # Cambiamos delete por post
+    def post(self, request, *args, **kwargs):
         self.object = self.get_object()
         self.object.delete()
         return JsonResponse({
@@ -191,7 +181,7 @@ class GestionarEspecialidadView(CreateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['editar'] = False # Indica que es creación
+        context['editar'] = False
         return context
 
     def form_valid(self, form):
@@ -220,7 +210,7 @@ class EditarEspecialidadView(UpdateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['editar'] = True  # Indica que es edición
+        context['editar'] = True
         return context
 
     def form_valid(self, form):
@@ -255,30 +245,22 @@ class ListarEspecialidadView(ListView):
 
     def get(self, request, *args, **kwargs):
         if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            # Optimización para respuesta AJAX
             queryset = self.get_queryset()
-
-            # Formateo de datos con mejor manejo de fechas y seguridad
             data = [{
                 'id_specialty': esp.id_specialty,
                 'specialties': esp.specialties,
                 'created_at': esp.created_at.strftime("%Y-%m-%d %H:%M:%S") if esp.created_at else None,
                 'update_at': esp.update_at.strftime("%Y-%m-%d %H:%M:%S") if esp.update_at else None,
-                # Agrega más campos si es necesario
             } for esp in queryset]
-
-            # Configuración de respuesta JSON segura
             return JsonResponse(
                 {
                     'data': data,
                     'recordsTotal': queryset.count(),
-                    'recordsFiltered': queryset.count(),  # Para compatibilidad con DataTables
-                    'draw': request.GET.get('draw', 1)     # Parámetro típico de DataTables
+                    'recordsFiltered': queryset.count(),
+                    'draw': request.GET.get('draw', 1)
                 },
                 safe=False
             )
-
-        # Comportamiento normal para renderizado HTML
         return super().get(request, *args, **kwargs)
 
 @method_decorator(permission_required('user.delete_specialty', raise_exception=True), name='dispatch')
@@ -295,6 +277,6 @@ class EliminarEspecialidadView(DeleteView):
         })
 
 class CambiarContrasenaView(PasswordChangeView):
-    form_class = CustomPasswordChangeForm #Usar el formulario personalizado
+    form_class = CustomPasswordChangeForm
     template_name = 'user/change_password.html'
     success_url = reverse_lazy('perfil_usuario')

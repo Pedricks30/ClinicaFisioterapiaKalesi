@@ -29,8 +29,9 @@ urlpatterns = [
     path('horario/', include('horario.urls')),  # URLs de la app médica
     path('citas/', include('citas.urls')),  # URLs de la app de citas
     path('paciente/', include('paciente.urls')),  # URLs de la app de pacientes}
-    #path('expedientes/', include('expedientes.urls')),  # URLs de la app de expediente
+    path('expedientes/', include('expedientes.urls')),  # URLs de la app de expediente
     path('notifications/', include('notifications.urls')),  # URLs de notificaciones
+    path('cuestionarios/', include('cuestionarios.urls')),  # URLs de la app de cuestionarios
     
 ]
 

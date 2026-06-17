@@ -1,0 +1,587 @@
+{% extends 'expedientes/actos/base_form.html' %}
+{% load static %}
+{% load form_filters %}
+
+{% block form_content %}
+
+<!-- Header de Información de la Cita -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="alert {% if es_admin %}alert-warning{% else %}alert-info{% endif %}">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <i class="fas fa-info-circle"></i> 
+                    <strong>Información de la cita:</strong> 
+                    {{ cita.fecha|date:"d/m/Y H:i" }} - Profesional: {{ cita.profesional.get_full_name }}
+                    {% if cita.tipo_cita == 'PRIMERA_CONSULTA' %}
+                        <span class="badge badge-info ml-2">Primera Consulta</span>
+                    {% endif %}
+                </div>
+                {% if es_admin %}
+                <div>
+                    <span class="badge badge-warning">
+                        <i class="fas fa-crown"></i> Modo Administrador: Tienes permisos especiales
+                    </span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Datos Básicos -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-user-md"></i> Datos Básicos del Paciente
+        </h6>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label>{{ form.peso.label }}</label>
+                    <div class="input-group">
+                        {{ form.peso }}
+                        <div class="input-group-append">
+                            <span class="input-group-text">kg</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label>{{ form.estatura.label }}</label>
+                    <div class="input-group">
+                        {{ form.estatura }}
+                        <div class="input-group-append">
+                            <span class="input-group-text">cm</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label>{{ form.tipo_sangre.label }}</label>
+                    {{ form.tipo_sangre }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Motivo y Diagnóstico -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-stethoscope"></i> Motivo y Diagnóstico
+        </h6>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="form-group">
+                    <label>{{ form.motivo_consulta.label }} <span class="text-danger">*</span></label>
+                    {{ form.motivo_consulta }}
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label>{{ form.tiempo_evolucion.label }}</label>
+                    {{ form.tiempo_evolucion }}
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label>{{ form.mecanismo_lesion.label }}</label>
+                    {{ form.mecanismo_lesion }}
+                </div>
+            </div>
+            <div class="col-md-12">
+                <div class="form-group">
+                    <label>{{ form.tratamientos_previos.label }}</label>
+                    {{ form.tratamientos_previos }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Evaluación del Dolor con Slider -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-burn"></i> Evaluación del Dolor
+        </h6>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-7">
+                <div class="form-group">
+                    <label>Escala Visual Analógica (EVA) - Nivel de Dolor</label>
+                    {{ form.nivel_dolor_inicial }}
+                    <div class="pain-slider-container mt-3">
+                        <input type="range" id="painSlider" min="0" max="10" value="0" step="1" class="pain-slider">
+                        <div class="pain-labels">
+                            <div class="d-flex justify-content-between mt-2">
+                                <span class="pain-label-0">0<br><small>Sin dolor</small></span>
+                                <span class="pain-label-1">1</span>
+                                <span class="pain-label-2">2</span>
+                                <span class="pain-label-3">3</span>
+                                <span class="pain-label-4">4</span>
+                                <span class="pain-label-5">5<br><small>Moderado</small></span>
+                                <span class="pain-label-6">6</span>
+                                <span class="pain-label-7">7</span>
+                                <span class="pain-label-8">8</span>
+                                <span class="pain-label-9">9</span>
+                                <span class="pain-label-10">10<br><small>Peor dolor</small></span>
+                            </div>
+                        </div>
+                        <div class="pain-value-display text-center mt-3">
+                            <h3>Nivel de dolor: <span id="painValue" class="font-weight-bold">0</span>/10</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-5">
+                <div class="form-group">
+                    <label>{{ form.tipo_dolor.label }}</label>
+                    {{ form.tipo_dolor }}
+                </div>
+                <div class="form-group">
+                    <label>{{ form.localizacion_dolor.label }}</label>
+                    {{ form.localizacion_dolor }}
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label>{{ form.factores_agravantes.label }}</label>
+                    {{ form.factores_agravantes }}
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label>{{ form.factores_atenuantes.label }}</label>
+                    {{ form.factores_atenuantes }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Evaluación Muscular -->
+<div class="card shadow mb-4 card-compact">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-dumbbell"></i> Evaluación Muscular (Grados 0-5)
+        </h6>
+    </div>
+    <div class="card-body">
+        <div class="row align-items-center">
+            <div class="col-md-4 muscular-image-wrapper mb-3 mb-md-0">
+                <img src="{% static 'img/evaluacion_muscular.webp' %}" alt="Referencia evaluación muscular" class="img-fluid muscular-image">
+                <p class="mt-3 mb-0 small text-muted">Escala de Daniels: 0=Sin contracción, 5=Fuerza normal</p>
+            </div>
+            <div class="col-md-8">
+                <div class="table-responsive compact-section">
+                    <table class="table table-bordered table-sm">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Región</th>
+                                <th colspan="2">Evaluación 1</th>
+                                <th colspan="2">Evaluación 2</th>
+                            </tr>
+                            <tr>
+                                <th></th>
+                                <th>Izq</th>
+                                <th>Der</th>
+                                <th>Izq</th>
+                                <th>Der</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Miembros Superiores</strong></td>
+                                <td>{{ form.ms_eval1_izquierda }}</td>
+                                <td>{{ form.ms_eval1_derecha }}</td>
+                                <td>{{ form.ms_eval2_izquierda }}</td>
+                                <td>{{ form.ms_eval2_derecha }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Miembros Inferiores</strong></td>
+                                <td>{{ form.mi_eval1_izquierda }}</td>
+                                <td>{{ form.mi_eval1_derecha }}</td>
+                                <td>{{ form.mi_eval2_izquierda }}</td>
+                                <td>{{ form.mi_eval2_derecha }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Tronco</strong></td>
+                                <td>{{ form.tronco_eval1_izquierda }}</td>
+                                <td>{{ form.tronco_eval1_derecha }}</td>
+                                <td>{{ form.tronco_eval2_izquierda }}</td>
+                                <td>{{ form.tronco_eval2_derecha }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Cuello</strong></td>
+                                <td>{{ form.cuello_eval1_izquierda }}</td>
+                                <td>{{ form.cuello_eval1_derecha }}</td>
+                                <td>{{ form.cuello_eval2_izquierda }}</td>
+                                <td>{{ form.cuello_eval2_derecha }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Evaluación Goniométrica - Versión Compacta -->
+<div class="card shadow mb-4 card-compact">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-ruler"></i> Evaluación Goniométrica (Rangos de Movimiento en Grados)
+        </h6>
+    </div>
+    <div class="card-body">
+        <ul class="nav nav-tabs" id="goniometricTabs" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link active" data-toggle="tab" href="#miembrosSuperiores">Miembros Superiores</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-toggle="tab" href="#miembrosInferiores">Miembros Inferiores</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-toggle="tab" href="#troncoCuello">Tronco y Cuello</a>
+            </li>
+        </ul>
+        
+        <div class="tab-content mt-3">
+            <!-- Miembros Superiores -->
+            <div class="tab-pane fade show active" id="miembrosSuperiores">
+                <div class="table-responsive compact-section">
+                    <table class="table table-sm table-bordered">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Movimiento</th>
+                                <th colspan="2">Evaluación 1</th>
+                                <th colspan="2">Evaluación 2</th>
+                            </tr>
+                            <tr>
+                                <th></th>
+                                <th>Izquierda</th><th>Derecha</th>
+                                <th>Izquierda</th><th>Derecha</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>Flexión</td><td>{{ form.ms_flexion_eval1_izq }}</td><td>{{ form.ms_flexion_eval1_der }}</td><td>{{ form.ms_flexion_eval2_izq }}</td><td>{{ form.ms_flexion_eval2_der }}</td></tr>
+                            <tr><td>Extensión</td><td>{{ form.ms_extension_eval1_izq }}</td><td>{{ form.ms_extension_eval1_der }}</td><td>{{ form.ms_extension_eval2_izq }}</td><td>{{ form.ms_extension_eval2_der }}</td></tr>
+                            <tr><td>Abducción</td><td>{{ form.ms_abduccion_eval1_izq }}</td><td>{{ form.ms_abduccion_eval1_der }}</td><td>{{ form.ms_abduccion_eval2_izq }}</td><td>{{ form.ms_abduccion_eval2_der }}</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Miembros Inferiores -->
+            <div class="tab-pane fade" id="miembrosInferiores">
+                <div class="table-responsive compact-section">
+                    <table class="table table-sm table-bordered">
+                        <thead class="thead-light">
+                            <tr><th>Movimiento</th><th colspan="2">Evaluación 1</th><th colspan="2">Evaluación 2</th></tr>
+                            <tr><th></th><th>Izquierda</th><th>Derecha</th><th>Izquierda</th><th>Derecha</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>Flexión</td><td>{{ form.mi_flexion_eval1_izq }}</td><td>{{ form.mi_flexion_eval1_der }}</td><td>{{ form.mi_flexion_eval2_izq }}</td><td>{{ form.mi_flexion_eval2_der }}</td></tr>
+                            <tr><td>Extensión</td><td>{{ form.mi_extension_eval1_izq }}</td><td>{{ form.mi_extension_eval1_der }}</td><td>{{ form.mi_extension_eval2_izq }}</td><td>{{ form.mi_extension_eval2_der }}</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Tronco y Cuello -->
+            <div class="tab-pane fade" id="troncoCuello">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="font-weight-bold">Tronco</h6>
+                        <table class="table table-sm table-bordered">
+                            <thead class="thead-light"><tr><th>Movimiento</th><th>Eval 1</th><th>Eval 2</th></tr></thead>
+                            <tbody>
+                                <tr><td>Flexión</td><td>{{ form.tronco_flexion_eval1 }}</td><td>{{ form.tronco_flexion_eval2 }}</td></tr>
+                                <tr><td>Extensión</td><td>{{ form.tronco_extension_eval1 }}</td><td>{{ form.tronco_extension_eval2 }}</td></tr>
+                                <tr><td>Lateral Izq</td><td>{{ form.tronco_lateral_izq_eval1 }}</td><td>{{ form.tronco_lateral_izq_eval2 }}</td></tr>
+                                <tr><td>Lateral Der</td><td>{{ form.tronco_lateral_der_eval1 }}</td><td>{{ form.tronco_lateral_der_eval2 }}</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="font-weight-bold">Cuello</h6>
+                        <table class="table table-sm table-bordered">
+                            <thead class="thead-light"><tr><th>Movimiento</th><th>Eval 1</th><th>Eval 2</th></tr></thead>
+                            <tbody>
+                                <tr><td>Flexión</td><td>{{ form.cuello_flexion_eval1 }}</td><td>{{ form.cuello_flexion_eval2 }}</td></tr>
+                                <tr><td>Extensión</td><td>{{ form.cuello_extension_eval1 }}</td><td>{{ form.cuello_extension_eval2 }}</td></tr>
+                                <tr><td>Lateral Izq</td><td>{{ form.cuello_lateral_izq_eval1 }}</td><td>{{ form.cuello_lateral_izq_eval2 }}</td></tr>
+                                <tr><td>Lateral Der</td><td>{{ form.cuello_lateral_der_eval1 }}</td><td>{{ form.cuello_lateral_der_eval2 }}</td></tr>
+                                <tr><td>Rotación Izq</td><td>{{ form.cuello_rotacion_izq_eval1 }}</td><td>{{ form.cuello_rotacion_izq_eval2 }}</td></tr>
+                                <tr><td>Rotación Der</td><td>{{ form.cuello_rotacion_der_eval1 }}</td><td>{{ form.cuello_rotacion_der_eval2 }}</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Antecedentes Patológicos -->
+<div class="card shadow mb-4 card-compact">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-notes-medical"></i> Antecedentes Patológicos y Heredopersonales
+        </h6>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            {% for field in form %}
+                {% if field.name in 'diabetes,alergias,hipertension,cancer,traumatismos_previos,cirugias_previas,transfusiones_sanguineas,enf_reumaticas,accidentes,cardiopatias,fracturas,espasmos_o_contracturas,actividad_fisica,consumo_tabaco,consumo_alcohol,consumo_drogas,automedicacion,esta_embarazada'|split:',' %}
+                    <div class="col-md-6 mb-2">
+                        {{ field }}
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Diagnóstico y Plan -->
+<div class="card shadow mb-4 card-compact card-accent">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-clipboard-list"></i> Diagnóstico y Plan de Tratamiento
+        </h6>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="form-group">
+                    <label>{{ form.diagnostico_fisioterapia.label }} <span class="text-danger">*</span></label>
+                    {{ form.diagnostico_fisioterapia }}
+                </div>
+            </div>
+            <div class="col-md-12">
+                <div class="form-group">
+                    <label>{{ form.objetivos_tratamiento.label }}</label>
+                    {{ form.objetivos_tratamiento }}
+                </div>
+            </div>
+            <div class="col-md-12">
+                <div class="form-group">
+                    <label>{{ form.plan_tratamiento.label }}</label>
+                    {{ form.plan_tratamiento }}
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label>{{ form.frecuencia_sesiones.label }}</label>
+                    {{ form.frecuencia_sesiones }}
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label>{{ form.numero_sesiones_recomendadas.label }}</label>
+                    {{ form.numero_sesiones_recomendadas }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Archivos Adjuntos -->
+<div class="card shadow mb-4 card-compact card-accent">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-paperclip"></i> Archivos Adjuntos
+        </h6>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label>{{ form.imagen_lesion.label }}</label>
+                    {{ form.imagen_lesion }}
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label>{{ form.estudios_complementarios.label }}</label>
+                    {{ form.estudios_complementarios }}
+                </div>
+            </div>
+            <div class="col-md-12">
+                <div class="form-group">
+                    <label>{{ form.observaciones.label }}</label>
+                    {{ form.observaciones }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card-compact {
+        border-radius: .85rem;
+    }
+    .card-compact .card-header {
+        padding: 0.9rem 1rem;
+        background-color: #f8f9ff;
+        border-bottom: 1px solid #dee2e6;
+    }
+    .card-compact .card-body {
+        padding: 1rem 1rem;
+    }
+    .card-compact .form-group {
+        margin-bottom: .85rem;
+    }
+    .card-compact .form-group label {
+        font-weight: 600;
+        color: #3d4f7c;
+    }
+    .card-accent {
+        border-left: .35rem solid #4e73df;
+    }
+    .muscular-image-wrapper {
+        text-align: center;
+    }
+    .muscular-image-wrapper img {
+        max-height: 220px;
+        width: auto;
+        border-radius: .75rem;
+        box-shadow: 0 10px 30px rgba(78, 115, 223, 0.12);
+    }
+    .muscular-image-wrapper p {
+        margin-top: .75rem;
+        color: #6c757d;
+    }
+    .pain-slider-container {
+        background: #ffffff;
+        border: 1px solid #dee2e6;
+        border-radius: 1rem;
+        padding: 1rem;
+    }
+    .pain-slider {
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        width: 100%;
+        height: 12px;
+        border-radius: 10px;
+        background: linear-gradient(to right, #28a745, #ffc107, #fd7e14, #dc3545);
+        outline: none;
+    }
+    .pain-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: white;
+        border: 2px solid #333;
+        cursor: pointer;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+    .pain-slider::-webkit-slider-thumb:hover {
+        transform: scale(1.12);
+    }
+    .pain-labels > div > span {
+        text-align: center;
+        flex: 1;
+        font-size: 12px;
+        font-weight: 600;
+    }
+    .pain-label-0 { color: #28a745; }
+    .pain-label-1, .pain-label-2, .pain-label-3, .pain-label-4 { color: #ffc107; }
+    .pain-label-5, .pain-label-6 { color: #fd7e14; }
+    .pain-label-7, .pain-label-8, .pain-label-9, .pain-label-10 { color: #dc3545; }
+    .pain-value-display h3 {
+        margin: 0;
+        font-size: 1.3rem;
+        color: #1f2d5a;
+    }
+    .compact-section .table-responsive {
+        margin-top: .5rem;
+    }
+    .compact-section .table-sm td,
+    .compact-section .table-sm th {
+        padding: .55rem .65rem;
+        vertical-align: middle;
+    }
+    .si-no-especificacion-widget {
+        background: #f8f9fc;
+        padding: 8px;
+        border-radius: 6px;
+        margin-bottom: 8px;
+    }
+    .si-no-especificacion-widget .row {
+        align-items: center;
+    }
+    .si-no-especificacion-widget .form-check {
+        margin-right: 15px;
+    }
+    table select, table input {
+        width: 100%;
+        min-width: 70px;
+    }
+    .nav-tabs .nav-link {
+        color: #4e73df;
+    }
+    .nav-tabs .nav-link.active {
+        font-weight: bold;
+        border-color: #4e73df #4e73df #fff;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Slider de dolor
+        const painSlider = document.getElementById('painSlider');
+        const painValue = document.getElementById('painValue');
+        const nivelDolorInput = document.getElementById('id_nivel_dolor_inicial');
+        
+        if (painSlider && painValue && nivelDolorInput) {
+            // Si ya tiene un valor, actualizar el slider
+            if (nivelDolorInput.value) {
+                painSlider.value = nivelDolorInput.value;
+                painValue.textContent = nivelDolorInput.value;
+            }
+            
+            painSlider.addEventListener('input', function() {
+                const value = this.value;
+                painValue.textContent = value;
+                nivelDolorInput.value = value;
+            });
+        }
+        
+        // Manejo de campos Si/No para habilitar/deshabilitar especificación
+        document.querySelectorAll('.si-no-especificacion-widget').forEach(function(widget) {
+            const radioSi = widget.querySelector('input[value="si"]');
+            const radioNo = widget.querySelector('input[value="no"]');
+            const inputSpec = widget.querySelector('input[type="text"]');
+            
+            function updateInputState() {
+                if (radioSi && radioSi.checked) {
+                    inputSpec.disabled = false;
+                } else if (radioNo && radioNo.checked) {
+                    inputSpec.disabled = true;
+                    inputSpec.value = '';
+                }
+            }
+            
+            if (radioSi && radioNo && inputSpec) {
+                radioSi.addEventListener('change', updateInputState);
+                radioNo.addEventListener('change', updateInputState);
+                updateInputState();
+            }
+        });
+    });
+</script>
+
+{% endblock %}

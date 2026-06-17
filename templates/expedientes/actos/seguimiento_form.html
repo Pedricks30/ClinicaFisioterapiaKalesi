@@ -1,0 +1,478 @@
+{% extends 'expedientes/actos/base_form.html' %}
+{% load static %}
+
+{% block form_content %}
+
+<!-- Header de Información de la Cita -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="alert {% if es_admin %}alert-warning{% else %}alert-info{% endif %}">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <i class="fas fa-info-circle"></i> 
+                    <strong>Información de la cita:</strong> 
+                    {{ cita.fecha|date:"d/m/Y H:i" }} - Profesional: {{ cita.profesional.get_full_name }}
+                    {% if cita.tipo_cita == 'SEGUIMIENTO' %}
+                        <span class="badge badge-primary ml-2">Sesión de Seguimiento</span>
+                    {% endif %}
+                </div>
+                {% if es_admin %}
+                <div>
+                    <span class="badge badge-warning">
+                        <i class="fas fa-crown"></i> Modo Administrador: Tienes permisos especiales
+                    </span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Información de la Primera Consulta -->
+{% if expediente.primera_consulta %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="alert alert-secondary">
+            <i class="fas fa-chart-line"></i> 
+            <strong>Evolución del tratamiento:</strong> 
+            Dolor inicial: <strong>{{ expediente.primera_consulta.nivel_dolor_inicial }}/10</strong> | 
+            Último dolor registrado: <strong>{{ expediente.ultimo_dolor|default:"No registrado" }}/10</strong> |
+            Sesiones realizadas: <strong>{{ expediente.seguimientos.count }}</strong>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Evaluación de la Sesión Actual -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-chart-line"></i> Evaluación de la Sesión Actual
+        </h6>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label>Escala Visual Analógica (EVA) - Nivel de Dolor Actual</label>
+                    <div class="pain-slider-container mt-2">
+                        <input type="range" id="painSlider" min="0" max="10" value="{{ form.nivel_dolor_actual.value|default:0 }}" step="1" class="pain-slider">
+                        <div class="pain-labels">
+                            <div class="d-flex justify-content-between mt-2">
+                                <span class="pain-label-0">0<br><small>Sin dolor</small></span>
+                                <span class="pain-label-1">1</span>
+                                <span class="pain-label-2">2</span>
+                                <span class="pain-label-3">3</span>
+                                <span class="pain-label-4">4</span>
+                                <span class="pain-label-5">5<br><small>Moderado</small></span>
+                                <span class="pain-label-6">6</span>
+                                <span class="pain-label-7">7</span>
+                                <span class="pain-label-8">8</span>
+                                <span class="pain-label-9">9</span>
+                                <span class="pain-label-10">10<br><small>Peor dolor</small></span>
+                            </div>
+                        </div>
+                        <div class="pain-value-display text-center mt-3">
+                            <h3>Nivel de dolor actual: <span id="painValue" class="font-weight-bold">{{ form.nivel_dolor_actual.value|default:0 }}</span>/10</h3>
+                        </div>
+                    </div>
+                    {{ form.nivel_dolor_actual }}
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label>{{ form.duracion_sesion.label }}</label>
+                    <div class="input-group">
+                        {{ form.duracion_sesion }}
+                        <div class="input-group-append">
+                            <span class="input-group-text">min</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label>Número de Sesión</label>
+                    <input type="text" class="form-control" value="#{{ expediente.seguimientos.count|add:1 }}" disabled>
+                </div>
+            </div>
+            <div class="col-md-12">
+                <div class="form-group">
+                    <label>{{ form.localizacion_dolor.label }}</label>
+                    {{ form.localizacion_dolor }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Evolución y Respuesta -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-chart-simple"></i> Evolución del Paciente
+        </h6>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="form-group">
+                    <label>{{ form.evolucion_paciente.label }} <span class="text-danger">*</span></label>
+                    {{ form.evolucion_paciente }}
+                    <small class="text-muted">Describa cómo ha evolucionado el paciente desde la última sesión</small>
+                </div>
+            </div>
+            <div class="col-md-12">
+                <div class="form-group">
+                    <label>{{ form.respuesta_tratamiento.label }}</label>
+                    {{ form.respuesta_tratamiento }}
+                    <small class="text-muted">¿Cómo ha respondido el paciente al tratamiento aplicado?</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tratamiento Aplicado -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-hand-holding-heart"></i> Tratamiento Aplicado en Esta Sesión
+        </h6>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="form-group">
+                    <label>{{ form.tecnicas_aplicadas.label }} <span class="text-danger">*</span></label>
+                    {{ form.tecnicas_aplicadas }}
+                </div>
+            </div>
+            <div class="col-md-12">
+                <div class="form-group">
+                    <label>{{ form.ejercicios_realizados.label }}</label>
+                    {{ form.ejercicios_realizados }}
+                </div>
+            </div>
+            <div class="col-md-12">
+                <div class="form-group">
+                    <label>{{ form.tratamiento_realizado.label }}</label>
+                    {{ form.tratamiento_realizado }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Evaluación Muscular -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-dumbbell"></i> Evaluación Muscular (Grados 0-5)
+        </h6>
+    </div>
+    <div class="card-body">
+        <div class="row align-items-center">
+            <div class="col-md-3 muscular-image-wrapper mb-3 mb-md-0">
+                <img src="{% static 'img/evaluacion_muscular.webp' %}" alt="Referencia evaluación muscular" class="img-fluid muscular-image">
+                <p class="mt-2 mb-0 small text-muted">Escala de Daniels: 0=Sin contracción, 5=Fuerza normal</p>
+            </div>
+            <div class="col-md-9">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-sm">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Región</th>
+                                <th colspan="2">Evaluación</th>
+                            </tr>
+                            <tr>
+                                <th></th>
+                                <th>Izquierda</th>
+                                <th>Derecha</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Miembros Superiores</strong></td>
+                                <td>{{ form.ms_eval1_izquierda }}</td>
+                                <td>{{ form.ms_eval1_derecha }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Miembros Inferiores</strong></td>
+                                <td>{{ form.mi_eval1_izquierda }}</td>
+                                <td>{{ form.mi_eval1_derecha }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Tronco</strong></td>
+                                <td>{{ form.tronco_eval1_izquierda }}</td>
+                                <td>{{ form.tronco_eval1_derecha }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Cuello</strong></td>
+                                <td>{{ form.cuello_eval1_izquierda }}</td>
+                                <td>{{ form.cuello_eval1_derecha }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Evaluación Goniométrica -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-ruler"></i> Evaluación Goniométrica (Rangos de Movimiento en Grados)
+        </h6>
+    </div>
+    <div class="card-body">
+        <ul class="nav nav-tabs" id="goniometricTabs" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link active" data-toggle="tab" href="#miembrosSuperiores">Miembros Superiores</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-toggle="tab" href="#miembrosInferiores">Miembros Inferiores</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-toggle="tab" href="#troncoCuello">Tronco y Cuello</a>
+            </li>
+        </ul>
+        
+        <div class="tab-content mt-3">
+            <!-- Miembros Superiores -->
+            <div class="tab-pane fade show active" id="miembrosSuperiores">
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Movimiento</th>
+                                <th>Izquierda (°)</th>
+                                <th>Derecha (°)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Flexión</th>
+                                <td>{{ form.ms_flexion_eval1_izq }}</th>
+                                <td>{{ form.ms_flexion_eval1_der }}</th>
+                            </tr>
+                            <tr>
+                                <td>Extensión</th>
+                                <td>{{ form.ms_extension_eval1_izq }}</th>
+                                <td>{{ form.ms_extension_eval1_der }}</th>
+                            </tr>
+                            <tr>
+                                <td>Abducción</th>
+                                <td>{{ form.ms_abduccion_eval1_izq }}</th>
+                                <td>{{ form.ms_abduccion_eval1_der }}</th>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Miembros Inferiores -->
+            <div class="tab-pane fade" id="miembrosInferiores">
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered">
+                        <thead class="thead-light">
+                            <tr><th>Movimiento</th><th>Izquierda (°)</th><th>Derecha (°)</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><th>Flexión</th><td>{{ form.mi_flexion_eval1_izq }}</td><td>{{ form.mi_flexion_eval1_der }}</td></tr>
+                            <tr><th>Extensión</th><td>{{ form.mi_extension_eval1_izq }}</td><td>{{ form.mi_extension_eval1_der }}</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Tronco y Cuello -->
+            <div class="tab-pane fade" id="troncoCuello">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="font-weight-bold">Tronco</h6>
+                        <table class="table table-sm table-bordered">
+                            <thead class="thead-light"><tr><th>Movimiento</th><th>Grados</th></tr></thead>
+                            <tbody>
+                                <tr><th>Flexión</th><td>{{ form.tronco_flexion_eval1 }}</td></tr>
+                                <tr><th>Extensión</th><td>{{ form.tronco_extension_eval1 }}</td></tr>
+                                <tr><th>Lateral Izquierdo</th><td>{{ form.tronco_lateral_izq_eval1 }}</td></tr>
+                                <tr><th>Lateral Derecho</th><td>{{ form.tronco_lateral_der_eval1 }}</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="font-weight-bold">Cuello</h6>
+                        <table class="table table-sm table-bordered">
+                            <thead class="thead-light"><tr><th>Movimiento</th><th>Grados</th></tr></thead>
+                            <tbody>
+                                <tr><th>Flexión</th><td>{{ form.cuello_flexion_eval1 }}</td></tr>
+                                <tr><th>Extensión</th><td>{{ form.cuello_extension_eval1 }}</td></tr>
+                                <tr><th>Lateral Izquierdo</th><td>{{ form.cuello_lateral_izq_eval1 }}</td></tr>
+                                <tr><th>Lateral Derecho</th><td>{{ form.cuello_lateral_der_eval1 }}</td></tr>
+                                <tr><th>Rotación Izquierda</th><td>{{ form.cuello_rotacion_izq_eval1 }}</td></tr>
+                                <tr><th>Rotación Derecha</th><td>{{ form.cuello_rotacion_der_eval1 }}</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Reevaluación y Planificación -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-clipboard-list"></i> Reevaluación y Plan para Próxima Sesión
+        </h6>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="form-group">
+                    <label>{{ form.reevaluacion_rango_movimiento.label }}</label>
+                    {{ form.reevaluacion_rango_movimiento }}
+                    <small class="text-muted">Registre los avances en rangos de movimiento</small>
+                </div>
+            </div>
+            <div class="col-md-12">
+                <div class="form-group">
+                    <label>{{ form.plan_proxima_sesion.label }}</label>
+                    {{ form.plan_proxima_sesion }}
+                    <small class="text-muted">¿Qué se planea para la siguiente sesión?</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Observaciones y Archivos -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-paperclip"></i> Observaciones y Archivos Adjuntos
+        </h6>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="form-group">
+                    <label>{{ form.observaciones.label }}</label>
+                    {{ form.observaciones }}
+                </div>
+            </div>
+            <div class="col-md-12">
+                <div class="form-group">
+                    <label>{{ form.imagen_evolucion.label }}</label>
+                    {{ form.imagen_evolucion }}
+                    <small class="text-muted d-block">Puede adjuntar imágenes de evolución (radiografías, fotos, etc.)</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        border-radius: .85rem;
+    }
+    .card-header {
+        padding: 0.9rem 1rem;
+        background-color: #f8f9ff;
+        border-bottom: 1px solid #dee2e6;
+    }
+    .muscular-image-wrapper {
+        text-align: center;
+    }
+    .muscular-image-wrapper img {
+        max-height: 180px;
+        width: auto;
+        border-radius: .75rem;
+        box-shadow: 0 10px 30px rgba(78, 115, 223, 0.12);
+    }
+    .pain-slider-container {
+        background: #ffffff;
+        border: 1px solid #dee2e6;
+        border-radius: 1rem;
+        padding: 1rem;
+    }
+    .pain-slider {
+        -webkit-appearance: none;
+        width: 100%;
+        height: 12px;
+        border-radius: 10px;
+        background: linear-gradient(to right, #28a745, #ffc107, #fd7e14, #dc3545);
+        outline: none;
+    }
+    .pain-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: white;
+        border: 2px solid #333;
+        cursor: pointer;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+    .pain-slider::-webkit-slider-thumb:hover {
+        transform: scale(1.12);
+    }
+    .pain-labels > div > span {
+        text-align: center;
+        flex: 1;
+        font-size: 11px;
+        font-weight: 600;
+    }
+    .pain-label-0 { color: #28a745; }
+    .pain-label-1, .pain-label-2, .pain-label-3, .pain-label-4 { color: #ffc107; }
+    .pain-label-5, .pain-label-6 { color: #fd7e14; }
+    .pain-label-7, .pain-label-8, .pain-label-9, .pain-label-10 { color: #dc3545; }
+    .pain-value-display h3 {
+        margin: 0;
+        font-size: 1.3rem;
+        color: #1f2d5a;
+    }
+    .nav-tabs .nav-link {
+        color: #4e73df;
+    }
+    .nav-tabs .nav-link.active {
+        font-weight: bold;
+        border-color: #4e73df #4e73df #fff;
+    }
+    table select, table input {
+        width: 100%;
+        min-width: 70px;
+    }
+    .table-sm td, .table-sm th {
+        padding: 6px;
+        vertical-align: middle;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Slider de dolor
+        const painSlider = document.getElementById('painSlider');
+        const painValue = document.getElementById('painValue');
+        const nivelDolorInput = document.getElementById('id_nivel_dolor_actual');
+        
+        if (painSlider && painValue && nivelDolorInput) {
+            if (nivelDolorInput.value) {
+                painSlider.value = nivelDolorInput.value;
+                painValue.textContent = nivelDolorInput.value;
+            }
+            
+            painSlider.addEventListener('input', function() {
+                const value = this.value;
+                painValue.textContent = value;
+                nivelDolorInput.value = value;
+            });
+        }
+    });
+</script>
+
+{% endblock %}

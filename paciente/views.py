@@ -19,8 +19,8 @@ class PatientListView(ListView):
     context_object_name = 'pacientes'
     paginate_by = 15
 
+    # En PatientListView
     def get_queryset(self):
-        # Filtra solo pacientes activos
         queryset = super().get_queryset().filter(estado=True)
         search_query = self.request.GET.get('search', '')
         
@@ -29,17 +29,15 @@ class PatientListView(ListView):
                 Q(nombres__icontains=search_query) |
                 Q(apellidos__icontains=search_query) |
                 Q(documento_identidad__icontains=search_query) |
-                Q(email__icontains=search_query) |
-                Q(numero_telefono__icontains=search_query)
+                Q(numero_telefono__icontains=search_query) |
+                Q(expediente__numero_expediente__icontains=search_query)  # Buscar por número expediente
             )
         
-        return queryset.select_related('tipo_documento', 'creado_por')
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['url_boton'] = reverse_lazy('crear_paciente')
-        context['search'] = self.request.GET.get('search', '')
-        return context
+        # Importante: traer datos relacionados para evitar consultas extra (N+1)
+        return queryset.select_related(
+            'tipo_documento', 
+            'expediente'          # Relación OneToOne
+        )
 
 @method_decorator(permission_required(['paciente.view_patient'], raise_exception=True), name='dispatch')
 class InactivePatientListView(ListView):

@@ -1,0 +1,326 @@
+<!-- citas/emails/no_asistio.html -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Inasistencia - Clínica de Fisioterapia</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            line-height: 1.6;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+            color: white;
+            padding: 30px 25px;
+            text-align: center;
+        }
+        .header .icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+            display: block;
+        }
+        .header h2 {
+            font-size: 24px;
+            font-weight: 700;
+            margin: 0;
+            letter-spacing: 0.5px;
+        }
+        .header .subtitle {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-top: 5px;
+            font-weight: 300;
+        }
+        .content {
+            padding: 30px 25px;
+        }
+        .content p {
+            margin: 10px 0;
+            color: #333;
+            font-size: 15px;
+        }
+        .content .greeting {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+        .alert-box {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 6px;
+        }
+        .alert-box p {
+            margin: 5px 0;
+            color: #856404;
+        }
+        .alert-box .warning-icon {
+            font-size: 20px;
+            margin-right: 8px;
+        }
+        .detalles {
+            background-color: #f8f9fa;
+            border-left: 4px solid #dc3545;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 6px;
+        }
+        .detalles h3 {
+            margin-top: 0;
+            color: #dc3545;
+            font-size: 16px;
+            font-weight: 700;
+        }
+        .detalles ul {
+            list-style: none;
+            padding: 0;
+            margin: 10px 0 0 0;
+        }
+        .detalles li {
+            padding: 8px 0;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            align-items: flex-start;
+        }
+        .detalles li:last-child {
+            border-bottom: none;
+        }
+        .detalles .label {
+            font-weight: 600;
+            color: #555;
+            min-width: 120px;
+            flex-shrink: 0;
+        }
+        .detalles .value {
+            color: #333;
+        }
+        .detalles .badge {
+            display: inline-block;
+            padding: 3px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            color: white;
+            background-color: #6c757d;
+        }
+        .badge-no-asistio {
+            background-color: #dc3545;
+        }
+        .consecuencias {
+            background-color: #f8d7da;
+            border-left: 4px solid #dc3545;
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 6px;
+        }
+        .consecuencias h4 {
+            color: #721c24;
+            margin: 0 0 10px 0;
+            font-size: 15px;
+        }
+        .consecuencias ul {
+            margin: 5px 0 0 20px;
+            color: #721c24;
+            font-size: 14px;
+        }
+        .consecuencias ul li {
+            margin-bottom: 5px;
+        }
+        .btn-container {
+            text-align: center;
+            margin: 25px 0 10px 0;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #047857, #065f46);
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 15px;
+            transition: all 0.3s ease;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(4, 120, 87, 0.3);
+        }
+        .btn-secondary {
+            background: linear-gradient(135deg, #6c757d, #5a6268);
+            margin-left: 10px;
+        }
+        .btn-secondary:hover {
+            box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px 25px;
+            text-align: center;
+            font-size: 12px;
+            color: #777;
+            border-top: 1px solid #e9ecef;
+        }
+        .footer .clinica-name {
+            font-weight: 600;
+            color: #047857;
+            font-size: 14px;
+        }
+        .footer .contacto {
+            margin-top: 8px;
+            color: #555;
+        }
+        .footer .contacto a {
+            color: #047857;
+            text-decoration: none;
+        }
+        .footer .contacto a:hover {
+            text-decoration: underline;
+        }
+        @media (max-width: 480px) {
+            .detalles li {
+                flex-direction: column;
+                padding: 10px 0;
+            }
+            .detalles .label {
+                min-width: auto;
+                margin-bottom: 3px;
+            }
+            .btn-container {
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+            }
+            .btn {
+                display: block;
+                margin: 5px 0;
+            }
+            .btn-secondary {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- HEADER -->
+        <div class="header">
+            <span class="icon">⚠️</span>
+            <h2>Registro de Inasistencia</h2>
+            <div class="subtitle">No asististe a tu cita programada</div>
+        </div>
+        
+        <!-- CONTENIDO -->
+        <div class="content">
+            <p class="greeting">Hola <strong>{{ paciente.nombres }} {{ paciente.apellidos }}</strong>,</p>
+            
+            <p>Lamentamos informarte que <strong>no asististe a tu cita</strong> programada en nuestra clínica.</p>
+            
+            <div class="alert-box">
+                <p>
+                    <span class="warning-icon">⚠️</span>
+                    <strong>Importante:</strong> Las inasistencias recurrentes pueden generar 
+                    restricciones para agendar nuevas citas.
+                </p>
+            </div>
+            
+            <!-- Detalles de la cita -->
+            <div class="detalles">
+                <h3>📋 Detalles de la Cita No Asistida</h3>
+                <ul>
+                    <li>
+                        <span class="label">N° Cita:</span>
+                        <span class="value"><strong>#{{ cita.id }}</strong></span>
+                    </li>
+                    <li>
+                        <span class="label">Fecha:</span>
+                        <span class="value">{{ cita.fecha|date:"d/m/Y" }}</span>
+                    </li>
+                    <li>
+                        <span class="label">Hora:</span>
+                        <span class="value">{{ cita.fecha|time:"H:i" }}</span>
+                    </li>
+                    <li>
+                        <span class="label">Duración:</span>
+                        <span class="value">{{ cita.duracion }} minutos</span>
+                    </li>
+                    <li>
+                        <span class="label">Profesional:</span>
+                        <span class="value">{{ profesional.get_full_name }}</span>
+                    </li>
+                    <li>
+                        <span class="label">Motivo:</span>
+                        <span class="value">{{ cita.motivo|truncatechars:100 }}</span>
+                    </li>
+                    <li>
+                        <span class="label">Estado:</span>
+                        <span class="value">
+                            <span class="badge badge-no-asistio">❌ No Asistió</span>
+                        </span>
+                    </li>
+                </ul>
+            </div>
+            
+            <!-- Consecuencias -->
+            <div class="consecuencias">
+                <h4>📌 ¿Qué significa esto?</h4>
+                <ul>
+                    <li>La cita ha sido <strong>marcada como no asistida</strong> en nuestro sistema.</li>
+                    <li>El horario ha sido <strong>liberado</strong> para otros pacientes.</li>
+                    <li>Si necesitas <strong>reprogramar</strong> tu cita, por favor contáctanos.</li>
+                    <li>Más de <strong>3 inasistencias</strong> pueden generar restricciones para agendar nuevas citas.</li>
+                </ul>
+            </div>
+            
+            <!-- Botones de acción -->
+            <div class="btn-container">
+                <a href="#" class="btn">📅 Solicitar Nueva Cita</a>
+                <a href="tel:+123456789" class="btn btn-secondary">📞 Contactar</a>
+            </div>
+            
+            <p style="margin-top: 20px; font-size: 14px; color: #666; text-align: center;">
+                <strong>¿Tienes dudas?</strong> No dudes en contactarnos para resolver cualquier inquietud.
+            </p>
+        </div>
+        
+        <!-- FOOTER -->
+        <div class="footer">
+            <div class="clinica-name">🏥 {{ clinica }}</div>
+            <div class="contacto">
+                📞 <a href="tel:+123456789">+123 456 789</a> &nbsp;|&nbsp;
+                ✉️ <a href="mailto:contacto@clinica.com">contacto@clinica.com</a>
+            </div>
+            <div style="margin-top: 10px;">
+                <p style="margin: 0; font-size: 11px; color: #999;">
+                    Horario de atención: Lunes a Viernes 8:00 AM - 6:00 PM
+                </p>
+                <p style="margin: 5px 0 0 0; font-size: 11px; color: #999;">
+                    Este es un mensaje automático. Por favor, no respondas a este correo.
+                </p>
+                <p style="margin: 5px 0 0 0; font-size: 11px; color: #999;">
+                    &copy; {% now "Y" %} {{ clinica }}. Todos los derechos reservados.
+                </p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

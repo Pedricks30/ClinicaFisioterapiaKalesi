@@ -1,0 +1,276 @@
+/* ========================================
+   HEADER DEL EXPEDIENTE
+======================================== */
+
+.expediente-title {
+
+    background: #ffffff;
+
+    border: none;
+
+    border-radius: 18px;
+
+    padding: 18px 25px;
+
+    margin-bottom: 20px;
+
+    box-shadow: 0 8px 25px rgba(0,0,0,.08);
+
+    font-size: 24px;
+
+    font-weight: 700;
+
+    color: #333;
+}
+
+.expediente-title .numero {
+
+    color: #00bfa5;
+}
+
+.expediente-title .paciente {
+
+    color: #444;
+}
+
+
+/* ========================================
+   WIZARD PRINCIPAL
+======================================== */
+
+.wizard-container {
+
+    display: flex;
+
+    width: 100%;
+
+    gap: 15px;
+
+    margin-bottom: 25px;
+}
+
+
+/* ========================================
+   BOTONES DEL WIZARD
+======================================== */
+.wizard-item {
+
+    flex: 1;
+
+    background: #ffffff;
+
+    border-radius: 16px;
+
+    padding: 15px 20px;
+
+    min-height: 80px;
+
+    text-decoration: none;
+
+    color: #555;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 12px;
+
+    transition: all .3s ease;
+
+    box-shadow: 0 6px 18px rgba(0,0,0,.08);
+
+    border: 2px solid transparent;
+
+    position: relative;
+}
+
+.wizard-item:hover {
+
+    text-decoration: none;
+
+    background: linear-gradient(
+        135deg,
+        #00c853,
+        #00bfa5
+    );
+
+    color: white;
+
+    transform: translateY(-3px);
+
+    box-shadow:
+        0 10px 25px rgba(0,191,165,.25);
+}
+
+.wizard-item:hover i {
+
+    color: white;
+}
+
+/* ========================================
+   ICONOS
+======================================== */
+
+.wizard-item i {
+
+    font-size: 42px;
+
+    color: #00bfa5;
+
+    transition: .3s;
+}
+
+
+/* ========================================
+   TEXTO
+======================================== */
+
+.wizard-item span {
+
+    font-size: 16px;
+
+    font-weight: 600;
+
+    letter-spacing: .2px;
+}
+
+
+/* ========================================
+   BOTÓN ACTIVO
+======================================== */
+
+.wizard-item.active {
+
+    background: linear-gradient(
+        135deg,
+        #00c853,
+        #00bfa5
+    );
+
+    color: white;
+
+    border-color: transparent;
+
+    box-shadow:
+        0 12px 28px rgba(0,191,165,.35);
+
+    transform: translateY(-2px);
+}
+
+.wizard-item.active i {
+
+    color: white;
+}
+
+/* ========================================
+   CONTENIDO DEL WIZARD
+======================================== */
+
+.wizard-content {
+
+    background: white;
+
+    border-radius: 20px;
+
+    padding: 25px;
+
+    min-height: 600px;
+
+    box-shadow: 0 10px 25px rgba(0,0,0,.08);
+}
+
+
+/* ========================================
+   INDICADOR SUPERIOR OPCIONAL
+======================================== */
+
+.wizard-item.active::before {
+
+    content: "";
+
+    position: absolute;
+
+    top: 0;
+
+    left: 0;
+
+    width: 100%;
+
+    height: 4px;
+
+    border-radius: 20px 20px 0 0;
+
+    background: rgba(255,255,255,.4);
+}
+
+.wizard-item {
+
+    position: relative;
+}
+
+
+/* ========================================
+   RESPONSIVE
+======================================== */
+
+@media (max-width: 992px) {
+
+    .wizard-container {
+
+        display: flex;
+
+        justify-content: center;
+
+        gap: 15px;
+
+        margin-bottom: 25px;
+    }
+
+    .wizard-item {
+
+        min-height: 70px;
+
+        padding: 12px;
+    }
+
+    .wizard-item i {
+
+        font-size: 26px;
+    }
+
+    .wizard-item span {
+
+        font-size: 14px;
+    }
+
+    .expediente-title {
+
+        font-size: 20px;
+    }
+}
+
+
+.wizard-item.active::after {
+
+    content: "";
+
+    position: absolute;
+
+    bottom: -10px;
+
+    left: 50%;
+
+    transform: translateX(-50%);
+
+    width: 0;
+
+    height: 0;
+
+    border-left: 10px solid transparent;
+
+    border-right: 10px solid transparent;
+
+    border-top: 10px solid #00bfa5;
+}

@@ -61,7 +61,7 @@
                         </tr>
                     </thead>
                     <tbody id="tbody-horarios">
-                        <tr><td colspan="3" class="text-center">Cargando...</td></tr>
+                        <tr><td colspan="3" class="text-center">Seleccione un profesional...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -73,9 +73,11 @@
     <!-- ================================================================ -->
     <div class="card shadow mb-4">
         <div class="card-header py-3 bg-success">
-            <h6 class="m-0 font-weight-bold text-light">
-                <i class="fas fa-calendar-alt mr-2"></i>Calendario de Citas
-            </h6>
+            <div class="d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-light">
+                    <i class="fas fa-calendar-alt mr-2"></i>Calendario de Citas
+                </h6>
+            </div>
         </div>
         <div class="card-body">
             <div id="calendar"></div>
@@ -103,24 +105,65 @@
                     {% csrf_token %}
                     <input type="hidden" id="cita_id" value="">
                     <input type="hidden" id="profesional_id" value="">
-                    
+
+                    <!-- Profesional activo -->
+                    <div class="alert alert-info" id="profesional-activo" style="display: none;">
+                        <i class="fas fa-user-md mr-2"></i>
+                        <strong>Profesional actual:</strong> <span id="nombre-profesional-activo"></span>
+                        <button type="button" class="btn btn-sm btn-outline-secondary float-right" id="btn-cambiar-profesional">
+                            <i class="fas fa-sync"></i> Cambiar
+                        </button>
+                    </div>
+
                     <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-md-12">
                             <div class="form-group">
-                                <label class="font-weight-bold">Paciente *</label>
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <label class="font-weight-bold mb-0">Paciente *</label>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-limpiar-paciente" style="display: none;">
+                                        <i class="fas fa-undo"></i> Limpiar selección
+                                    </button>
+                                </div>
                                 <select id="id_paciente" class="form-control select2-buscar" required>
                                     <option value="">Buscar paciente...</option>
                                 </select>
                             </div>
                         </div>
-                        <div class="col-md-6">
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12">
                             <div class="form-group">
                                 <label class="font-weight-bold">Motivo *</label>
                                 <textarea id="id_motivo" class="form-control" rows="2" required></textarea>
                             </div>
                         </div>
                     </div>
-                    
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="font-weight-bold">Tipo de Cita *</label>
+                                <select id="id_tipo_cita" class="form-control" required>
+                                    <option value="">-- Seleccione tipo de cita --</option>
+                                    <option value="PRIMERA_CONSULTA">🔵 Primera Consulta - Evaluación Inicial</option>
+                                    <option value="SEGUIMIENTO">🟢 Seguimiento - Sesión de Tratamiento</option>
+                                    <option value="FINALIZACION">🔴 Finalización - Alta del Paciente</option>
+                                    <option value="REVISION">🟡 Revisión - Control Post-Alta</option>
+                                </select>
+                                <small class="text-muted" id="tipo_cita_help">
+                                    <i class="fas fa-info-circle"></i> Seleccione el tipo de cita manualmente
+                                </small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="font-weight-bold">Color en calendario</label>
+                                <input type="color" id="id_color" class="form-control" value="#007BFF" style="width:80px;height:40px;padding:3px;">
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="row">
                         <div class="col-md-4">
                             <div class="form-group">
@@ -149,15 +192,6 @@
                             </div>
                         </div>
                     </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label class="font-weight-bold">Color en calendario</label>
-                                <input type="color" id="id_color" class="form-control" value="#007BFF" style="width:80px;height:40px;padding:3px;">
-                            </div>
-                        </div>
-                    </div>
                 </form>
             </div>
             <div class="modal-footer">
@@ -174,306 +208,810 @@
 </div>
 {% endblock %}
 
-{% block extra_css %}
-<link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0/dist/css/select2.min.css" rel="stylesheet">
-<style>
-    .fc-event { cursor: pointer; padding: 3px 6px; font-size: 0.8em; border-radius: 4px; }
-    .fc-toolbar-title { font-size: 1.2em !important; }
-    #calendar { min-height: 500px; }
-    .select2-container .select2-selection--single { height: 38px !important; }
-</style>
-{% endblock %}
-
 {% block extra_js %}
-<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/es.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0/dist/js/select2.min.js"></script>
-
+{{ block.super }}
 <script>
 // =========================================================================
-// VARIABLES GLOBALES
+// ESPERAR A QUE JQUERY ESTÉ COMPLETAMENTE CARGADO
 // =========================================================================
-let profesionalSeleccionado = null;
-let calendar = null;
-let citaEditando = null;
-
-// =========================================================================
-// SELECT2 PARA BÚSQUEDA DE PACIENTES
-// =========================================================================
-$('#id_paciente').select2({
-    placeholder: 'Buscar paciente por nombre o documento...',
-    allowClear: true,
-    width: '100%',
-    dropdownParent: $('#citaModal'),
-    ajax: {
-        url: '/paciente/api/buscar-pacientes/',
-        dataType: 'json',
-        delay: 250,
-        data: function(params) { return { q: params.term }; },
-        processResults: function(data) {
-            return { results: data.results };
-        },
-        cache: true
-    },
-    minimumInputLength: 2,
-    templateResult: function(item) {
-        if (item.loading) return item.text;
-        return $('<div>' + item.text + '<br><small class="text-muted">' + (item.documento || '') + '</small></div>');
-    }
-});
-
-// =========================================================================
-// FILTRO: ESPECIALIDAD → PROFESIONAL
-// =========================================================================
-$('#id_especialidad').on('change', function() {
-    const especialidadId = $(this).val();
-    const profesionalSelect = $('#id_profesional');
-    const btnBuscar = $('#btn-buscar');
+(function() {
+    console.log('=== INICIANDO SISTEMA DE CITAS ===');
     
-    profesionalSelect.html('<option value="">Cargando...</option>');
-    profesionalSelect.prop('disabled', true);
-    btnBuscar.prop('disabled', true);
-    
-    if (!especialidadId) {
-        profesionalSelect.html('<option value="">-- Primero seleccione especialidad --</option>');
-        return;
-    }
-    
-    fetch(`/citas/api/filtrar-profesionales/?especialidad_id=${especialidadId}`)
-        .then(response => response.json())
-        .then(data => {
-            profesionalSelect.html('<option value="">-- Seleccione profesional --</option>');
-            data.profesionales.forEach(prof => {
-                profesionalSelect.append(
-                    `<option value="${prof.id}" data-horarios="${prof.horarios}">${prof.nombre} (${prof.tipo})</option>`
-                );
-            });
-            profesionalSelect.prop('disabled', false);
-        });
-});
-
-$('#id_profesional').on('change', function() {
-    $('#btn-buscar').prop('disabled', !$(this).val());
-});
-
-// =========================================================================
-// BOTÓN BUSCAR: MUESTRA HORARIOS Y CARGA CALENDARIO
-// =========================================================================
-$('#btn-buscar').on('click', function() {
-    const profesionalId = $('#id_profesional').val();
-    const profesionalNombre = $('#id_profesional option:selected').text();
-    
-    if (!profesionalId) return;
-    
-    profesionalSeleccionado = profesionalId;
-    
-    // Mostrar horarios del profesional
-    fetch(`/citas/api/horarios-profesional/${profesionalId}/`)
-        .then(response => response.json())
-        .then(data => {
-            const tbody = $('#tbody-horarios');
-            tbody.empty();
-            
-            if (data.horarios.length === 0) {
-                tbody.append('<tr><td colspan="3" class="text-center text-danger">No tiene horarios asignados</td></tr>');
-            } else {
-                data.horarios.forEach(h => {
-                    tbody.append(`<tr><td>${h.dias.join(', ')}</td><td>${h.hora_inicio}</td><td>${h.hora_fin}</td></tr>`);
-                });
-            }
-            
-            $('#nombre-profesional').text(profesionalNombre);
-            $('#card-horarios').show();
-        });
-    
-    // Recargar calendario
-    if (calendar) {
-        calendar.refetchEvents();
-    }
-});
-
-// =========================================================================
-// FULLCALENDAR
-// =========================================================================
-document.addEventListener('DOMContentLoaded', function() {
-    const calendarEl = document.getElementById('calendar');
-    calendar = new FullCalendar.Calendar(calendarEl, {
-        locale: 'es',
-        initialView: 'dayGridMonth',
-        headerToolbar: {
-            left: 'prev,next today',
-            center: 'title',
-            right: 'dayGridMonth,timeGridWeek,timeGridDay'
-        },
-        buttonText: {
-            today: 'Hoy',
-            month: 'Mes',
-            week: 'Semana',
-            day: 'Día'
-        },
-        events: function(info, successCallback, failureCallback) {
-            let url = '/citas/api/eventos/';
-            if (profesionalSeleccionado) {
-                url += `?profesional_id=${profesionalSeleccionado}`;
-            }
-            fetch(url)
-                .then(response => response.json())
-                .then(data => successCallback(data))
-                .catch(error => failureCallback(error));
-        },
-        selectable: true,
-        select: function(info) {
-            if (!profesionalSeleccionado) {
-                Swal.fire('Atención', 'Primero seleccione un profesional', 'warning');
-                return;
-            }
-            abrirModalNuevaCita(info.startStr);
-        },
-        eventClick: function(info) {
-            abrirModalEditarCita(info.event);
-        },
-        eventDidMount: function(info) {
-            info.el.setAttribute('title', info.event.extendedProps.motivo || '');
+    function cuandoJQueryListo(callback) {
+        if (typeof jQuery !== 'undefined') {
+            callback();
+        } else {
+            setTimeout(function() { cuandoJQueryListo(callback); }, 50);
         }
-    });
-    calendar.render();
-});
-
-// =========================================================================
-// MODAL: ABRIR PARA NUEVA CITA
-// =========================================================================
-function abrirModalNuevaCita(fechaStr) {
-    citaEditando = null;
-    $('#modal-titulo').html('<i class="fas fa-calendar-plus mr-2"></i>Nueva Cita');
-    $('#cita_id').val('');
-    $('#id_fecha').val(fechaStr.split('T')[0]);
-    $('#id_hora').html('<option value="">Cargando horas...</option>');
-    $('#id_motivo').val('');
-    $('#id_color').val('#007BFF');
-    $('#btn-eliminar-cita').hide();
-    $('#btn-guardar-cita').text('Guardar Cita');
-    
-    cargarHorasDisponibles(fechaStr.split('T')[0]);
-    $('#citaModal').modal('show');
-}
-
-// =========================================================================
-// MODAL: ABRIR PARA EDITAR CITA
-// =========================================================================
-function abrirModalEditarCita(event) {
-    citaEditando = event.id;
-    const props = event.extendedProps;
-    
-    $('#modal-titulo').html('<i class="fas fa-edit mr-2"></i>Editar Cita');
-    $('#cita_id').val(event.id);
-    $('#id_paciente').html(`<option value="${props.paciente_id}" selected>${props.paciente_nombre}</option>`).trigger('change');
-    $('#id_fecha').val(event.startStr.split('T')[0]);
-    $('#id_motivo').val(props.motivo);
-    $('#id_color').val(event.backgroundColor || '#007BFF');
-    $('#btn-eliminar-cita').show();
-    $('#btn-guardar-cita').text('Actualizar Cita');
-    
-    cargarHorasDisponibles(event.startStr.split('T')[0], event.startStr.split('T')[1].substring(0, 5));
-    $('#citaModal').modal('show');
-}
-
-// =========================================================================
-// CARGAR HORAS DISPONIBLES
-// =========================================================================
-function cargarHorasDisponibles(fechaStr, horaSeleccionada = null) {
-    if (!profesionalSeleccionado) return;
-    
-    const horaSelect = $('#id_hora');
-    horaSelect.html('<option value="">Cargando...</option>');
-    
-    fetch(`/citas/api/horas-disponibles/${profesionalSeleccionado}/${fechaStr}/`)
-        .then(response => response.json())
-        .then(data => {
-            horaSelect.html('<option value="">-- Seleccione hora --</option>');
-            data.slots.forEach(slot => {
-                const selected = horaSeleccionada && slot.hora === horaSeleccionada ? 'selected' : '';
-                horaSelect.append(`<option value="${slot.datetime}" ${selected}>${slot.hora} - ${slot.hora_fin}</option>`);
-            });
-        });
-}
-
-// =========================================================================
-// CUANDO CAMBIA LA FECHA, RECARGAR HORAS
-// =========================================================================
-$('#id_fecha').on('change', function() {
-    cargarHorasDisponibles($(this).val());
-});
-
-// =========================================================================
-// GUARDAR CITA (CREAR O EDITAR)
-// =========================================================================
-$('#btn-guardar-cita').on('click', function() {
-    const citaId = $('#cita_id').val();
-    const pacienteId = $('#id_paciente').val();
-    const fechaHora = $('#id_hora').val();
-    const motivo = $('#id_motivo').val();
-    const duracion = $('#id_duracion').val();
-    
-    if (!pacienteId || !fechaHora || !motivo) {
-        Swal.fire('Error', 'Complete todos los campos requeridos', 'error');
-        return;
     }
     
-    const formData = new FormData();
-    formData.append('profesional_id', profesionalSeleccionado);
-    formData.append('paciente', pacienteId);
-    formData.append('fecha', fechaHora);
-    formData.append('motivo', motivo);
-    formData.append('duracion', duracion);
-    formData.append('csrfmiddlewaretoken', $('[name=csrfmiddlewaretoken]').val());
-    
-    const url = citaId ? `/citas/api/editar/${citaId}/` : '/citas/api/crear/';
-    
-    fetch(url, { method: 'POST', body: formData })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                Swal.fire('Éxito', data.message, 'success');
-                $('#citaModal').modal('hide');
-                calendar.refetchEvents();
-            } else {
-                Swal.fire('Error', data.error || 'Error al guardar', 'error');
+    cuandoJQueryListo(function() {
+        console.log('✅ jQuery está listo');
+        
+        let profesionalSeleccionado = null;
+        let calendar = null;
+        let citaEditando = null;
+        let pacienteSeleccionadoId = null;
+        let pacienteSeleccionadoNombre = null;
+        
+        // ================================================================
+        // FUNCIÓN: Inicializar Select2 para pacientes
+        // ================================================================
+        function inicializarSelect2Pacientes(placeholder, disabled = false) {
+            const $select = $('#id_paciente');
+            
+            if ($select.hasClass('select2-hidden-accessible')) {
+                $select.select2('destroy');
             }
-        });
-});
-
-// =========================================================================
-// ELIMINAR CITA
-// =========================================================================
-$('#btn-eliminar-cita').on('click', function() {
-    if (!citaEditando) return;
-    
-    Swal.fire({
-        title: '¿Cancelar cita?',
-        text: 'Esta acción no se puede deshacer',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonText: 'Sí, cancelar',
-        cancelButtonText: 'No'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            fetch(`/citas/api/eliminar/${citaEditando}/`, {
-                method: 'POST',
-                headers: { 'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val() }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    Swal.fire('Éxito', data.message, 'success');
-                    $('#citaModal').modal('hide');
-                    calendar.refetchEvents();
-                } else {
-                    Swal.fire('Error', data.error, 'error');
+            
+            $select.empty().append('<option value="">Buscar paciente...</option>');
+            $select.prop('disabled', disabled);
+            
+            $select.select2({
+                placeholder: placeholder || 'Buscar paciente por nombre o documento...',
+                allowClear: true,
+                width: '100%',
+                dropdownParent: $('#citaModal'),
+                ajax: {
+                    url: '/paciente/api/buscar-pacientes/',
+                    dataType: 'json',
+                    delay: 250,
+                    data: function(params) { return { q: params.term }; },
+                    processResults: function(data) {
+                        return { results: data.results };
+                    },
+                    cache: true
+                },
+                minimumInputLength: 2,
+                templateResult: function(item) {
+                    if (item.loading) return item.text;
+                    return $('<div>' + item.text + '<br><small class="text-muted">' + (item.documento || '') + '</small></div>');
                 }
             });
         }
+        
+        // ================================================================
+        // FUNCIÓN: Limpiar TODO el modal
+        // ================================================================
+        function limpiarModalCompleto() {
+            // Limpiar variables de estado
+            pacienteSeleccionadoId = null;
+            pacienteSeleccionadoNombre = null;
+            citaEditando = null;
+            
+            // Ocultar botones
+            $('#btn-limpiar-paciente').show();
+            $('#btn-eliminar-cita').hide();
+            
+            // Limpiar campo de tipo de cita
+            $('#id_tipo_cita_display').val('Seleccione un paciente para calcular el tipo');
+            $('#id_tipo_cita_display').css('color', '#6c757d');
+            
+            // Limpiar y resetear el select de paciente
+            const $pacienteSelect = $('#id_paciente');
+            if ($pacienteSelect.hasClass('select2-hidden-accessible')) {
+                $pacienteSelect.select2('destroy');
+            }
+            $pacienteSelect.empty().append('<option value="">Buscar paciente...</option>');
+            $pacienteSelect.prop('disabled', false);
+            $pacienteSelect.select2({
+                placeholder: 'Buscar paciente por nombre o documento...',
+                allowClear: true,
+                width: '100%',
+                dropdownParent: $('#citaModal'),
+                ajax: {
+                    url: '/paciente/api/buscar-pacientes/',
+                    dataType: 'json',
+                    delay: 250,
+                    data: function(params) { return { q: params.term }; },
+                    processResults: function(data) {
+                        return { results: data.results };
+                    },
+                    cache: true
+                },
+                minimumInputLength: 2,
+                templateResult: function(item) {
+                    if (item.loading) return item.text;
+                    return $('<div>' + item.text + '<br><small class="text-muted">' + (item.documento || '') + '</small></div>');
+                }
+            });
+            
+            // Limpiar otros campos
+            $('#id_tipo_cita').prop('disabled', false).val('');
+            $('#id_motivo').val('');
+            $('#id_color').val('#007BFF');
+            $('#id_fecha').val('');
+            $('#id_hora').html('<option value="">-- Seleccione fecha primero --</option>');
+            $('#cita_id').val('');
+            $('#tipo_cita_help').show();
+            $('#btn-guardar-cita').text('Guardar Cita');
+            $('#modal-titulo').html('<i class="fas fa-calendar-plus mr-2"></i>Nueva Cita');
+            
+            console.log('✅ Modal completamente limpiado');
+        }
+        
+        // ================================================================
+        // FUNCIÓN: Verificar estado del paciente (SOLO al guardar NUEVA cita)
+        // ================================================================
+        function verificarEstadoPacienteAlGuardar(pacienteId, profesionalId, esEdicion, callback) {
+            // ✅ SI ES EDICIÓN, NO VERIFICAR CITAS PENDIENTES
+            if (esEdicion) {
+                callback(true);
+                return;
+            }
+            
+            fetch(`/citas/api/verificar-estado-paciente/?paciente_id=${pacienteId}&profesional_id=${profesionalId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.tiene_citas_pendientes) {
+                        Swal.fire({
+                            title: '⚠️ Citas Pendientes',
+                            html: `
+                                <p>El paciente tiene <strong>${data.cantidad_citas_pendientes}</strong> cita(s) pendiente(s):</p>
+                                <ul style="text-align: left;">
+                                    ${data.citas_pendientes.map(c => `<li>${c.fecha} - ${c.tipo} (${c.estado})</li>`).join('')}
+                                </ul>
+                                <p class="text-warning mt-2">Debe completar o cancelar estas citas antes de crear nuevas.</p>
+                            `,
+                            icon: 'warning',
+                            confirmButtonText: 'Entendido',
+                            allowOutsideClick: false
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                callback(false);
+                            }
+                        });
+                    } else {
+                        callback(true);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    callback(true);
+                });
+        }
+        
+        // ================================================================
+        // FUNCIÓN: Mostrar tipo de cita calculado
+        // ================================================================
+        function mostrarTipoCita() {
+            const pacienteId = $('#id_paciente').val();
+            if (!pacienteId || !profesionalSeleccionado) {
+                $('#id_tipo_cita_display').val('Seleccione un paciente para calcular el tipo');
+                $('#id_tipo_cita_display').css('color', '#6c757d');
+                return;
+            }
+            
+            $('#id_tipo_cita_display').val('Calculando tipo...');
+            $('#id_tipo_cita_display').css('color', '#007bff');
+            
+            fetch(`/citas/api/calcular-tipo-cita/?paciente_id=${pacienteId}&profesional_id=${profesionalSeleccionado}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.tipo_cita) {
+                        const iconos = {
+                            'PRIMERA_CONSULTA': '🔵',
+                            'SEGUIMIENTO': '🟢',
+                            'FINALIZACION': '🔴',
+                            'REVISION': '🟡'
+                        };
+                        const colores = {
+                            'PRIMERA_CONSULTA': '#007bff',
+                            'SEGUIMIENTO': '#28a745',
+                            'FINALIZACION': '#dc3545',
+                            'REVISION': '#ffc107'
+                        };
+                        $('#id_tipo_cita_display').val(`${iconos[data.tipo_cita] || ''} ${data.label}`);
+                        $('#id_tipo_cita_display').css('color', colores[data.tipo_cita] || '#6c757d');
+                        $('#id_tipo_cita_display').css('font-weight', 'bold');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error calculando tipo:', error);
+                    $('#id_tipo_cita_display').val('Error al calcular el tipo');
+                    $('#id_tipo_cita_display').css('color', '#dc3545');
+                });
+        }
+        
+        // ================================================================
+        // FUNCIÓN: Cargar profesionales por especialidad
+        // ================================================================
+        function cargarProfesionales(especialidadId) {
+            const profesionalSelect = document.getElementById('id_profesional');
+            const btnBuscar = document.getElementById('btn-buscar');
+            
+            if (!especialidadId || especialidadId === '') {
+                profesionalSelect.innerHTML = '<option value="">-- Primero seleccione especialidad --</option>';
+                profesionalSelect.disabled = true;
+                btnBuscar.disabled = true;
+                document.getElementById('card-horarios').style.display = 'none';
+                $('#profesional-activo').hide();
+                return;
+            }
+            
+            profesionalSelect.innerHTML = '<option value="">Cargando profesionales...</option>';
+            profesionalSelect.disabled = true;
+            btnBuscar.disabled = true;
+            document.getElementById('card-horarios').style.display = 'none';
+            $('#profesional-activo').hide();
+            
+            fetch(`/citas/api/filtrar-profesionales/?especialidad_id=${especialidadId}`)
+                .then(response => response.json())
+                .then(data => {
+                    profesionalSelect.innerHTML = '';
+                    
+                    if (data.profesionales && data.profesionales.length > 0) {
+                        const defaultOption = document.createElement('option');
+                        defaultOption.value = '';
+                        defaultOption.textContent = '-- Seleccione un profesional --';
+                        profesionalSelect.appendChild(defaultOption);
+                        
+                        data.profesionales.forEach(prof => {
+                            const option = document.createElement('option');
+                            option.value = prof.id;
+                            option.textContent = `${prof.nombre} (${prof.tipo}) - ${prof.especialidad}`;
+                            profesionalSelect.appendChild(option);
+                        });
+                        
+                        profesionalSelect.disabled = false;
+                    } else {
+                        profesionalSelect.innerHTML = '<option value="">No hay profesionales disponibles</option>';
+                        profesionalSelect.disabled = true;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    profesionalSelect.innerHTML = '<option value="">Error al cargar profesionales</option>';
+                    profesionalSelect.disabled = true;
+                });
+        }
+        
+        // ================================================================
+        // FUNCIÓN: Cargar horas disponibles
+        // ================================================================
+        function cargarHorasDisponibles(fechaStr, horaSeleccionada = null, horaOriginal = null, citaId = null) {
+            if (!profesionalSeleccionado) return;
+        
+            const horaSelect = $('#id_hora');
+            horaSelect.html('<option value="">Cargando...</option>');
+        
+            let url = `/citas/api/horas-disponibles/${profesionalSeleccionado}/${fechaStr}/`;
+            if (citaId) {
+                url += `?cita_id=${citaId}`;
+            }
+        
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    horaSelect.html('<option value="">-- Seleccione hora --</option>');
+                    if (data.slots && data.slots.length > 0) {
+                        let horaEncontrada = false;
+                    
+                        data.slots.forEach(slot => {
+                            const datetime = slot.datetime;
+                            const horaSlot = slot.hora;
+                            const horaFin = slot.hora_fin;
+                            const esHoraActual = slot.es_hora_actual || false;
+                            const disponible = slot.disponible !== false;
+                        
+                            let selected = false;
+                        
+                            if (horaOriginal && horaSlot === horaOriginal) {
+                                selected = true;
+                                horaEncontrada = true;
+                                console.log(`Hora original encontrada: ${horaSlot} - seleccionada`);
+                            } else if (horaSeleccionada && horaSlot === horaSeleccionada) {
+                                selected = true;
+                                horaEncontrada = true;
+                            } else if (esHoraActual && !selected) {
+                                selected = true;
+                                horaEncontrada = true;
+                                console.log(`Hora actual de la cita: ${horaSlot} - seleccionada`);
+                            }
+                        
+                            let optionHtml = '';
+                            if (esHoraActual && !disponible) {
+                                optionHtml = `<option value="${datetime}" ${selected ? 'selected' : ''} style="background-color: #fff3cd; color: #856404;">
+                                    🔒 ${horaSlot} - ${horaFin} (hora actual de la cita)
+                                </option>`;
+                            } else {
+                                optionHtml = `<option value="${datetime}" ${selected ? 'selected' : ''}>${horaSlot} - ${horaFin}</option>`;
+                            }
+
+                            horaSelect.append(optionHtml);
+                        });
+                    
+                        if (horaOriginal && !horaEncontrada) {
+                            horaSelect.prepend(`<option value="" disabled style="color: #721c24; background-color: #f8d7da;">
+                                ❌ Hora original: ${horaOriginal} - Ya no está disponible, seleccione una nueva hora
+                            </option>`);
+                        }
+                    } else {
+                        horaSelect.append('<option value="" disabled>No hay horas disponibles para esta fecha</option>');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error al cargar horas:', error);
+                    horaSelect.html('<option value="">Error al cargar horas</option>');
+                });
+        }
+        
+        // ================================================================
+        // FUNCIÓN: Abrir modal para editar cita
+        // ================================================================
+        function abrirModalEditarCita(event) {
+            citaEditando = event.id;
+            $('#btn-limpiar-paciente').hide();
+            
+            const profesionalSelect = document.getElementById('id_profesional');
+            const profesionalNombre = profesionalSelect.options[profesionalSelect.selectedIndex]?.text || '';
+            if (profesionalSeleccionado) {
+                $('#nombre-profesional-activo').text(profesionalNombre);
+                $('#profesional-activo').show();
+            } else {
+                $('#profesional-activo').hide();
+            }
+
+            const props = event.extendedProps;
+
+            console.log('Editando cita:', event.id);
+            console.log('startStr:', event.startStr);
+            console.log('props.hora_cita:', props.hora_cita);
+
+            $('#modal-titulo').html('<i class="fas fa-edit mr-2"></i>Editar Cita');
+            $('#cita_id').val(event.id);
+
+            const $pacienteSelect = $('#id_paciente');
+            if ($pacienteSelect.hasClass('select2-hidden-accessible')) {
+                $pacienteSelect.select2('destroy');
+            }
+
+            $pacienteSelect.empty();
+            $pacienteSelect.append(`<option value="${props.paciente_id}" selected>${props.paciente_text || props.paciente_nombre}</option>`);
+
+            $pacienteSelect.select2({
+                placeholder: props.paciente_nombre,
+                width: '100%',
+                dropdownParent: $('#citaModal'),
+                disabled: true
+            });
+            $pacienteSelect.prop('disabled', true);
+            
+            pacienteSeleccionadoId = props.paciente_id;
+
+            // ✅ tipo_cita habilitado en edición
+            if (props.tipo_cita) {
+                $('#id_tipo_cita').val(props.tipo_cita);
+            }
+
+            const fechaStr = event.startStr.split('T')[0];
+            $('#id_fecha').val(fechaStr);
+
+            let horaOriginal = props.hora_cita || null;
+
+            if (!horaOriginal && event.startStr) {
+                const match = event.startStr.match(/T(\d{2}:\d{2})/);
+                if (match) {
+                    horaOriginal = match[1];
+                }
+            }
+
+            console.log('Hora original final:', horaOriginal);
+            console.log('Cita ID para excluir:', event.id);
+
+            $('#id_motivo').val(props.motivo);
+            $('#id_color').val(event.backgroundColor || '#007BFF');
+            $('#btn-eliminar-cita').show();
+            $('#btn-guardar-cita').text('Actualizar Cita');
+
+            cargarHorasDisponibles(fechaStr, null, horaOriginal, event.id);
+            $('#citaModal').modal('show');
+        }
+        
+        // ================================================================
+        // FUNCIÓN: Abrir modal para nueva cita
+        // ================================================================
+        function abrirModalNuevaCita(fechaStr) {
+            // Limpiar todo antes de abrir
+            limpiarModalCompleto();
+
+            $('#id_fecha').val(fechaStr.split('T')[0]);
+            cargarHorasDisponibles(fechaStr.split('T')[0], null, null, null);
+
+            const profesionalSelect = document.getElementById('id_profesional');
+            const profesionalNombre = profesionalSelect.options[profesionalSelect.selectedIndex]?.text || '';
+            if (profesionalSeleccionado) {
+                $('#nombre-profesional-activo').text(profesionalNombre);
+                $('#profesional-activo').show();
+            } else {
+                $('#profesional-activo').hide();
+            }
+
+            $('#citaModal').modal('show');
+        }
+        
+        // ================================================================
+        // EVENTOS DEL DOM
+        // ================================================================
+        
+        // Evento: Cambio de especialidad
+        document.getElementById('id_especialidad').addEventListener('change', function() {
+            cargarProfesionales(this.value);
+            if (pacienteSeleccionadoId) {
+                limpiarModalCompleto();
+            }
+        });
+        
+        // Evento: Cambio de profesional
+        document.getElementById('id_profesional').addEventListener('change', function() {
+            const btnBuscar = document.getElementById('btn-buscar');
+            if (this.value && this.value !== '' && !this.disabled) {
+                btnBuscar.disabled = false;
+                
+                if (pacienteSeleccionadoId) {
+                    Swal.fire({
+                        title: 'Cambio de Profesional',
+                        text: 'Al cambiar de profesional, el paciente seleccionado será limpiado.',
+                        icon: 'info',
+                        showCancelButton: true,
+                        confirmButtonText: 'Continuar',
+                        cancelButtonText: 'Cancelar'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            limpiarModalCompleto();
+                            actualizarProfesionalActivo();
+                        } else {
+                            this.value = '';
+                            btnBuscar.disabled = true;
+                        }
+                    });
+                } else {
+                    actualizarProfesionalActivo();
+                }
+            } else {
+                btnBuscar.disabled = true;
+                $('#profesional-activo').hide();
+            }
+        });
+        
+        // Evento: Botón cambiar profesional
+        $('#btn-cambiar-profesional').on('click', function() {
+            limpiarModalCompleto();
+            
+            const profesionalSelect = document.getElementById('id_profesional');
+            profesionalSelect.value = '';
+            document.getElementById('btn-buscar').disabled = true;
+            $('#profesional-activo').hide();
+            
+            Swal.fire({
+                icon: 'info',
+                title: 'Profesional cambiado',
+                text: 'Seleccione un nuevo profesional',
+                timer: 1500,
+                showConfirmButton: false
+            });
+            
+            profesionalSeleccionado = null;
+            if (calendar) calendar.refetchEvents();
+        });
+        
+        // Evento: Botón buscar
+        $('#btn-buscar').on('click', function() {
+            const profesionalId = $('#id_profesional').val();
+            const profesionalNombre = $('#id_profesional option:selected').text();
+            
+            if (!profesionalId) {
+                Swal.fire('Atención', 'Por favor seleccione un profesional', 'warning');
+                return;
+            }
+            
+            if (pacienteSeleccionadoId) {
+                limpiarModalCompleto();
+            }
+            
+            profesionalSeleccionado = profesionalId;
+            
+            $('#nombre-profesional-activo').text(profesionalNombre);
+            $('#profesional-activo').show();
+            
+            fetch(`/citas/api/horarios-profesional/${profesionalId}/`)
+                .then(response => response.json())
+                .then(data => {
+                    const tbody = $('#tbody-horarios');
+                    tbody.empty();
+                    
+                    if (data.horarios && data.horarios.length > 0) {
+                        data.horarios.forEach(h => {
+                            tbody.append(`<tr><td>${h.dias}</td><td>${h.hora_inicio}</td><td>${h.hora_fin}</td></tr>`);
+                        });
+                    } else {
+                        tbody.append('<tr><td colspan="3" class="text-center text-danger">No tiene horarios asignados</td></tr>');
+                    }
+                    
+                    $('#nombre-profesional').text(profesionalNombre);
+                    $('#card-horarios').show();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    $('#tbody-horarios').html('<tr><td colspan="3" class="text-center text-danger">Error al cargar horarios</td></tr>');
+                });
+            
+            if (calendar) calendar.refetchEvents();
+        });
+        
+        // Evento: Cambio de fecha
+        $('#id_fecha').on('change', function() {
+            cargarHorasDisponibles($(this).val(), null, null, $('#cita_id').val() || null);
+        });
+        
+        // Evento: Cambio de tipo_cita - Actualizar color automáticamente
+        $('#id_tipo_cita').on('change', function() {
+            const tipo = $(this).val();
+            const colores = {
+                'PRIMERA_CONSULTA': '#007BFF',
+                'SEGUIMIENTO': '#28A745',
+                'FINALIZACION': '#DC3545',
+                'REVISION': '#FFC107'
+            };
+            if (tipo && colores[tipo]) {
+                $('#id_color').val(colores[tipo]);
+            }
+        });
+        
+        // Evento: Selección de paciente
+        $('#id_paciente').on('select2:select', function(e) {
+            pacienteSeleccionadoId = e.params.data.id;
+            mostrarTipoCita();
+        });
+        
+        // Evento: Limpiar selección de paciente
+        $('#id_paciente').on('select2:clear', function() {
+            pacienteSeleccionadoId = null;
+            $('#id_tipo_cita_display').val('Seleccione un paciente para calcular el tipo');
+            $('#id_tipo_cita_display').css('color', '#6c757d');
+        });
+        
+        // Evento: Botón limpiar paciente
+        $('#btn-limpiar-paciente').on('click', function() {
+            limpiarModalCompleto();
+            Swal.fire({
+                icon: 'info',
+                title: 'Selección limpiada',
+                text: 'Puede buscar un nuevo paciente',
+                timer: 1500,
+                showConfirmButton: false
+            });
+        });
+        
+        // ================================================================
+        // EVENTO: Guardar cita
+        // ================================================================
+        $('#btn-guardar-cita').on('click', function() {
+            const citaId = $('#cita_id').val();
+            const pacienteId = $('#id_paciente').val();
+            const tipoCita = $('#id_tipo_cita').val();
+            const fechaHoraRaw = $('#id_hora').val();
+            const motivo = $('#id_motivo').val();
+            const duracion = $('#id_duracion').val();
+            const color = $('#id_color').val();  
+            const esEdicion = Boolean(citaId);
+
+            if (!pacienteId || !tipoCita || !fechaHoraRaw || !motivo) {
+                Swal.fire('Error', 'Complete todos los campos requeridos (Paciente, Tipo, Fecha/Hora y Motivo)', 'error');
+                return;
+            }
+
+            function enviarFormulario() {
+                let fechaHora = fechaHoraRaw;
+
+                if (fechaHoraRaw.includes('+') || fechaHoraRaw.includes('-') || fechaHoraRaw.includes('Z')) {
+                    const dateObj = new Date(fechaHoraRaw);
+                    const year = dateObj.getFullYear();
+                    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+                    const day = String(dateObj.getDate()).padStart(2, '0');
+                    const hours = String(dateObj.getHours()).padStart(2, '0');
+                    const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+                    fechaHora = `${year}-${month}-${day}T${hours}:${minutes}`;
+                }
+
+                console.log('Fecha/Hora original:', fechaHoraRaw);
+                console.log('Fecha/Hora formateada LOCAL:', fechaHora);
+
+                const formData = new FormData();
+                formData.append('profesional_id', profesionalSeleccionado);
+                formData.append('paciente', pacienteId);
+                formData.append('tipo_cita', tipoCita);
+                formData.append('fecha', fechaHora);
+                formData.append('motivo', motivo);
+                formData.append('duracion', duracion);
+                formData.append('color', color);
+                formData.append('csrfmiddlewaretoken', $('[name=csrfmiddlewaretoken]').val());
+
+                const url = citaId ? `/citas/api/editar/${citaId}/` : '/citas/api/crear/';
+
+                Swal.fire({
+                    title: 'Guardando...',
+                    text: 'Por favor espere',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                fetch(url, { method: 'POST', body: formData })
+                    .then(response => response.json())
+                    .then(data => {
+                        Swal.close();
+                        if (data.success) {
+                            Swal.fire('Éxito', data.message, 'success');
+                            $('#citaModal').modal('hide');
+                            if (calendar) calendar.refetchEvents();
+                            limpiarModalCompleto();
+                            console.log('✅ Todo limpiado después de guardar');
+                        } else {
+                            let errorMsg = 'Error al guardar la cita';
+                            if (data.errors) {
+                                if (typeof data.errors === 'object') {
+                                    errorMsg = Object.values(data.errors).flat().join('\n');
+                                } else {
+                                    errorMsg = data.errors;
+                                }
+                            }
+                            Swal.fire('Error', errorMsg, 'error');
+                        }
+                    })
+                    .catch(error => {
+                        Swal.close();
+                        console.error('Error:', error);
+                        Swal.fire('Error', 'Error de conexión al guardar la cita', 'error');
+                    });
+            }
+
+            // ✅ Verificar citas pendientes SOLO si es nueva cita
+            verificarEstadoPacienteAlGuardar(pacienteId, profesionalSeleccionado, esEdicion, (puedeContinuar) => {
+                if (!puedeContinuar) {
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'Corrija las citas pendientes',
+                        text: 'Por favor cancele o complete las citas pendientes antes de crear una nueva.',
+                        timer: 3000,
+                        showConfirmButton: false
+                    });
+                    return;
+                }
+                enviarFormulario();
+            });
+        });
+        
+        // ================================================================
+        // EVENTO: Eliminar/Cancelar cita
+        // ================================================================
+        $('#btn-eliminar-cita').on('click', function() {
+            if (!citaEditando) return;
+                
+            Swal.fire({
+                title: '¿Cancelar cita?',
+                text: 'Esta acción no se puede deshacer',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, cancelar',
+                cancelButtonText: 'No'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'Cancelando...',
+                        text: 'Por favor espere',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+
+                    fetch(`/citas/api/eliminar/${citaEditando}/`, {
+                        method: 'POST',
+                        headers: { 'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val() }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        Swal.close();
+                        if (data.success) {
+                            Swal.fire('Éxito', data.message, 'success');
+                            $('#citaModal').modal('hide');
+                            if (calendar) calendar.refetchEvents();
+                            limpiarModalCompleto();
+                        } else {
+                            Swal.fire('Error', data.error || 'No se pudo cancelar la cita', 'error');
+                        }
+                    })
+                    .catch(error => {
+                        Swal.close();
+                        console.error('Error:', error);
+                        Swal.fire('Error', 'Error de conexión al cancelar la cita', 'error');
+                    });
+                }
+            });
+        });
+        
+        // ================================================================
+        // EVENTO: Cuando se cierra el modal
+        // ================================================================
+        $('#citaModal').on('hidden.bs.modal', function () {
+            if (!citaEditando) {
+                limpiarModalCompleto();
+            } else {
+                if (profesionalSeleccionado) {
+                    const profesionalSelect = document.getElementById('id_profesional');
+                    const profesionalNombre = profesionalSelect.options[profesionalSelect.selectedIndex]?.text || '';
+                    if (profesionalNombre) {
+                        $('#nombre-profesional-activo').text(profesionalNombre);
+                        $('#profesional-activo').show();
+                    }
+                }
+                $('#btn-limpiar-paciente').hide();
+            }
+            console.log('✅ Modal cerrado - Limpieza completada');
+        });
+        
+        // ================================================================
+        // INICIALIZAR FULLCALENDAR
+        // ================================================================
+        const calendarEl = document.getElementById('calendar');
+        if (calendarEl) {
+            calendar = new FullCalendar.Calendar(calendarEl, {
+                locale: 'es',
+                initialView: 'dayGridMonth',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                },
+                buttonText: {
+                    today: 'Hoy',
+                    month: 'Mes',
+                    week: 'Semana',
+                    day: 'Día'
+                },
+                events: function(info, successCallback, failureCallback) {
+                    let url = '/citas/api/eventos/';
+                    if (profesionalSeleccionado) {
+                        url += `?profesional_id=${profesionalSeleccionado}`;
+                    }
+                    fetch(url)
+                        .then(response => response.json())
+                        .then(data => successCallback(data))
+                        .catch(error => failureCallback(error));
+                },
+                selectable: true,
+                select: function(info) {
+                    if (!profesionalSeleccionado) {
+                        Swal.fire('Atención', 'Primero seleccione un profesional', 'warning');
+                        return;
+                    }
+                    abrirModalNuevaCita(info.startStr);
+                },
+                eventClick: function(info) {
+                    abrirModalEditarCita(info.event);
+                },
+                eventDidMount: function(info) {
+                    info.el.setAttribute('title', info.event.extendedProps.motivo || '');
+                }
+            });
+            calendar.render();
+            console.log('✅ Calendario inicializado');
+        }
+        
+        // ================================================================
+        // INICIALIZAR
+        // ================================================================
+        const especialidadSelect = document.getElementById('id_especialidad');
+        if (especialidadSelect.value) {
+            cargarProfesionales(especialidadSelect.value);
+        }
+        
+        inicializarSelect2Pacientes('Buscar paciente por nombre o documento...');
+        
+        console.log('✅ Sistema de citas iniciado correctamente');
     });
-});
+})();
 </script>
 {% endblock %}

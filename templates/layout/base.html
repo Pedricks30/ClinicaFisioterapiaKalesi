@@ -24,10 +24,18 @@
 
     <!-- Custom CSS -->
     <link href="{% static 'css/sb_forms.css' %}" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/calendar-custom.css' %}">
+    <link rel="stylesheet" href="{% static 'css/paciente-custom.css' %}">
+
+    <link rel="stylesheet" href="{% static 'css/expediente-custom.css' %}">
 
     <!-- Third-party CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.css"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/country-select-js/2.1.0/css/countrySelect.min.css"/>
+    <!-- FullCalendar CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0/dist/css/select2.min.css" rel="stylesheet">
 </head>
 
 <body id="page-top">
@@ -76,7 +84,10 @@
                 <div class="modal-body">Seleccione "Cerrar sesión" a continuación si está listo para finalizar su sesión actual.</div>
                 <div class="modal-footer">
                     <button class="btn btn-danger" type="button" data-dismiss="modal">Cancelar</button>
-                    <a class="btn btn-primary" href="{% url 'logout' %}">Cerrar Sesión</a>
+                    <form method="post" action="{% url 'logout' %}" style="display: inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-primary">Cerrar Sesión</button>
+                    </form>
                 </div>
             </div>
         </div>
@@ -103,11 +114,95 @@
         var urlBoton = "{{ url_boton }}";
         var accionBoton = "{{ accionBoton }}";
     </script>
-    <!-- Luego Bootstrap -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Incluir SweetAlert2 -->
+    
+    <!-- ================================================ -->
+    <!-- 1. PRIMERO: jQuery (OBLIGATORIO antes que todo) -->
+    <!-- ================================================ -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <!-- ================================================ -->
+    <!-- 2. Bootstrap (depende de jQuery) -->
+    <!-- ================================================ -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- ================================================ -->
+    <!-- 3. SweetAlert2 (para alertas bonitas) -->
+    <!-- ================================================ -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <!-- Para integrar con Django messages -->
+    
+    <!-- ================================================ -->
+    <!-- 4. FullCalendar y sus dependencias -->
+    <!-- ================================================ -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/es.min.js"></script>
+    
+    <!-- ================================================ -->
+    <!-- 5. Select2 (depende de jQuery) -->
+    <!-- ================================================ -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0/dist/js/select2.min.js"></script>
+    
+    <!-- ================================================ -->
+    <!-- 6. Tus scripts estáticos locales -->
+    <!-- ================================================ -->
+    <!-- Bootstrap core JavaScript (versión local) -->
+    <script src="{% static 'vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+    
+    <!-- Core plugin JavaScript -->
+    <script src="{% static 'vendor/jquery-easing/jquery.easing.min.js' %}"></script>
+    
+    <!-- Custom scripts for all pages -->
+    <script src="{% static 'js/sb-admin-2.min.js' %}"></script>
+    <script src="{% static 'js/sb-admin-2.js' %}"></script>
+    
+    <!-- DataTables JavaScript -->
+    <script src="{% static 'vendor/datatables/jquery.dataTables.min.js' %}"></script>
+    <script src="{% static 'vendor/datatables/dataTables.bootstrap4.min.js' %}"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap4.min.js"></script>
+    
+    <!-- Scripts personalizados para DataTables -->
+    <script src="{% static 'js/datatable.js' %}"></script>
+    
+    <!-- Scripts personalizados para Forms de país y Teléfono -->
+    <script src="{% static 'js/sb-forms.js' %}"></script>
+    
+    <script>
+        // 15 minutos en milisegundos
+        const TIEMPO_INACTIVIDAD = 900000; 
+        let temporizadorSesion;
+    
+        function redirigirAlLogin() {
+            window.location.href = "login/"; // Reemplaza por tu ruta exacta de login
+        }
+    
+        function reiniciarTemporizador() {
+            // Borra el temporizador anterior
+            clearTimeout(temporizadorSesion);
+            // Inicia el conteo desde cero
+            temporizadorSesion = setTimeout(redirigirAlLogin, TIEMPO_INACTIVIDAD);
+        }
+    
+        // Escucha eventos de actividad física en la computadora
+        window.onload = reiniciarTemporizador;
+        window.onmousemove = reiniciarTemporizador;
+        window.onmousedown = reiniciarTemporizador; // Clics del mouse
+        window.ontouchstart = reiniciarTemporizador; // Pantallas táctiles
+        window.onclick = reiniciarTemporizador;     
+        window.onkeypress = reiniciarTemporizador;  // Teclado
+    </script>
+    
+    <!-- Third-party JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.print.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.colVis.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/country-select-js/2.1.0/js/countrySelect.min.js"></script>
+    
+    <!-- Script para manejar mensajes de Django con SweetAlert2 -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Verificar si hay mensajes de Django
@@ -119,48 +214,13 @@
                         icon: '{% if message.tags == "error" %}error{% else %}{{ message.tags }}{% endif %}',
                         confirmButtonText: 'Aceptar',
                         customClass: {
-                            confirmButton: 'btn btn-primary' // Añadimos la clase de botón primario
+                            confirmButton: 'btn btn-primary'
                         }
                     });
                 {% endfor %}
             {% endif %}
         });
     </script>
-    <!-- jQuery (debe cargarse primero) -->
-    <script src="{% static 'vendor/jquery/jquery.min.js' %}"></script>
-    <!-- Bootstrap core JavaScript -->
-    <script src="{% static 'vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
-
-    <!-- Core plugin JavaScript -->
-    <script src="{% static 'vendor/jquery-easing/jquery.easing.min.js' %}"></script>
-    
-    <!-- Custom scripts for all pages -->
-    <script src="{% static 'js/sb-admin-2.min.js' %}"></script>
-    <script src="{% static 'js/sb-admin-2.js' %}"></script>
-    
-
-    <!-- DataTables JavaScript -->
-    <script src="{% static 'vendor/datatables/jquery.dataTables.min.js' %}"></script>
-    <script src="{% static 'vendor/datatables/dataTables.bootstrap4.min.js' %}"></script>
-    <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
-    <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap4.min.js"></script>
-
-    <!-- Scripts personalizados para DataTables -->
-    <script src="{% static 'js/datatable.js' %}"></script>
-
-    <!-- Scripts personalizados para Forms de país y Teléfono -->
-    <script src="{% static 'js/sb-forms.js' %}"></script>
-
-    <!-- Third-party JavaScript -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
-    <script src="https://cdn.datatables.net/buttons/2.3.6/js/dataTables.buttons.min.js"></script>
-    <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.html5.min.js"></script>
-    <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.print.min.js"></script>
-    <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.colVis.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/country-select-js/2.1.0/js/countrySelect.min.js"></script>
     {% endblock %}
 </body>
 </html>

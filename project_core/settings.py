@@ -32,6 +32,12 @@ SECRET_KEY = env.str('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool('DEBUG', default=False)
+# AES-256 en modo GCM para codificar la información antes de enviarla a PostgreSQL.
+# Configuración correcta para django-searchable-encrypted-fields
+# Colocamos el string del .env dentro de una lista [] y usamos el nombre en PLURAL
+FIELD_ENCRYPTION_KEYS = [
+    env.str('FIELD_ENCRYPTION_KEY')
+]
 
 ALLOWED_HOSTS = tuple(env.list('ALLOWED_HOSTS', default=[]))
 
@@ -46,6 +52,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'encrypted_fields',
+    'django_apscheduler',
     'authentication',
     'django_htmx',
     'dashboard',
@@ -57,11 +65,13 @@ INSTALLED_APPS = [
     'paciente',
     'expedientes',
     'notifications',
+    'cuestionarios',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django_session_timeout.middleware.SessionTimeoutMiddleware', 
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -69,6 +79,19 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django_htmx.middleware.HtmxMiddleware',
 ]
+# Configuración para APScheduler
+APSCHEDULER_DATETIME_FORMAT = "N j, Y, f:s a"
+SCHEDULER_CONFIG = {
+    'apscheduler.jobstores.default': {
+        'class': 'django_apscheduler.jobstores:DjangoJobStore'
+    },
+    'apscheduler.executors.processpool': {
+        'type': 'threadpool'
+    }
+}
+
+# Limpiar trabajos antiguos automáticamente
+APSCHEDULER_CLEANUP_OLD_JOBS = True
 
 ROOT_URLCONF = 'project_core.urls'
 
@@ -133,6 +156,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
+
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
 
@@ -160,10 +184,29 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'  # Servidor SMTP de Gmail
 EMAIL_USE_TLS = env.bool('EMAIL_USE_TLS', default=True)  # Usar TLS para seguridad
-EMAIL_PORT = env.int('EMAIL_PORT')  # Puerto para TLS
+EMAIL_PORT = env.int('EMAIL_PORT', default=587)  # Puerto para TLS
 EMAIL_HOST_USER = env.str('EMAIL_HOST_USER') # Tu dirección de correo electrónico
 EMAIL_HOST_PASSWORD = env.str('EMAIL_HOST_PASSWORD') # Tu contraseña de correo
 # Password validation
+
+# ... Todo el contenido previo de tu archivo settings.py (MIDDLEWARE, DATABASES, etc.) ...
+
+# ==============================================================================
+# CONFIGURACIÓN DE EXPIRACIÓN DE SESIÓN (django-session-timeout)
+# ==============================================================================
+
+# Tiempo de expiración (15 minutos = 900 segundos)
+#SESSION_EXPIRE_SECONDS = 900  
+
+# Expirar basado en la última actividad (¡Muy recomendado!)
+#SESSION_EXPIRE_AFTER_LAST_ACTIVITY = True  
+
+# Redirección tras expirar la sesión (Asegúrate de que 'login' coincida con el name de tu URL)
+#SESSION_TIMEOUT_REDIRECT = 'login/'  
+
+# Agrupa la última actividad por minutos (60 segundos) para mejorar el rendimiento
+#SESSION_EXPIRE_AFTER_LAST_ACTIVITY_GRACE_PERIOD = 60  
+
 
 # Configuración para la carpeta MEDIA
 MEDIA_URL = '/media/'  # URL para acceder a los archivos multimedia

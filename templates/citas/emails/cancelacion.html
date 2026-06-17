@@ -1,0 +1,99 @@
+<!-- citas/emails/cancelacion.html -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cancelación de Cita</title>
+    <style>
+        /* Mismo estilo base que no_asistio.html pero con colores naranjas */
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            line-height: 1.6;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #fd7e14, #e67300);
+            color: white;
+            padding: 30px 25px;
+            text-align: center;
+        }
+        .header .icon { font-size: 48px; margin-bottom: 10px; display: block; }
+        .header h2 { font-size: 24px; font-weight: 700; margin: 0; }
+        .content { padding: 30px 25px; }
+        .detalles {
+            background-color: #f8f9fa;
+            border-left: 4px solid #fd7e14;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 6px;
+        }
+        .detalles ul {
+            list-style: none;
+            padding: 0;
+            margin: 10px 0 0 0;
+        }
+        .detalles li {
+            padding: 8px 0;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            align-items: flex-start;
+        }
+        .detalles .label { font-weight: 600; color: #555; min-width: 120px; flex-shrink: 0; }
+        .btn {
+            display: inline-block;
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #fd7e14, #e67300);
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px 25px;
+            text-align: center;
+            font-size: 12px;
+            color: #777;
+            border-top: 1px solid #e9ecef;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <span class="icon">❌</span>
+            <h2>Cancelación de Cita</h2>
+        </div>
+        <div class="content">
+            <p>Hola <strong>{{ paciente.nombres }} {{ paciente.apellidos }}</strong>,</p>
+            <p>Tu cita ha sido <strong>cancelada</strong>.</p>
+            
+            <div class="detalles">
+                <h3>📋 Detalles de la Cita Cancelada</h3>
+                <ul>
+                    <li><span class="label">Fecha:</span> {{ cita.fecha|date:"d/m/Y" }}</li>
+                    <li><span class="label">Hora:</span> {{ cita.fecha|time:"H:i" }}</li>
+                    <li><span class="label">Profesional:</span> {{ profesional.get_full_name }}</li>
+                </ul>
+            </div>
+            
+            <p>Si necesitas reprogramar tu cita, por favor contáctanos.</p>
+        </div>
+        <div class="footer">
+            <p>🏥 {{ clinica }}</p>
+            <p>&copy; {% now "Y" %} {{ clinica }}. Todos los derechos reservados.</p>
+        </div>
+    </div>
+</body>
+</html>

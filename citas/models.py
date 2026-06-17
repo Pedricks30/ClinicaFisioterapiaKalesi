@@ -1,14 +1,17 @@
+# citas/models.py
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
+from django.db.models import Count
 from django.utils import timezone
 from datetime import timedelta
 from django.core.exceptions import ValidationError
 from paciente.models import Patient
 from users.models import CustomUser
 from horario.models import Horario
+from expedientes.models import Expediente , ConsultaSegumiento
 
 
 class Cita(models.Model):
@@ -29,19 +32,19 @@ class Cita(models.Model):
         ('SEGUIMIENTO', 'Seguimiento - Sesión de Tratamiento'),
         ('FINALIZACION', 'Finalización - Alta del Paciente'),
         ('REVISION', 'Revisión - Control Post-Alta'),
-        ('OTRO', 'Otro tipo de consulta'),
     ]
     
     # Relaciones principales
     paciente = models.ForeignKey(
         Patient,
-        on_delete=models.CASCADE,
-        related_name='citas_paciente',
-        verbose_name='Paciente'
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='citas_paciente'
     )
     profesional = models.ForeignKey(
         CustomUser,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name='citas_profesional',
         limit_choices_to={'tipo_usuario__in': ['MEDIC', 'FISIO']},
         verbose_name='Profesional'
@@ -69,11 +72,17 @@ class Cita(models.Model):
     tipo_cita = models.CharField(
         max_length=20,
         choices=TIPO_CITA_FISIOTERAPIA,
-        default='OTRO',
         verbose_name='Tipo de cita',
         help_text='Clasificación de la cita según el tratamiento de fisioterapia'
     )
-    
+    # Nuevo campo para el color
+    color = models.CharField(
+        max_length=7,
+        default='#007BFF',
+        blank=True,
+        verbose_name='Color en calendario',
+        help_text='Color que se mostrará en el calendario (formato hexadecimal)'
+    )
     # Número de sesión (para seguimiento de tratamiento)
     numero_sesion = models.PositiveIntegerField(
         null=True,
@@ -91,30 +100,13 @@ class Cita(models.Model):
         limit_choices_to={'tipo_usuario__in': ['RECEP', 'ADMIN', 'MEDIC', 'FISIO']},
         verbose_name='Creada por'
     )
-    
-    # Relación con horario del profesional
-    horario = models.ForeignKey(
-        Horario,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='citas',
-        help_text="Horario profesional asociado a esta cita"
-    )
-    
-    # Notas adicionales
-    notas_internas = models.TextField(
-        blank=True,
-        verbose_name='Notas internas',
-        help_text='Notas visibles solo para el personal'
-    )
+    # Notas adicionales 
     notas_paciente = models.TextField(
         blank=True,
         verbose_name='Notas para el paciente',
         help_text='Instrucciones o notas visibles para el paciente'
     )
-    
-    # Recordatorios
+    # Recordatorios 
     recordatorio_enviado = models.BooleanField(
         default=False,
         verbose_name='¿Recordatorio enviado?'
@@ -124,7 +116,6 @@ class Cita(models.Model):
         blank=True,
         verbose_name='Fecha de envío del recordatorio'
     )
-    
     # Confirmación del paciente
     confirmada_paciente = models.BooleanField(
         default=False,
@@ -135,7 +126,6 @@ class Cita(models.Model):
         blank=True,
         verbose_name='Fecha de confirmación'
     )
-    
     # Metadatos
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -166,66 +156,103 @@ class Cita(models.Model):
     def __str__(self):
         tipo = dict(self.TIPO_CITA_FISIOTERAPIA).get(self.tipo_cita, '')
         return f"Cita #{self.id} - {self.paciente} ({tipo}) - {self.fecha.strftime('%d/%m/%Y %H:%M')}"
-    
+
     def clean(self):
-        """Validaciones adicionales para el modelo"""
-        super().clean()
+        """
+        Validaciones personalizadas para la cita
+        """
+        if not self.tipo_cita:
+            return  # ✅ Simplemente retornar, no lanzar error
         
-        # Validación de duración mínima
-        if self.duracion < 15:
+        # ✅ Validar que el tipo sea válido
+        tipos_validos = [t[0] for t in self.TIPO_CITA_FISIOTERAPIA]
+        if self.tipo_cita not in tipos_validos:
             raise ValidationError({
-                'duracion': 'La duración mínima de una cita es de 15 minutos'
+                'tipo_cita': f'El tipo de cita "{self.tipo_cita}" no es válido.'
             })
-        
-        # Validación de que la duración sea múltiplo de 15 minutos
-        if self.duracion % 15 != 0:
-            raise ValidationError({
-                'duracion': 'La duración debe ser un múltiplo de 15 minutos'
-            })
-        
-        # Validación de duración máxima (4 horas)
-        if self.duracion > 240:
-            raise ValidationError({
-                'duracion': 'La duración máxima de una cita es de 4 horas'
-            })
-        
-        # Validación de fecha no pasada para citas nuevas
-        if not self.pk and self.fecha < timezone.now():
-            raise ValidationError({
-                'fecha': 'No se pueden agendar citas en fechas pasadas'
-            })
-        
-        # Validación de solapamiento para citas activas
-        if self.estado in ['PENDIENTE', 'CONFIRMADA', 'EN_PROCESO']:
-            self.validar_solapamiento()
-        
-        # Validación de horario profesional
-        if self.horario and self.horario.profesional != self.profesional:
-            raise ValidationError({
-                'horario': 'El horario seleccionado no corresponde al profesional'
-            })
-        
-        # Validación de tipo de cita según el estado del expediente
+
+        # ✅ Si no hay paciente, no validar más
+        if not self.paciente:
+            return
+
+        # ✅ Validación para PRIMERA_CONSULTA
         if self.tipo_cita == 'PRIMERA_CONSULTA':
-            self.validar_primera_consulta()
-        elif self.tipo_cita == 'FINALIZACION':
-            self.validar_finalizacion()
-    
+            try:
+                expediente = Expediente.objects.get(paciente=self.paciente)
+                if hasattr(expediente, 'primera_consulta') and expediente.primera_consulta:
+                    if self.pk:
+                        if expediente.primera_consulta.cita and expediente.primera_consulta.cita.pk != self.pk:
+                            raise ValidationError({
+                                'tipo_cita': 'Este paciente ya tiene una primera consulta registrada.'
+                            })
+                    else:
+                        raise ValidationError({
+                            'tipo_cita': 'Este paciente ya tiene una primera consulta registrada.'
+                        })
+            except Expediente.DoesNotExist:
+                # No hay expediente, se puede crear primera consulta
+                pass
+
+        # ✅ Validación para FINALIZACION
+        if self.tipo_cita == 'FINALIZACION':
+            try:
+                expediente = Expediente.objects.get(paciente=self.paciente)
+                if hasattr(expediente, 'finalizacion') and expediente.finalizacion:
+                    if self.pk:
+                        if expediente.finalizacion.cita and expediente.finalizacion.cita.pk != self.pk:
+                            raise ValidationError({
+                                'tipo_cita': 'Este paciente ya tiene una finalización registrada.'
+                            })
+                    else:
+                        raise ValidationError({
+                            'tipo_cita': 'Este paciente ya tiene una finalización registrada.'
+                        })
+
+                if not hasattr(expediente, 'seguimientos') or not expediente.seguimientos.exists():
+                    raise ValidationError({
+                        'tipo_cita': 'Debe existir al menos una sesión de seguimiento antes de finalizar.'
+                    })
+            except Expediente.DoesNotExist:
+                raise ValidationError({
+                    'tipo_cita': 'El paciente no tiene un expediente activo.'
+                })
+
+        # ✅ Validación para SEGUIMIENTO
+        if self.tipo_cita == 'SEGUIMIENTO':
+            try:
+                expediente = Expediente.objects.get(paciente=self.paciente)
+                if not hasattr(expediente, 'primera_consulta') or not expediente.primera_consulta:
+                    raise ValidationError({
+                        'tipo_cita': 'Debe existir una Primera Consulta antes de crear seguimientos.'
+                    })
+
+                if hasattr(expediente, 'finalizacion') and expediente.finalizacion:
+                    raise ValidationError({
+                        'tipo_cita': 'El tratamiento ya está finalizado, no se pueden crear más seguimientos.'
+                    })
+            except Expediente.DoesNotExist:
+                raise ValidationError({
+                    'tipo_cita': 'El paciente no tiene un expediente activo.'
+                })
+            
     def validar_solapamiento(self):
         """Valida que no haya citas solapadas para el mismo profesional"""
+        if not self.fecha or not self.profesional_id:
+            return
+
         inicio_cita = self.fecha
         fin_cita = self.fecha + timedelta(minutes=self.duracion)
-        
+
         citas_solapadas = Cita.objects.filter(
             profesional=self.profesional,
             fecha__lt=fin_cita,
-            fecha__gt=inicio_cita - timedelta(minutes=self.duracion),
+            fecha__gte=inicio_cita - timedelta(minutes=self.duracion),
             estado__in=['PENDIENTE', 'CONFIRMADA', 'EN_PROCESO']
         )
-        
+
         if self.pk:
             citas_solapadas = citas_solapadas.exclude(pk=self.pk)
-        
+
         if citas_solapadas.exists():
             cita_conflicto = citas_solapadas.first()
             raise ValidationError(
@@ -235,58 +262,45 @@ class Cita(models.Model):
     
     def validar_primera_consulta(self):
         """Valida que no exista otra primera consulta para el mismo paciente"""
-        from expedientes.models import Expediente
-        
-        # Verificar si ya existe un expediente con primera consulta
+        if not self.paciente:
+            return
+
         try:
             expediente = Expediente.objects.get(paciente=self.paciente)
-            if expediente.primera_consulta_realizada:
-                # Permitir solo si esta es la cita asociada a esa primera consulta
-                from expedientes.models import HistoriaClinicaFisioterapia
-                if not HistoriaClinicaFisioterapia.objects.filter(
-                    cita=self,
-                    tipo_historia='PRIMERA_CONSULTA'
-                ).exists():
+            if hasattr(expediente, 'primera_consulta'):
+                if not self.pk or self.pk != expediente.primera_consulta.cita_id:
                     raise ValidationError({
-                        'tipo_cita': 'Este paciente ya tiene una primera consulta registrada'
+                        'tipo_cita': 'Este paciente ya tiene una primera consulta registrada en su expediente.'
                     })
         except Expediente.DoesNotExist:
-            pass  # Si no tiene expediente, es su primera consulta
-    
+            pass
+
     def validar_finalizacion(self):
         """Valida que existan sesiones previas antes de una finalización"""
-        from expedientes.models import Expediente, HistoriaClinicaFisioterapia
-        
+        if not self.paciente:
+            return
+
         try:
             expediente = Expediente.objects.get(paciente=self.paciente)
-            
-            # Verificar que tenga al menos una sesión de seguimiento
-            sesiones_seguimiento = HistoriaClinicaFisioterapia.objects.filter(
-                expediente=expediente,
-                tipo_historia='SEGUIMIENTO'
+            sesiones_seguimiento = ConsultaSegumiento.objects.filter(
+                expediente=expediente
             ).count()
-            
+
             if sesiones_seguimiento == 0:
                 raise ValidationError({
-                    'tipo_cita': 'Debe existir al menos una sesión de seguimiento antes de programar una finalización'
+                    'tipo_cita': 'Debe existir al menos una sesión de seguimiento antes de programar una finalización.'
                 })
-            
-            # Verificar que no exista ya una finalización
-            if expediente.tratamiento_finalizado:
-                # Permitir solo si esta es la cita asociada a esa finalización
-                if not HistoriaClinicaFisioterapia.objects.filter(
-                    cita=self,
-                    tipo_historia='FINALIZACION'
-                ).exists():
+
+            if hasattr(expediente, 'finalizacion'):
+                if not self.pk or self.pk != expediente.finalizacion.cita_id:
                     raise ValidationError({
-                        'tipo_cita': 'Este paciente ya tiene un tratamiento finalizado'
+                        'tipo_cita': 'Este paciente ya tiene un tratamiento finalizado.'
                     })
-                    
         except Expediente.DoesNotExist:
             raise ValidationError({
-                'tipo_cita': 'El paciente no tiene un expediente activo'
+                'tipo_cita': 'El paciente no tiene un expediente activo. Debe realizarse una primera consulta primero.'
             })
-    
+
     @property
     def hora_inicio(self):
         """Hora de inicio de la cita"""
@@ -392,7 +406,6 @@ class Cita(models.Model):
         self.estado = 'CANCELADA'
         self.save()
         
-        # Registrar el motivo en el histórico
         CitaHistorico.objects.create(
             cita_original=self,
             fecha_original=self.fecha,
@@ -414,12 +427,10 @@ class Cita(models.Model):
         
         fecha_anterior = self.fecha
         
-        # Actualizar la cita
         self.fecha = nueva_fecha
         self.estado = 'REPROGRAMADA'
         self.save()
         
-        # Crear registro histórico
         CitaHistorico.objects.create(
             cita_original=self,
             fecha_original=fecha_anterior,
@@ -453,7 +464,7 @@ class Cita(models.Model):
     def enviar_notificacion(self, tipo):
         """Envía notificaciones por email según el tipo de evento"""
         subject_map = {
-            'confirmacion': f"✅ Confirmación de Cita #{self.id} - Clínica de Fisioterapia",
+            'confirmacion': f"✅ Confirmación de Cita #{self.id} - Clínica de Fisioterapia Kalesi",
             'recordatorio': f"⏰ Recordatorio de Cita #{self.id} - Mañana",
             'cancelacion': f"❌ Cancelación de Cita #{self.id}",
             'reprogramacion': f"🔄 Reprogramación de Cita #{self.id}",
@@ -478,7 +489,6 @@ class Cita(models.Model):
         }
         
         try:
-            # Email para el paciente
             if self.paciente.email:
                 html_message = render_to_string(template_map.get(tipo, template_map['confirmacion']), context)
                 send_mail(
@@ -490,7 +500,6 @@ class Cita(models.Model):
                     fail_silently=True
                 )
             
-            # Email para el profesional
             if self.profesional.email:
                 context['es_profesional'] = True
                 html_message = render_to_string(template_map.get(tipo, template_map['confirmacion']), context)
@@ -504,7 +513,6 @@ class Cita(models.Model):
                 )
                 
         except Exception as e:
-            # Loggear el error pero no interrumpir el flujo
             import logging
             logger = logging.getLogger(__name__)
             logger.error(f"Error enviando notificación de cita #{self.id}: {str(e)}")
@@ -512,7 +520,11 @@ class Cita(models.Model):
     def save(self, *args, **kwargs):
         """Lógica personalizada al guardar"""
         is_new = self.pk is None
-        
+        if self.pk:
+            self._original_paciente_id = Cita.objects.get(pk=self.pk).paciente_id
+        else:
+            self._original_paciente_id = None
+            
         # Si es nueva y es primera consulta, asignar número de sesión 1
         if is_new and self.tipo_cita == 'PRIMERA_CONSULTA':
             self.numero_sesion = 1
@@ -527,6 +539,8 @@ class Cita(models.Model):
             if ultima_cita and ultima_cita.numero_sesion:
                 self.numero_sesion = ultima_cita.numero_sesion + 1
         
+        # ✅ Validar antes de guardar
+       #self.clean()
         super().save(*args, **kwargs)
 
 
@@ -536,13 +550,10 @@ def manejar_notificaciones_cita(sender, instance, created, **kwargs):
     Maneja las notificaciones automáticas cuando se crea o modifica una cita
     """
     if created:
-        # Nueva cita creada
         instance.enviar_notificacion('confirmacion')
     elif instance.estado == 'CANCELADA':
-        # Cita cancelada
         instance.enviar_notificacion('cancelacion')
     elif instance.estado == 'REPROGRAMADA':
-        # Cita reprogramada
         instance.enviar_notificacion('reprogramacion')
 
 
@@ -617,7 +628,6 @@ def enviar_recordatorios():
     ahora = timezone.now()
     manana = ahora.date() + timedelta(days=1)
     
-    # Buscar citas para mañana
     citas = Cita.objects.filter(
         fecha__date=manana,
         estado__in=['PENDIENTE', 'CONFIRMADA'],
@@ -636,7 +646,6 @@ def enviar_recordatorios():
             logger.error(f"Error enviando recordatorio para cita #{cita.id}: {str(e)}")
 
 
-# Función para obtener el resumen de citas del día
 def get_citas_del_dia(fecha=None):
     """
     Obtiene todas las citas de una fecha específica (por defecto hoy)
@@ -650,12 +659,10 @@ def get_citas_del_dia(fecha=None):
     ).select_related('paciente', 'profesional').order_by('fecha')
 
 
-# Función para estadísticas de citas
 def get_estadisticas_citas(profesional=None, fecha_inicio=None, fecha_fin=None):
     """
     Obtiene estadísticas de citas para un período y profesional específico
     """
-    from django.db.models import Count
     
     queryset = Cita.objects.all()
     

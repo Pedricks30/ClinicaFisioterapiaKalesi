@@ -102,24 +102,6 @@ class PatientForm(forms.ModelForm):
         widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
         label='Dirección'
     )
-    tipo_sangre = forms.ChoiceField(
-        choices=Patient.TIPO_SANGRE_CHOICES,
-        required=False,
-        widget=forms.Select(attrs={'class': 'form-control'}),
-        label='Tipo de Sangre',
-        help_text='Seleccione el tipo de sangre del paciente.'
-    )
-    alergias = forms.CharField(
-        required=False,
-        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
-        label='Alergias'
-    )
-    condiciones_medicas = forms.CharField(
-        required=False,
-        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
-        label='Condiciones Médicas',
-        help_text='Ingrese cualquier condición médica relevante del paciente (máximo 200 caracteres).'
-    )
     nombre_acompanante = forms.CharField(
         max_length=200,
         required=False,
@@ -161,7 +143,6 @@ class PatientForm(forms.ModelForm):
             'nacionalidad', 'sexo', 'fecha_nacimiento', 'foto_perfil',
             'estado_civil', 'ocupacion', 'lugar_nacimiento', 'estado',
             'numero_telefono', 'email', 'direccion',
-            'tipo_sangre', 'alergias', 'condiciones_medicas',
             'nombre_acompanante', 'parentesco_acompanante', 
             'telefono_acompanante', 'direccion_acompanante','creado_por'
         ]
@@ -215,13 +196,6 @@ class PatientForm(forms.ModelForm):
 
         if telefono and telefono == telefono_acompanante:
             self.add_error('numero_telefono', "El teléfono no puede ser el mismo que el del acompañante")
-
-        # 3. Validación de tipo de sangre si tiene condiciones médicas
-        condiciones_medicas = cleaned_data.get('condiciones_medicas')
-        tipo_sangre = cleaned_data.get('tipo_sangre')
-
-        if condiciones_medicas and not tipo_sangre:
-            self.add_error('tipo_sangre', "Debe especificar el tipo de sangre si el paciente tiene condiciones médicas")
 
         return cleaned_data
 
