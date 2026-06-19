@@ -1,0 +1,140 @@
+<!-- expedientes/templates/modelo_3d/visualizar_modelo.html -->
+{% extends 'layout/base.html' %}
+{% load static %}
+
+{% block title %}Visualizador Anatómico 3D{% endblock %}
+
+{% block content %}
+<div class="modelo-3d-container">
+    <!-- HEADER -->
+    <div class="modelo-3d-header">
+        <div class="header-left">
+            <div class="header-icon">
+                <i class="fas fa-cube"></i>
+            </div>
+            <div>
+                <h1>Visualizador Anatómico 3D</h1>
+                <div class="subtitle">
+                    Modelo interactivo del cuerpo humano
+                    {% if paciente %}
+                        | <strong>Paciente:</strong> {{ paciente.get_full_name }}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="header-right">
+            {% if paciente %}
+                <span class="badge-paciente">
+                    <i class="fas fa-user"></i>
+                    {{ paciente.get_full_name }}
+                </span>
+            {% endif %}
+            <a href="javascript:history.back()" class="btn-volver">
+                <i class="fas fa-arrow-left"></i> Volver
+            </a>
+        </div>
+    </div>
+
+    <!-- MODELO 3D -->
+    <div class="modelo-3d-wrapper">
+        <!-- Overlay -->
+        <div class="modelo-overlay">
+            <span class="modelo-label">
+                <i class="fas fa-cube"></i> Modelo Anatómico 3D
+            </span>
+            <span class="modelo-hint">
+                <i class="fas fa-mouse-pointer"></i> Interactúa con el modelo
+            </span>
+        </div>
+
+        <!-- IFrame del modelo -->
+        <iframe 
+            id="modelo3d"
+            src="https://human.biodigital.com/widgets/healthline/?m=production/femaleAdult/female_system_anatomy_muscular_whole.json&s=female&camera=-150.4,128.314,-134.935,-0.011,90.122,4.701,0.127,0.983,0.132&initial=true&load-rotate=15&ui-fullscreen=false&ui-share=false&lang=es&uaid=2glnP"
+            class="modelo-iframe"
+            allowfullscreen>
+        </iframe>
+
+        <!-- Botones de selección de género -->
+        <div class="gender-selector">
+            <button type="button" class="btn-gender active" data-gender="female">
+                <i class="fas fa-female"></i> Mujer
+            </button>
+            <button type="button" class="btn-gender" data-gender="male">
+                <i class="fas fa-male"></i> Hombre
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Visualizador 3D iniciado');
+
+    // ============================================
+    // CONTROL DE GÉNERO EN EL MODELO 3D
+    // ============================================
+    const genderButtons = document.querySelectorAll('.btn-gender');
+    const modeloIframe = document.getElementById('modelo3d');
+    const wrapper = document.querySelector('.modelo-3d-wrapper');
+
+    const urlsByGender = {
+        female: 'https://human.biodigital.com/widgets/healthline/?m=production/femaleAdult/female_system_anatomy_muscular_whole.json&s=female&camera=-150.4,128.314,-134.935,-0.011,90.122,4.701,0.127,0.983,0.132&initial=true&load-rotate=15&ui-fullscreen=false&ui-share=false&lang=es&uaid=2glnP',
+        male: 'https://human.biodigital.com/widgets/healthline/?m=production/maleAdult/male_system_anatomy_muscular_whole.json&s=male&camera=-150.4,128.314,-134.935,-0.011,90.122,4.701,0.127,0.983,0.132&initial=true&load-rotate=15&ui-fullscreen=false&ui-share=false&lang=es&uaid=2glnP'
+    };
+
+    genderButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            // Remover clase active de todos los botones
+            genderButtons.forEach(btn => btn.classList.remove('active'));
+            // Agregar clase active al botón clickeado
+            this.classList.add('active');
+
+            // Obtener género del botón
+            const gender = this.dataset.gender;
+            const url = urlsByGender[gender];
+
+            if (url && modeloIframe) {
+                // Cambiar el src del iframe
+                modeloIframe.src = url;
+
+                // Forzar recarga
+                setTimeout(() => {
+                    const currentSrc = modeloIframe.src;
+                    modeloIframe.src = currentSrc;
+                }, 100);
+
+                // Mostrar feedback
+                const generoTexto = gender === 'female' ? 'femenino' : 'masculino';
+                mostrarFeedback(`Modelo ${generoTexto} cargado`);
+                console.log(`Cambiando a modelo: ${gender}`);
+            }
+        });
+    });
+
+    // ============================================
+    // FUNCIÓN PARA MOSTRAR FEEDBACK
+    // ============================================
+    function mostrarFeedback(mensaje) {
+        // Eliminar feedback anterior
+        const feedbackAnterior = document.querySelector('.feedback-gender');
+        if (feedbackAnterior) {
+            feedbackAnterior.remove();
+        }
+
+        // Crear nuevo feedback
+        const feedback = document.createElement('div');
+        feedback.className = 'feedback-gender';
+        feedback.innerHTML = `<i class="fas fa-check-circle"></i> ${mensaje}`;
+        wrapper.appendChild(feedback);
+
+        // Remover después de 2 segundos
+        setTimeout(() => {
+            feedback.style.opacity = '0';
+            feedback.style.transition = 'opacity 0.5s ease';
+            setTimeout(() => feedback.remove(), 500);
+        }, 2000);
+    }
+});
+</script>
+{% endblock %}

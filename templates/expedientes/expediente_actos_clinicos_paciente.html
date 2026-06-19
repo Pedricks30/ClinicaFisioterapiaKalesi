@@ -1,3 +1,4 @@
+<!-- expedientes/templates/expedientes/expediente_actos_clinicos_paciente.html -->
 {% extends 'expedientes/expediente_wizard.html' %}
 {% load static %}
 
@@ -100,9 +101,21 @@
                             <div class="btn-group" role="group">
                                 <!-- Botón Editar -->
                                 {% if historia.puede_editar or es_admin %}
-                                    <a href="{{ historia.url_editar }}" class="btn btn-warning btn-sm" title="Editar">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
+                                    {% if historia.tipo == 'seguimiento' %}
+                                        <!-- Para seguimientos: usar la URL de edición de seguimiento (formulario) -->
+                                        <a href="{% url 'expedientes:editar_seguimiento' expediente.id historia.id %}" 
+                                           class="btn btn-warning btn-sm" 
+                                           title="Editar seguimiento">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    {% else %}
+                                        <!-- Para otros tipos: usar URL normal -->
+                                        <a href="{{ historia.url_editar }}" 
+                                           class="btn btn-warning btn-sm" 
+                                           title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    {% endif %}
                                 {% else %}
                                     <button class="btn btn-secondary btn-sm" disabled title="No se puede editar (pasó más de 1 hora)">
                                         <i class="fas fa-lock"></i>
@@ -230,7 +243,7 @@
                 </div>
                 {% else %}
                 <div class="alert alert-warning">
-                    <i class="fas fa-exclamation-triangle"></i> No hay citas completadas disponibles para crear historias clínicas.
+                    <i class="fas fa-exclamation-triangle"></i> No hay citas pendientes disponibles para crear nueva historias clínicas.
                 </div>
                 <p class="text-muted">Para crear una historia clínica, debe:</p>
                 <ul class="text-muted">

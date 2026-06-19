@@ -1,0 +1,197 @@
+<!-- cuestionarios/templates/cuestionarios/cuestionario_detail.html -->
+{% extends "layout/base.html" %}
+{% load static %}
+
+{% block title %}{{ cuestionario.nombre }} - Detalle{% endblock title %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Información del Cuestionario -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 bg-success d-flex justify-content-between align-items-center flex-wrap">
+            <h6 class="m-0 font-weight-bold text-light">
+                <i class="fas fa-clipboard-list me-2"></i> {{ cuestionario.nombre }}
+                <span class="badge bg-light text-dark ms-2">{{ total_preguntas }} preguntas</span>
+            </h6>
+            <div class="d-flex gap-2">
+                <a href="{% url 'cuestionarios:list' %}" class="btn btn-sm btn-light">
+                    <i class="fas fa-arrow-left"></i> Volver
+                </a>
+                {% if perms.cuestionarios.change_cuestionario %}
+                <a href="{% url 'cuestionarios:update' cuestionario.pk %}" class="btn btn-sm btn-warning">
+                    <i class="fas fa-edit"></i> Editar
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-8">
+                    <p class="mb-2"><strong>Descripción:</strong></p>
+                    <p class="text-muted">{{ cuestionario.descripcion }}</p>
+                </div>
+                <div class="col-md-4">
+                    <p><strong>Tipo:</strong> 
+                        <span class="badge bg-secondary">{{ cuestionario.get_tipo_cuestionario_display }}</span>
+                    </p>
+                    <p><strong>Estado:</strong>
+                        {% if cuestionario.activo %}
+                        <span class="badge bg-success"><i class="fas fa-check-circle"></i> Activo</span>
+                        {% else %}
+                        <span class="badge bg-danger"><i class="fas fa-times-circle"></i> Inactivo</span>
+                        {% endif %}
+                    </p>
+                    <p><strong>Creado:</strong> {{ cuestionario.created_at|date:"d/m/Y H:i" }}</p>
+                    {% if cuestionario.created_by %}
+                    <p><strong>Por:</strong> {{ cuestionario.created_by.get_full_name|default:cuestionario.created_by.username }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de Preguntas -->
+    <div class="card shadow">
+        <div class="card-header py-3 bg-light d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold text-primary">
+                <i class="fas fa-question-circle me-2"></i> Preguntas del Cuestionario
+                <span class="badge bg-secondary text-white ms-2">{{ total_preguntas }}</span>
+            </h6>
+            {% if perms.cuestionarios.add_preguntacuestionario %}
+            <a href="{% url 'cuestionarios:pregunta_create' cuestionario.pk %}" class="btn btn-sm btn-success">
+                <i class="fas fa-plus-circle"></i> Nueva Pregunta
+            </a>
+            {% endif %}
+        </div>
+        <div class="card-body">
+            {% if preguntas %}
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover" id="dataTable" width="100%" cellspacing="0">
+                    <thead class="thead-light">
+                        <tr>
+                            <th style="width: 50px;">#</th>
+                            <th>Pregunta</th>
+                            <th style="width: 140px;">Tipo</th>
+                            <th style="width: 80px;">Orden</th>
+                            <th style="width: 100px;">Obligatorio</th>
+                            <th style="width: 130px;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for pregunta in preguntas %}
+                        <tr>
+                            <td class="text-center">{{ forloop.counter }}</td>
+                            <td>{{ pregunta.texto_pregunta }}</td>
+                            <td>
+                                <span class="badge bg-info text-white">
+                                    {{ pregunta.get_tipo_pregunta_display }}
+                                </span>
+                            </td>
+                            <td class="text-center">{{ pregunta.orden }}</td>
+                            <td class="text-center">
+                                {% if pregunta.obligatorio %}
+                                <span class="badge bg-danger"><i class="fas fa-check"></i> Sí</span>
+                                {% else %}
+                                <span class="badge bg-secondary"><i class="fas fa-times"></i> No</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                <div class="d-flex justify-content-center gap-1">
+                                    {% if perms.cuestionarios.change_preguntacuestionario %}
+                                    <a href="{% url 'cuestionarios:pregunta_update' pregunta.pk %}" 
+                                       class="btn btn-sm btn-warning" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    {% endif %}
+                                    {% if perms.cuestionarios.delete_preguntacuestionario %}
+                                    <button type="button" 
+                                            class="btn btn-sm btn-danger" 
+                                            title="Eliminar"
+                                            onclick="confirmarEliminarPregunta('{{ pregunta.pk }}', '{{ pregunta.texto_pregunta|escapejs }}')">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-question-circle fa-4x text-muted mb-3 d-block"></i>
+                <h5 class="text-muted">No hay preguntas en este cuestionario</h5>
+                <p class="text-muted">Haz clic en "Nueva Pregunta" para agregar tu primera pregunta.</p>
+                {% if perms.cuestionarios.add_preguntacuestionario %}
+                <a href="{% url 'cuestionarios:pregunta_create' cuestionario.pk %}" class="btn btn-success mt-2">
+                    <i class="fas fa-plus-circle"></i> Agregar Pregunta
+                </a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+function confirmarEliminarPregunta(id, texto) {
+    Swal.fire({
+        title: '¿Eliminar pregunta?',
+        html: `Está a punto de eliminar la pregunta: <strong>${texto}</strong><br><br>
+               <span class="text-danger">⚠️ Esta acción no se puede deshacer.</span>`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc3545',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar',
+        reverseButtons: true
+    }).then((result) => {
+        if (result.isConfirmed) {
+            Swal.fire({
+                title: 'Eliminando...',
+                text: 'Por favor espere',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            
+            fetch(`/cuestionarios/pregunta/${id}/eliminar/`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Eliminado',
+                        text: 'La pregunta ha sido eliminada exitosamente.',
+                        timer: 1500,
+                        showConfirmButton: false
+                    }).then(() => {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'No se pudo eliminar la pregunta.'
+                    });
+                }
+            })
+            .catch(error => {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Ocurrió un error al intentar eliminar.'
+                });
+            });
+        }
+    });
+}
+</script>
+{% endblock %}

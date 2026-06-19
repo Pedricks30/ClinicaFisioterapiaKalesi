@@ -1,0 +1,239 @@
+<!-- cuestionarios/templates/cuestionarios/pregunta_form.html -->
+{% extends "layout/base.html" %}
+{% load static %}
+
+{% block title %}
+    {% if form.instance.pk %}
+        Editar Pregunta
+    {% else %}
+        Nueva Pregunta - {{ cuestionario.nombre }}
+    {% endif %}
+{% endblock title %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header py-3 bg-success">
+                    <h6 class="m-0 font-weight-bold text-light">
+                        <i class="fas fa-question-circle me-2"></i>
+                        {% if form.instance.pk %}
+                            Editar Pregunta
+                        {% else %}
+                            Nueva Pregunta - {{ cuestionario.nombre }}
+                        {% endif %}
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form.non_field_errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        
+                        <div class="row">
+                            <div class="col-md-12">
+                                <!-- Texto de la pregunta -->
+                                <div class="mb-3">
+                                    <label for="{{ form.texto_pregunta.id_for_label }}" class="form-label fw-bold">
+                                        {{ form.texto_pregunta.label }} <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.texto_pregunta }}
+                                    {% if form.texto_pregunta.errors %}
+                                        <div class="text-danger small">{{ form.texto_pregunta.errors }}</div>
+                                    {% endif %}
+                                    {% if form.texto_pregunta.help_text %}
+                                        <small class="form-text text-muted">{{ form.texto_pregunta.help_text }}</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <!-- Tipo de pregunta -->
+                                <div class="mb-3">
+                                    <label for="{{ form.tipo_pregunta.id_for_label }}" class="form-label fw-bold">
+                                        {{ form.tipo_pregunta.label }} <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.tipo_pregunta }}
+                                    {% if form.tipo_pregunta.errors %}
+                                        <div class="text-danger small">{{ form.tipo_pregunta.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-3">
+                                <!-- Orden -->
+                                <div class="mb-3">
+                                    <label for="{{ form.orden.id_for_label }}" class="form-label fw-bold">
+                                        {{ form.orden.label }}
+                                    </label>
+                                    {{ form.orden }}
+                                    {% if form.orden.errors %}
+                                        <div class="text-danger small">{{ form.orden.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-3">
+                                <!-- Obligatorio -->
+                                <div class="mb-3 mt-4 pt-2">
+                                    <div class="form-check form-switch">
+                                        {{ form.obligatorio }}
+                                        <label class="form-check-label fw-bold" for="{{ form.obligatorio.id_for_label }}">
+                                            {{ form.obligatorio.label }}
+                                        </label>
+                                        {% if form.obligatorio.errors %}
+                                            <div class="text-danger small">{{ form.obligatorio.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Campos específicos según tipo -->
+                        <div id="camposEspecificos">
+                            <!-- Opciones múltiples (MULTIPLE) -->
+                            <div class="mb-3" id="campoOpciones" style="display: none;">
+                                <label for="{{ form.opciones.id_for_label }}" class="form-label fw-bold">
+                                    {{ form.opciones.label }}
+                                </label>
+                                {{ form.opciones }}
+                                {% if form.opciones.errors %}
+                                    <div class="text-danger small">{{ form.opciones.errors }}</div>
+                                {% endif %}
+                                {% if form.opciones.help_text %}
+                                    <small class="form-text text-muted">{{ form.opciones.help_text }}</small>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Escala -->
+                            <div id="camposEscala" style="display: none;">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <div class="mb-3">
+                                            <label for="{{ form.escala_min.id_for_label }}" class="form-label fw-bold">
+                                                {{ form.escala_min.label }}
+                                            </label>
+                                            {{ form.escala_min }}
+                                            {% if form.escala_min.errors %}
+                                                <div class="text-danger small">{{ form.escala_min.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="mb-3">
+                                            <label for="{{ form.escala_max.id_for_label }}" class="form-label fw-bold">
+                                                {{ form.escala_max.label }}
+                                            </label>
+                                            {{ form.escala_max }}
+                                            {% if form.escala_max.errors %}
+                                                <div class="text-danger small">{{ form.escala_max.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="mb-3">
+                                            <label for="{{ form.etiqueta_min.id_for_label }}" class="form-label fw-bold">
+                                                {{ form.etiqueta_min.label }}
+                                            </label>
+                                            {{ form.etiqueta_min }}
+                                            {% if form.etiqueta_min.errors %}
+                                                <div class="text-danger small">{{ form.etiqueta_min.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="mb-3">
+                                            <label for="{{ form.etiqueta_max.id_for_label }}" class="form-label fw-bold">
+                                                {{ form.etiqueta_max.label }}
+                                            </label>
+                                            {{ form.etiqueta_max }}
+                                            {% if form.etiqueta_max.errors %}
+                                                <div class="text-danger small">{{ form.etiqueta_max.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Indicador clave y umbral de alarma -->
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <div class="form-check form-switch">
+                                            {{ form.es_indicador_clave }}
+                                            <label class="form-check-label fw-bold" for="{{ form.es_indicador_clave.id_for_label }}">
+                                                {{ form.es_indicador_clave.label }}
+                                            </label>
+                                            {% if form.es_indicador_clave.errors %}
+                                                <div class="text-danger small">{{ form.es_indicador_clave.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.umbral_alarma.id_for_label }}" class="form-label fw-bold">
+                                            {{ form.umbral_alarma.label }}
+                                        </label>
+                                        {{ form.umbral_alarma }}
+                                        {% if form.umbral_alarma.errors %}
+                                            <div class="text-danger small">{{ form.umbral_alarma.errors }}</div>
+                                        {% endif %}
+                                        {% if form.umbral_alarma.help_text %}
+                                            <small class="form-text text-muted">{{ form.umbral_alarma.help_text }}</small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Botones -->
+                        <div class="d-flex gap-2 mt-3">
+                            <a href="{% url 'cuestionarios:detail' cuestionario.pk %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-save"></i> 
+                                {% if form.instance.pk %}Guardar Cambios{% else %}Agregar Pregunta{% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const tipoPregunta = document.getElementById('{{ form.tipo_pregunta.id_for_label }}');
+    const campoOpciones = document.getElementById('campoOpciones');
+    const camposEscala = document.getElementById('camposEscala');
+    
+    function mostrarCampos() {
+        const tipo = tipoPregunta.value;
+        
+        // Ocultar todos
+        campoOpciones.style.display = 'none';
+        camposEscala.style.display = 'none';
+        
+        // Mostrar según tipo
+        if (tipo === 'MULTIPLE') {
+            campoOpciones.style.display = 'block';
+        } else if (tipo === 'ESCALA' || tipo === 'ESCALA_NUMERICA') {
+            camposEscala.style.display = 'block';
+        }
+    }
+    
+    tipoPregunta.addEventListener('change', mostrarCampos);
+    mostrarCampos();
+});
+</script>
+{% endblock %}

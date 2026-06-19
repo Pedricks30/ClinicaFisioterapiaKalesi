@@ -1,3 +1,4 @@
+<!-- expedientes/templates/expedientes/expediente_wizard.html -->
 {% extends 'layout/base.html' %}
 {% load static %}
 
@@ -6,51 +7,39 @@
 <div class="container-fluid">
 
     <div class="expediente-title">
-
-        Expediente :
-        {{ expediente.numero_expediente }}
-
-        {{ paciente.nombres }}
-        {{ paciente.apellidos }}
-
+        Expediente : {{ expediente.numero_expediente }}
+        {{ paciente.nombres }} {{ paciente.apellidos }}
     </div>
 
     <div class="wizard-container">
-
         <a href="{% url 'expedientes:expediente_datos' expediente.id %}"
            class="wizard-item {% if seccion == 'datos' %}active{% endif %}">
-
             <i class="fas fa-user fa-3x"></i>
-
             <span>Datos Paciente</span>
-
         </a>
 
         <a href="{% url 'expedientes:expediente_citas' expediente.id %}"
            class="wizard-item {% if seccion == 'citas' %}active{% endif %}">
-
             <i class="fas fa-calendar-alt fa-3x"></i>
-
             <span>Citas</span>
-
         </a>
 
         <a href="{% url 'expedientes:expediente_actos' expediente.id %}"
            class="wizard-item {% if seccion == 'actos' %}active{% endif %}">
-
             <i class="fas fa-stethoscope fa-3x"></i>
-
             <span>Actos Clínicos</span>
-
         </a>
 
+        <a href="{% url 'expedientes:expediente_evolucion_grafica' expediente.id %}"
+           class="wizard-item {% if seccion == 'evolucion' %}active{% endif %}">
+            <i class="fas fa-chart-line fa-3x"></i>
+            <span>Evolución Predictiva</span>
+        </a>
     </div>
 
     <div class="wizard-content">
-
         {% block wizard_content %}
         {% endblock %}
-
     </div>
 
 </div>

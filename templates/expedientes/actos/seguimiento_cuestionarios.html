@@ -1,0 +1,866 @@
+<!-- expedientes/templates/expedientes/actos/seguimiento_cuestionarios.html -->
+{% extends 'layout/base.html' %}
+{% load static %}
+
+{% block title %}
+    {% if es_edicion %}
+        Editar Evaluación con Modelo 3D
+    {% else %}
+        Evaluación Clínica con Modelo 3D
+    {% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/cuestionarios.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="cuestionarios-container">
+    <!-- Header -->
+    <div class="cuestionarios-header {% if es_edicion %}header-edicion{% else %}header-creacion{% endif %}">
+        <div class="header-content">
+            <div class="header-left">
+                <div class="header-icon">
+                    <i class="fas {% if es_edicion %}fa-edit{% else %}fa-cube{% endif %}"></i>
+                </div>
+                <div>
+                    <h1 class="header-title">
+                        {% if es_edicion %}
+                            Editar Evaluación Clínica
+                        {% else %}
+                            Evaluación Clínica con Modelo 3D
+                        {% endif %}
+                    </h1>
+                    <div class="header-info">
+                        <strong>Paciente:</strong> {{ paciente.get_full_name }} | 
+                        <strong>Sesión #</strong> 
+                        {% if es_edicion %}
+                            {{ seguimiento.numero_sesion }}
+                        {% else %}
+                            {{ expediente.seguimientos.count|add:1 }}
+                        {% endif %}
+                        {% if es_edicion %}
+                            | <strong>Fecha:</strong> {{ seguimiento.fecha_consulta|date:"d/m/Y H:i" }}
+                        {% endif %}
+                        | <strong>Sexo:</strong> {{ paciente.get_sexo_display }}
+                    </div>
+                </div>
+            </div>
+            <div class="header-right">
+                <span class="badge-status {% if es_edicion %}badge-edicion{% else %}badge-creacion{% endif %}">
+                    {% if es_edicion %}
+                        <i class="fas fa-edit"></i> Modo Edición
+                    {% else %}
+                        <i class="fas fa-plus-circle"></i> Nueva Evaluación
+                    {% endif %}
+                </span>
+                <span class="badge-bodypart">
+                    <i class="fas fa-arrows-alt"></i> Seleccione una parte del cuerpo
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Layout principal -->
+    <div class="cuestionarios-layout">
+        <!-- Lado izquierdo: Cuestionarios -->
+        <div class="cuestionarios-side">
+            <div class="card-cuestionario">
+                <div class="card-body-cuestionario">
+                    <form method="POST" id="formCompleto" class="form-cuestionario">
+                        {% csrf_token %}
+                        
+                        <!-- Selector de parte del cuerpo -->
+                        <div class="body-parts-selector">
+                            <label class="selector-label">
+                                <i class="fas fa-bullseye"></i> Seleccione la parte del cuerpo a evaluar:
+                            </label>
+                            <div class="body-parts-buttons">
+                                <button type="button" class="btn-part active" data-part="hombro">
+                                    <i class="fas fa-arms"></i> Hombro
+                                </button>
+                                <button type="button" class="btn-part" data-part="espalda">
+                                    <i class="fas fa-spine"></i> Espalda
+                                </button>
+                                <button type="button" class="btn-part" data-part="rodilla">
+                                    <i class="fas fa-leg"></i> Rodilla
+                                </button>
+                                <button type="button" class="btn-part" data-part="cuello">
+                                    <i class="fas fa-neck"></i> Cuello
+                                </button>
+                                <button type="button" class="btn-part" data-part="general">
+                                    <i class="fas fa-user"></i> General
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Cuestionarios dinámicos -->
+                        <div id="cuestionariosContainer" class="cuestionarios-container">
+                            <div class="loading-cuestionario">
+                                <div class="spinner-clinico"></div>
+                                <p class="loading-text">Cargando cuestionarios...</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Campos ocultos del seguimiento -->
+                        <input type="hidden" name="nivel_dolor_actual" id="id_nivel_dolor_actual" value="0">
+                        <input type="hidden" name="evolucion_paciente" value="Evaluación con modelo 3D">
+                        <input type="hidden" name="tecnicas_aplicadas" value="Evaluación con modelo 3D">
+                        
+                        <!-- Botones de acción -->
+                        <div class="form-actions">
+                            <a href="{% url 'expedientes:expediente_actos' expediente.id %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary btn-guardar" id="btnGuardar">
+                                <i class="fas fa-save"></i> 
+                                {% if es_edicion %}
+                                    Actualizar Evaluación
+                                {% else %}
+                                    Guardar Evaluación Completa
+                                {% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Lado derecho: Modelo 3D BioDigital -->
+        <div class="modelo-side">
+            <div class="card-modelo">
+                <div class="modelo-container">
+                    <div class="modelo-header">
+                        <span class="modelo-label">
+                            <i class="fas fa-cube"></i> Modelo Anatómico 3D
+                        </span>
+                        <span class="modelo-hint">
+                            <i class="fas fa-mouse-pointer"></i> Interactúa con el modelo
+                        </span>
+                    </div>
+                    
+                    <!-- Contenedor del iframe -->
+                    <div class="modelo-iframe-wrapper" id="iframeWrapper">
+                        <iframe 
+                            id="modelo3d"
+                            src="{% if paciente.sexo == 'Masculino' %}https://human.biodigital.com/widgets/healthline/?m=production/maleAdult/male_system_anatomy_muscular_whole.json&s=male&camera=-150.4,128.314,-134.935,-0.011,90.122,4.701,0.127,0.983,0.132&initial=true&load-rotate=15&ui-fullscreen=false&ui-share=false&lang=es&uaid=2glnP{% else %}https://human.biodigital.com/widgets/healthline/?m=production/femaleAdult/female_system_anatomy_muscular_whole.json&s=female&camera=-150.4,128.314,-134.935,-0.011,90.122,4.701,0.127,0.983,0.132&initial=true&load-rotate=15&ui-fullscreen=false&ui-share=false&lang=es&uaid=2glnP{% endif %}"
+                            class="modelo-iframe"
+                            allowfullscreen>
+                        </iframe>
+                    </div>
+                    
+                    <!-- Botones de selección de género -->
+                    <div class="gender-selector">
+                        <button type="button" class="btn-gender {% if paciente.sexo == 'Femenino' or not paciente.sexo %}active{% endif %}" data-gender="female">
+                            <i class="fas fa-female"></i> Mujer
+                        </button>
+                        <button type="button" class="btn-gender {% if paciente.sexo == 'Masculino' %}active{% endif %}" data-gender="male">
+                            <i class="fas fa-male"></i> Hombre
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 DOM cargado - Iniciando aplicación');
+
+    // ============================================
+    // VARIABLES GLOBALES
+    // ============================================
+    let modoEdicion = false;
+    let parteActual = 'hombro';
+
+    // ============================================
+    // FUNCIÓN PARA CARGAR CUESTIONARIO
+    // ============================================
+    function cargarCuestionario(parte) {
+        console.log('📥 Cargando cuestionario para:', parte);
+        parteActual = parte;
+        
+        // Actualizar botones de partes del cuerpo
+        document.querySelectorAll('.btn-part').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        const btnActivo = document.querySelector(`.btn-part[data-part="${parte}"]`);
+        if (btnActivo) {
+            btnActivo.classList.add('active');
+        }
+        
+        // Mostrar loading
+        const container = document.getElementById('cuestionariosContainer');
+        if (container) {
+            container.innerHTML = `
+                <div class="loading-cuestionario">
+                    <div class="spinner-clinico"></div>
+                    <p class="loading-text">Cargando cuestionarios...</p>
+                </div>
+            `;
+        }
+        
+        // Construir URL
+        let url = `/expedientes/api/cuestionarios-por-parte/?parte=${parte}`;
+        {% if es_edicion %}
+            url += `&edicion=true&seguimiento_id={{ seguimiento.id }}`;
+        {% endif %}
+        
+        fetch(url)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Error en la respuesta del servidor');
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('✅ Cuestionario cargado');
+                if (container) {
+                    container.innerHTML = data.html;
+                }
+                inicializarSliders();
+                {% if es_edicion %}
+                    marcarRespuestasExistentes();
+                {% endif %}
+                
+                // 🔥 IMPORTANTE: Configurar eventos de edición después de cargar
+                configurarEventosEdicion();
+            })
+            .catch(error => {
+                console.error('❌ Error al cargar cuestionario:', error);
+                if (container) {
+                    container.innerHTML = `
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-circle"></i> Error al cargar los cuestionarios.
+                            <br><small>${error.message}</small>
+                        </div>
+                    `;
+                }
+            });
+    }
+
+    // ============================================
+    // INICIALIZAR SLIDERS
+    // ============================================
+    function inicializarSliders() {
+        document.querySelectorAll('.escala-slider').forEach(slider => {
+            slider.addEventListener('input', function() {
+                const preguntaId = this.dataset.pregunta;
+                const valueSpan = document.getElementById(`valor_pregunta_${preguntaId}`);
+                if (valueSpan) {
+                    valueSpan.textContent = this.value;
+                }
+            });
+        });
+    }
+
+    // ============================================
+    // MARCAR RESPUESTAS EXISTENTES (MODO EDICIÓN)
+    // ============================================
+    {% if es_edicion %}
+    function marcarRespuestasExistentes() {
+        const respuestasExistentes = {{ respuestas_existentes|safe }};
+        
+        document.querySelectorAll('.pregunta-item').forEach(item => {
+            const preguntaId = item.dataset.preguntaId;
+            const respuesta = respuestasExistentes[preguntaId];
+            
+            if (respuesta) {
+                // Marcar como respondida
+                const badge = document.createElement('div');
+                badge.className = 'respuesta-existente';
+                badge.innerHTML = '<i class="fas fa-check-circle"></i> Respuesta existente';
+                const texto = item.querySelector('.texto');
+                if (texto) texto.appendChild(badge);
+                
+                // Para escalas
+                const slider = item.querySelector('.escala-slider');
+                if (slider && respuesta.respuesta_escala !== null && respuesta.respuesta_escala !== undefined) {
+                    slider.value = respuesta.respuesta_escala;
+                    const valueSpan = document.getElementById(`valor_pregunta_${preguntaId}`);
+                    if (valueSpan) {
+                        valueSpan.textContent = respuesta.respuesta_escala;
+                    }
+                }
+                
+                // Para Si/No
+                const radios = item.querySelectorAll('input[type="radio"]');
+                if (radios.length > 0 && respuesta.respuesta_booleana !== null && respuesta.respuesta_booleana !== undefined) {
+                    const valor = respuesta.respuesta_booleana ? 'si' : 'no';
+                    radios.forEach(radio => {
+                        if (radio.value === valor) {
+                            radio.checked = true;
+                        }
+                    });
+                }
+                
+                // Para texto
+                const textarea = item.querySelector('textarea');
+                if (textarea && respuesta.respuesta_texto) {
+                    textarea.value = respuesta.respuesta_texto;
+                }
+                
+                // Para select múltiple
+                const select = item.querySelector('select');
+                if (select && respuesta.respuesta_multiple) {
+                    select.value = respuesta.respuesta_multiple;
+                }
+            }
+        });
+    }
+    {% endif %}
+
+    // ============================================
+    // MANEJO DE EDICIÓN DE PREGUNTAS
+    // ============================================
+
+    // Función para alternar modo edición
+    function toggleModoEdicion() {
+        console.log('🔄 Toggle modo edición - Estado actual:', modoEdicion);
+        modoEdicion = !modoEdicion;
+        
+        const items = document.querySelectorAll('.pregunta-item');
+        const btn = document.getElementById('toggleModoEdicion');
+        const addWrapper = document.getElementById('btnAddPreguntaWrapper');
+        const addContainer = document.getElementById('addPreguntaContainer');
+        
+        console.log('📦 Items encontrados:', items.length);
+        
+        if (modoEdicion) {
+            console.log('✅ Activando modo edición');
+            // Activar modo edición
+            items.forEach(item => {
+                item.classList.add('modo-edicion');
+                const actions = item.querySelector('.pregunta-actions');
+                if (actions) actions.style.display = 'flex';
+                const respuesta = item.querySelector('.respuesta-container');
+                if (respuesta) respuesta.style.display = 'none';
+            });
+            if (btn) {
+                btn.innerHTML = '<i class="fas fa-check"></i> Finalizar Edición';
+                btn.classList.remove('btn-outline-primary');
+                btn.classList.add('btn-success');
+            }
+            if (addWrapper) addWrapper.style.display = 'block';
+            if (addContainer) addContainer.style.display = 'none';
+        } else {
+            console.log('❌ Desactivando modo edición');
+            items.forEach(item => {
+                item.classList.remove('modo-edicion');
+                const actions = item.querySelector('.pregunta-actions');
+                if (actions) actions.style.display = 'none';
+                const respuesta = item.querySelector('.respuesta-container');
+                if (respuesta) respuesta.style.display = 'block';
+                const edit = item.querySelector('.pregunta-edit');
+                if (edit) edit.style.display = 'none';
+                const view = item.querySelector('.pregunta-view');
+                if (view) view.style.display = 'block';
+            });
+            if (btn) {
+                btn.innerHTML = '<i class="fas fa-edit"></i> Editar Preguntas';
+                btn.classList.remove('btn-success');
+                btn.classList.add('btn-outline-primary');
+            }
+            if (addWrapper) addWrapper.style.display = 'none';
+            if (addContainer) addContainer.style.display = 'none';
+            // Recargar cuestionario para mostrar cambios
+            cargarCuestionario(parteActual);
+        }
+    }
+
+    // Mostrar formulario de agregar pregunta
+    function mostrarAgregarPregunta() {
+        console.log('📝 Mostrando formulario de agregar pregunta');
+        const container = document.getElementById('addPreguntaContainer');
+        const wrapper = document.getElementById('btnAddPreguntaWrapper');
+        if (container) container.style.display = 'block';
+        if (wrapper) wrapper.style.display = 'none';
+    }
+
+    // Ocultar formulario de agregar pregunta
+    function ocultarAgregarPregunta() {
+        console.log('📝 Ocultando formulario de agregar pregunta');
+        const container = document.getElementById('addPreguntaContainer');
+        const wrapper = document.getElementById('btnAddPreguntaWrapper');
+        if (container) container.style.display = 'none';
+        if (wrapper) wrapper.style.display = 'block';
+    }
+
+    // Agregar nueva pregunta
+    function agregarNuevaPregunta() {
+        console.log('➕ Agregando nueva pregunta');
+        const texto = document.getElementById('nuevaPreguntaTexto');
+        if (!texto) {
+            mostrarFeedback('Error: No se encontró el campo de texto', 'error');
+            return;
+        }
+        
+        const textoValue = texto.value.trim();
+        if (!textoValue) {
+            mostrarFeedback('Por favor, escriba el texto de la pregunta.', 'error');
+            return;
+        }
+        
+        const tipo = document.getElementById('nuevaPreguntaTipo').value;
+        const obligatorio = document.getElementById('nuevaPreguntaObligatorio').checked;
+        const orden = document.getElementById('nuevaPreguntaOrden').value || 0;
+        
+        const data = {
+            texto_pregunta: textoValue,
+            tipo_pregunta: tipo,
+            obligatorio: obligatorio,
+            orden: parseInt(orden),
+            parte: parteActual,
+            expediente_id: {{ expediente.id }},
+            {% if es_edicion %}seguimiento_id: {{ seguimiento.id }},{% endif %}
+            es_edicion: {{ es_edicion|yesno:"true,false" }}
+        };
+        
+        // Campos específicos según tipo
+        if (tipo === 'ESCALA' || tipo === 'ESCALA_NUMERICA') {
+            const minInput = document.getElementById('nuevaPreguntaMin');
+            const maxInput = document.getElementById('nuevaPreguntaMax');
+            const etiqMin = document.getElementById('nuevaPreguntaEtiquetaMin');
+            const etiqMax = document.getElementById('nuevaPreguntaEtiquetaMax');
+            data.escala_min = parseInt(minInput ? minInput.value : 0) || 0;
+            data.escala_max = parseInt(maxInput ? maxInput.value : 10) || 10;
+            data.etiqueta_min = etiqMin ? etiqMin.value : 'Sin dolor';
+            data.etiqueta_max = etiqMax ? etiqMax.value : 'Máximo dolor';
+        }
+        
+        if (tipo === 'MULTIPLE') {
+            const opcionesText = document.getElementById('nuevaPreguntaOpciones');
+            data.opciones = opcionesText ? opcionesText.value.split('\n').filter(opt => opt.trim() !== '') : [];
+        }
+        
+        fetch('/cuestionarios/api/agregar-pregunta/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                mostrarFeedback('✅ Pregunta agregada exitosamente');
+                ocultarAgregarPregunta();
+                if (texto) texto.value = '';
+                cargarCuestionario(parteActual);
+            } else {
+                mostrarFeedback(data.error || 'Error al agregar la pregunta', 'error');
+            }
+        })
+        .catch(error => {
+            mostrarFeedback('Error al agregar la pregunta', 'error');
+            console.error('Error:', error);
+        });
+    }
+
+    // Guardar edición de pregunta
+    function guardarEdicionPregunta(preguntaId) {
+        console.log('💾 Guardando edición de pregunta:', preguntaId);
+        const item = document.querySelector(`.pregunta-item[data-pregunta-id="${preguntaId}"]`);
+        if (!item) {
+            mostrarFeedback('Error: No se encontró la pregunta', 'error');
+            return;
+        }
+        
+        const texto = item.querySelector('.edit-texto-pregunta');
+        if (!texto) {
+            mostrarFeedback('Error: No se encontró el campo de texto', 'error');
+            return;
+        }
+        
+        const textoValue = texto.value.trim();
+        if (!textoValue) {
+            mostrarFeedback('El texto de la pregunta no puede estar vacío', 'error');
+            return;
+        }
+        
+        const tipoSelect = item.querySelector('.edit-tipo-pregunta');
+        const obligatorioCheck = item.querySelector('.edit-obligatorio');
+        const ordenInput = item.querySelector('.edit-orden');
+        
+        const tipo = tipoSelect ? tipoSelect.value : 'TEXTO';
+        const obligatorio = obligatorioCheck ? obligatorioCheck.checked : true;
+        const orden = parseInt(ordenInput ? ordenInput.value : 0) || 0;
+        
+        const data = {
+            pregunta_id: preguntaId,
+            texto_pregunta: textoValue,
+            tipo_pregunta: tipo,
+            obligatorio: obligatorio,
+            orden: orden,
+            parte: parteActual
+        };
+        
+        if (tipo === 'ESCALA' || tipo === 'ESCALA_NUMERICA') {
+            const minInput = item.querySelector('.edit-escala-min input');
+            const maxInput = item.querySelector('.edit-escala-max input');
+            const etiqMin = item.querySelector('.edit-etiqueta-min input');
+            const etiqMax = item.querySelector('.edit-etiqueta-max input');
+            data.escala_min = parseInt(minInput ? minInput.value : 0) || 0;
+            data.escala_max = parseInt(maxInput ? maxInput.value : 10) || 10;
+            data.etiqueta_min = etiqMin ? etiqMin.value : 'Sin dolor';
+            data.etiqueta_max = etiqMax ? etiqMax.value : 'Máximo dolor';
+        }
+        
+        if (tipo === 'MULTIPLE') {
+            const opcionesText = item.querySelector('.edit-opciones');
+            data.opciones = opcionesText ? opcionesText.value.split('\n').filter(opt => opt.trim() !== '') : [];
+        }
+        
+        fetch('/cuestionarios/api/editar-pregunta/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                mostrarFeedback('✅ Pregunta actualizada exitosamente');
+                cargarCuestionario(parteActual);
+            } else {
+                mostrarFeedback(data.error || 'Error al actualizar la pregunta', 'error');
+            }
+        })
+        .catch(error => {
+            mostrarFeedback('Error al actualizar la pregunta', 'error');
+            console.error('Error:', error);
+        });
+    }
+
+    // Eliminar pregunta
+    function eliminarPregunta(preguntaId) {
+        console.log('🗑️ Eliminando pregunta:', preguntaId);
+        if (!confirm('¿Está seguro de eliminar esta pregunta?')) return;
+        
+        const data = {
+            pregunta_id: preguntaId,
+            parte: parteActual
+        };
+        
+        fetch('/cuestionarios/api/eliminar-pregunta/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                mostrarFeedback('✅ Pregunta eliminada exitosamente');
+                cargarCuestionario(parteActual);
+            } else {
+                mostrarFeedback(data.error || 'Error al eliminar la pregunta', 'error');
+            }
+        })
+        .catch(error => {
+            mostrarFeedback('Error al eliminar la pregunta', 'error');
+            console.error('Error:', error);
+        });
+    }
+
+    // Mostrar feedback visual
+    function mostrarFeedback(mensaje, tipo = 'success') {
+        console.log('💬 Feedback:', mensaje, tipo);
+        const existing = document.querySelector('.feedback-cambio');
+        if (existing) existing.remove();
+        
+        const feedback = document.createElement('div');
+        feedback.className = `feedback-cambio ${tipo === 'error' ? 'error' : ''}`;
+        feedback.innerHTML = `
+            <i class="fas ${tipo === 'error' ? 'fa-exclamation-circle' : 'fa-check-circle'}"></i>
+            ${mensaje}
+        `;
+        document.body.appendChild(feedback);
+        
+        setTimeout(() => {
+            feedback.style.opacity = '0';
+            feedback.style.transition = 'opacity 0.5s ease';
+            setTimeout(() => feedback.remove(), 500);
+        }, 3000);
+    }
+
+    // ============================================
+    // CONFIGURAR EVENTOS DE EDICIÓN
+    // ============================================
+    function configurarEventosEdicion() {
+        console.log('⚙️ Configurando eventos de edición...');
+        
+        // Botón para alternar modo edición
+        const btnToggle = document.getElementById('toggleModoEdicion');
+        if (btnToggle) {
+            console.log('✅ Botón toggle encontrado');
+            // Remover eventos anteriores con clonación
+            const newBtn = btnToggle.cloneNode(true);
+            btnToggle.parentNode.replaceChild(newBtn, btnToggle);
+            newBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                toggleModoEdicion();
+            });
+        } else {
+            console.warn('⚠️ Botón toggle NO encontrado en el DOM');
+        }
+        
+        // Botón para mostrar formulario de agregar
+        const btnMostrar = document.getElementById('btnMostrarAgregarPregunta');
+        if (btnMostrar) {
+            const newBtn = btnMostrar.cloneNode(true);
+            btnMostrar.parentNode.replaceChild(newBtn, btnMostrar);
+            newBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                mostrarAgregarPregunta();
+            });
+        }
+        
+        // Botón para cancelar agregar
+        const btnCancelar = document.getElementById('btnCancelarAgregar');
+        if (btnCancelar) {
+            const newBtn = btnCancelar.cloneNode(true);
+            btnCancelar.parentNode.replaceChild(newBtn, btnCancelar);
+            newBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                ocultarAgregarPregunta();
+            });
+        }
+        
+        // Botón para agregar pregunta
+        const btnAgregar = document.getElementById('btnAgregarPregunta');
+        if (btnAgregar) {
+            const newBtn = btnAgregar.cloneNode(true);
+            btnAgregar.parentNode.replaceChild(newBtn, btnAgregar);
+            newBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                agregarNuevaPregunta();
+            });
+        }
+        
+        // Mostrar/ocultar campos según tipo de pregunta (nueva)
+        const selectTipo = document.getElementById('nuevaPreguntaTipo');
+        if (selectTipo) {
+            // Remover eventos anteriores
+            const newSelect = selectTipo.cloneNode(true);
+            selectTipo.parentNode.replaceChild(newSelect, selectTipo);
+            newSelect.addEventListener('change', function() {
+                const tipo = this.value;
+                const isEscala = tipo === 'ESCALA' || tipo === 'ESCALA_NUMERICA';
+                const isMultiple = tipo === 'MULTIPLE';
+                
+                document.querySelectorAll('.nueva-escala-min, .nueva-escala-max, .nueva-etiqueta-min, .nueva-etiqueta-max')
+                    .forEach(el => el.style.display = isEscala ? 'block' : 'none');
+                
+                const opcionesMultiple = document.querySelector('.nueva-opciones-multiple');
+                if (opcionesMultiple) {
+                    opcionesMultiple.style.display = isMultiple ? 'block' : 'none';
+                }
+            });
+        }
+        
+        // Configurar eventos de edición de preguntas con delegación
+        // Remover eventos anteriores de edición
+        document.removeEventListener('click', handleEdicionClick);
+        document.removeEventListener('change', handleEdicionChange);
+        
+        // Agregar nuevos eventos
+        document.addEventListener('click', handleEdicionClick);
+        document.addEventListener('change', handleEdicionChange);
+        
+        console.log('✅ Eventos de edición configurados');
+    }
+
+    // Manejador de eventos click para edición
+    function handleEdicionClick(e) {
+        // Botón editar pregunta
+        const editBtn = e.target.closest('.editar-pregunta');
+        if (editBtn) {
+            e.preventDefault();
+            const preguntaId = editBtn.dataset.preguntaId;
+            console.log('✏️ Editando pregunta:', preguntaId);
+            const item = document.querySelector(`.pregunta-item[data-pregunta-id="${preguntaId}"]`);
+            if (item) {
+                const view = item.querySelector('.pregunta-view');
+                const edit = item.querySelector('.pregunta-edit');
+                if (view) view.style.display = 'none';
+                if (edit) edit.style.display = 'block';
+            }
+            return;
+        }
+        
+        // Botón cancelar edición
+        const cancelBtn = e.target.closest('.cancelar-edicion-pregunta');
+        if (cancelBtn) {
+            e.preventDefault();
+            const item = cancelBtn.closest('.pregunta-item');
+            if (item) {
+                const view = item.querySelector('.pregunta-view');
+                const edit = item.querySelector('.pregunta-edit');
+                if (view) view.style.display = 'block';
+                if (edit) edit.style.display = 'none';
+            }
+            return;
+        }
+        
+        // Botón guardar edición
+        const saveBtn = e.target.closest('.guardar-edicion-pregunta');
+        if (saveBtn) {
+            e.preventDefault();
+            const preguntaId = saveBtn.dataset.preguntaId;
+            guardarEdicionPregunta(preguntaId);
+            return;
+        }
+        
+        // Botón eliminar pregunta
+        const deleteBtn = e.target.closest('.eliminar-pregunta-btn');
+        if (deleteBtn) {
+            e.preventDefault();
+            const preguntaId = deleteBtn.dataset.preguntaId;
+            eliminarPregunta(preguntaId);
+            return;
+        }
+    }
+
+    // Manejador de eventos change para edición
+    function handleEdicionChange(e) {
+        if (e.target.classList.contains('edit-tipo-pregunta')) {
+            const select = e.target;
+            const item = select.closest('.pregunta-item');
+            if (!item) return;
+            
+            const tipo = select.value;
+            const isEscala = tipo === 'ESCALA' || tipo === 'ESCALA_NUMERICA';
+            const isMultiple = tipo === 'MULTIPLE';
+            
+            item.querySelectorAll('.edit-escala-min, .edit-escala-max, .edit-etiqueta-min, .edit-etiqueta-max')
+                .forEach(el => el.style.display = isEscala ? 'block' : 'none');
+            
+            const opcionesMultiple = item.querySelector('.edit-opciones-multiple');
+            if (opcionesMultiple) {
+                opcionesMultiple.style.display = isMultiple ? 'block' : 'none';
+            }
+        }
+    }
+
+    // ============================================
+    // EVENTOS DE PARTES DEL CUERPO
+    // ============================================
+    function configurarEventosPartesCuerpo() {
+        document.querySelectorAll('.btn-part').forEach(btn => {
+            // Remover eventos anteriores
+            const newBtn = btn.cloneNode(true);
+            btn.parentNode.replaceChild(newBtn, btn);
+            
+            newBtn.addEventListener('click', function(e) {
+                const parte = this.dataset.part;
+                console.log('🔄 Cambiando a parte:', parte);
+                
+                // Si está en modo edición, salir primero
+                if (modoEdicion) {
+                    modoEdicion = false;
+                    const btnToggle = document.getElementById('toggleModoEdicion');
+                    if (btnToggle) {
+                        btnToggle.innerHTML = '<i class="fas fa-edit"></i> Editar Preguntas';
+                        btnToggle.classList.remove('btn-success');
+                        btnToggle.classList.add('btn-outline-primary');
+                    }
+                    document.querySelectorAll('.pregunta-item').forEach(item => {
+                        item.classList.remove('modo-edicion');
+                    });
+                }
+                cargarCuestionario(parte);
+            });
+        });
+    }
+
+    // ============================================
+    // CONTROL DE GÉNERO EN EL MODELO 3D
+    // ============================================
+    function configurarGeneroModelo() {
+        const genderButtons = document.querySelectorAll('.btn-gender');
+        const modeloIframe = document.getElementById('modelo3d');
+        
+        const urlsByGender = {
+            female: 'https://human.biodigital.com/widgets/healthline/?m=production/femaleAdult/female_system_anatomy_muscular_whole.json&s=female&camera=-150.4,128.314,-134.935,-0.011,90.122,4.701,0.127,0.983,0.132&initial=true&load-rotate=15&ui-fullscreen=false&ui-share=false&lang=es&uaid=2glnP',
+            male: 'https://human.biodigital.com/widgets/healthline/?m=production/maleAdult/male_system_anatomy_muscular_whole.json&s=male&camera=-150.4,128.314,-134.935,-0.011,90.122,4.701,0.127,0.983,0.132&initial=true&load-rotate=15&ui-fullscreen=false&ui-share=false&lang=es&uaid=2glnP'
+        };
+        
+        genderButtons.forEach(button => {
+            // Remover eventos anteriores
+            const newBtn = button.cloneNode(true);
+            button.parentNode.replaceChild(newBtn, button);
+            
+            newBtn.addEventListener('click', function(e) {
+                genderButtons.forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+                
+                const gender = this.dataset.gender;
+                const url = urlsByGender[gender];
+                
+                if (url && modeloIframe) {
+                    modeloIframe.src = url;
+                    setTimeout(() => {
+                        const currentSrc = modeloIframe.src;
+                        modeloIframe.src = currentSrc;
+                    }, 100);
+                    
+                    const generoTexto = gender === 'female' ? 'femenino' : 'masculino';
+                    mostrarFeedback(`Modelo ${generoTexto} cargado`);
+                    console.log(`Cambiando a modelo: ${gender}`);
+                }
+            });
+        });
+    }
+
+    // ============================================
+    // VALIDAR ANTES DE ENVIAR
+    // ============================================
+    function configurarValidacionFormulario() {
+        document.getElementById('formCompleto').addEventListener('submit', function(e) {
+            const preguntas = document.querySelectorAll('.pregunta-item');
+            let respondidas = 0;
+            
+            preguntas.forEach(pregunta => {
+                const inputs = pregunta.querySelectorAll('input, textarea, select');
+                inputs.forEach(input => {
+                    if (input.type === 'radio' && input.checked) respondidas++;
+                    else if (input.type === 'text' && input.value.trim()) respondidas++;
+                    else if (input.tagName === 'TEXTAREA' && input.value.trim()) respondidas++;
+                    else if (input.tagName === 'SELECT' && input.value) respondidas++;
+                });
+            });
+            
+            if (respondidas === 0) {
+                e.preventDefault();
+                alert('Por favor, responda al menos una pregunta del cuestionario antes de guardar.');
+            }
+        });
+    }
+
+    // ============================================
+    // INICIALIZAR - TODOS LOS EVENTOS
+    // ============================================
+    console.log('🚀 Inicializando aplicación...');
+    
+    // Configurar eventos de partes del cuerpo
+    configurarEventosPartesCuerpo();
+    
+    // Configurar eventos de género
+    configurarGeneroModelo();
+    
+    // Configurar validación del formulario
+    configurarValidacionFormulario();
+    
+    // Cargar cuestionario inicial
+    cargarCuestionario('hombro');
+    
+});
+</script>
+{% endblock %}

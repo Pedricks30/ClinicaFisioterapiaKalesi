@@ -1,328 +1,221 @@
-{% extends 'base.html' %}
+<!-- cuestionarios/templates/cuestionarios/cuestionario_list.html -->
+{% extends "layout/base.html" %}
 {% load static %}
 
-{% block title %}Cuestionarios - Sistema de Gestión{% endblock %}
+{% block title %}Cuestionarios Clínicos{% endblock title %}
 
 {% block content %}
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Cuestionarios{% endblock %}</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-        }
-        
-        .container-cuestionarios {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        
-        /* Header */
-        .header {
-            background: white;
-            border-radius: 15px;
-            padding: 25px;
-            margin-bottom: 30px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        
-        .header h1 {
-            color: #333;
-            font-size: 28px;
-            margin-bottom: 10px;
-        }
-        
-        .header p {
-            color: #666;
-            font-size: 14px;
-        }
-        
-        /* Filtros */
-        .filtros {
-            background: white;
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        
-        .filtros-form {
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-            align-items: flex-end;
-        }
-        
-        .filtro-group {
-            flex: 1;
-            min-width: 200px;
-        }
-        
-        .filtro-group label {
-            display: block;
-            margin-bottom: 5px;
-            color: #555;
-            font-weight: 500;
-            font-size: 14px;
-        }
-        
-        .filtro-group select, .filtro-group input {
-            width: 100%;
-            padding: 8px 12px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 14px;
-        }
-        
-        .btn-filtrar {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 8px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 500;
-        }
-        
-        /* Grid de cuestionarios */
-        .cuestionarios-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-        
-        .cuestionario-card {
-            background: white;
-            border-radius: 15px;
-            overflow: hidden;
-            transition: transform 0.3s, box-shadow 0.3s;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        
-        .cuestionario-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 5px 25px rgba(0,0,0,0.15);
-        }
-        
-        .card-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px;
-        }
-        
-        .card-header h3 {
-            font-size: 18px;
-            margin-bottom: 8px;
-        }
-        
-        .badge-tipo {
-            background: rgba(255,255,255,0.3);
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 12px;
-            display: inline-block;
-        }
-        
-        .card-body {
-            padding: 20px;
-        }
-        
-        .card-body p {
-            color: #666;
-            font-size: 14px;
-            line-height: 1.5;
-            margin-bottom: 15px;
-        }
-        
-        .card-footer {
-            padding: 15px 20px;
-            background: #f8f9fa;
-            display: flex;
-            gap: 10px;
-            justify-content: space-between;
-        }
-        
-        .btn {
-            padding: 8px 15px;
-            border-radius: 8px;
-            text-decoration: none;
-            font-size: 13px;
-            font-weight: 500;
-            transition: all 0.3s;
-            display: inline-block;
-        }
-        
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-        
-        .btn-secondary {
-            background: #6c757d;
-            color: white;
-        }
-        
-        .btn-danger {
-            background: #dc3545;
-            color: white;
-        }
-        
-        .btn-sm {
-            padding: 5px 12px;
-            font-size: 12px;
-        }
-        
-        /* Paginación */
-        .pagination {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin-top: 30px;
-        }
-        
-        .page-link {
-            padding: 8px 15px;
-            background: white;
-            border-radius: 8px;
-            text-decoration: none;
-            color: #667eea;
-            transition: all 0.3s;
-        }
-        
-        .page-link:hover, .page-link.active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-        
-        /* Botón flotante */
-        .btn-flotante {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-decoration: none;
-            font-size: 30px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            transition: all 0.3s;
-        }
-        
-        .btn-flotante:hover {
-            transform: scale(1.1);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
-        }
-        
-        /* Responsive */
-        @media (max-width: 768px) {
-            .cuestionarios-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .filtros-form {
-                flex-direction: column;
-            }
-            
-            .filtro-group {
-                width: 100%;
-            }
-        }
-    </style>
-</head>
-<body>
-<div class="container-cuestionarios">
-    <!-- Header -->
-    <div class="header">
-        <h1>📋 Cuestionarios Clínicos</h1>
-        <p>Gestiona y aplica cuestionarios para evaluar la evolución de tus pacientes</p>
-    </div>
-    
-    <!-- Filtros -->
-    <div class="filtros">
-        <form method="GET" class="filtros-form">
-            <div class="filtro-group">
-                <label>🔍 Buscar</label>
-                <input type="text" name="search" placeholder="Nombre o descripción..." value="{{ request.GET.search|default:'' }}">
+<div class="container-fluid">
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 bg-success">
+            <div class="d-flex justify-content-between align-items-center flex-wrap">
+                <h6 class="m-0 font-weight-bold text-light">
+                    <i class="fas fa-clipboard-list me-2"></i> Cuestionarios Clínicos
+                    <span class="badge bg-light text-dark ms-2">{{ paginator.count }} cuestionarios</span>
+                </h6>
+                <div class="filter-bar">
+                    <form method="GET" class="d-flex gap-2 align-items-center flex-wrap">
+                        <div class="input-group input-group-sm">
+                            <input type="text" name="search" class="form-control" placeholder="Buscar..." value="{{ request.GET.search|default:'' }}">
+                            <button class="btn btn-light border" type="submit">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                        <select name="tipo" class="form-select form-select-sm" onchange="this.form.submit()">
+                            <option value="">Todos los tipos</option>
+                            {% for value, label in tipos %}
+                            <option value="{{ value }}" {% if request.GET.tipo == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                        {% if request.GET.search or request.GET.tipo %}
+                        <a href="{% url 'cuestionarios:list' %}" class="btn btn-sm btn-secondary">
+                            <i class="fas fa-times"></i> Limpiar
+                        </a>
+                        {% endif %}
+                    </form>
+                    {% if perms.cuestionarios.add_cuestionario %}
+                    <a href="{% url 'cuestionarios:create' %}" class="btn btn-sm btn-light">
+                        <i class="fas fa-plus-circle"></i> Nuevo
+                    </a>
+                    {% endif %}
+                </div>
             </div>
-            <div class="filtro-group">
-                <label>📌 Tipo</label>
-                <select name="tipo">
-                    <option value="">Todos</option>
-                    {% for value, label in tipos %}
-                    <option value="{{ value }}" {% if request.GET.tipo == value %}selected{% endif %}>{{ label }}</option>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                {% for cuestionario in cuestionarios %}
+                <div class="col-xl-3 col-lg-4 col-md-6 col-sm-12 mb-4">
+                    <div class="cuestionario-card">
+                        <div class="cuestionario-header">
+                            <div class="icono">
+                                <i class="fas fa-clipboard-list"></i>
+                            </div>
+                            <div class="flex-grow-1" style="min-width: 0;">
+                                <h5 class="mb-0" title="{{ cuestionario.nombre }}">{{ cuestionario.nombre }}</h5>
+                                <div class="d-flex gap-2 mt-1">
+                                    <span class="badge-estado">
+                                        {% if cuestionario.activo %}
+                                        <i class="fas fa-check-circle"></i> Activo
+                                        {% else %}
+                                        <i class="fas fa-times-circle"></i> Inactivo
+                                        {% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="cuestionario-body">
+                            <div class="descripcion">
+                                {{ cuestionario.descripcion|truncatechars:80 }}
+                            </div>
+                            <div class="meta-info">
+                                {% with color=cuestionario.tipo_cuestionario|lower %}
+                                <span class="badge-tipo 
+                                    {% if color == 'hombro_pectoral' or color == 'hombro' %}verde
+                                    {% elif color == 'espalda' %}azul
+                                    {% elif color == 'rodilla' %}morado
+                                    {% elif color == 'cuello' %}naranja
+                                    {% elif color == 'personalizado' %}rojo
+                                    {% else %}gris{% endif %}">
+                                    <i class="fas fa-tag"></i> {{ cuestionario.get_tipo_cuestionario_display }}
+                                </span>
+                                {% endwith %}
+                                <span class="badge-preguntas">
+                                    <i class="fas fa-question-circle"></i> {{ cuestionario.preguntas.count }}
+                                </span>
+                            </div>
+                            <div class="meta-info mt-1">
+                                <small><i class="far fa-calendar-alt"></i> {{ cuestionario.created_at|date:"d/m/Y" }}</small>
+                                {% if cuestionario.created_by %}
+                                <small><i class="fas fa-user"></i> {{ cuestionario.created_by.get_full_name|default:cuestionario.created_by.username }}</small>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="action-buttons">
+                                <a href="{% url 'cuestionarios:detail' cuestionario.pk %}" class="btn-accion primary">
+                                    <i class="fas fa-eye"></i> Ver
+                                </a>
+                                {% if perms.cuestionarios.change_cuestionario %}
+                                <a href="{% url 'cuestionarios:update' cuestionario.pk %}" class="btn-accion edit" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                {% endif %}
+                                {% if perms.cuestionarios.delete_cuestionario %}
+                                <button type="button" class="btn-accion delete" title="Eliminar" onclick="confirmarEliminacion('{{ cuestionario.pk }}', '{{ cuestionario.nombre|escapejs }}')">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12 text-center py-5">
+                    <i class="fas fa-clipboard-list fa-4x text-muted mb-3 d-block"></i>
+                    <h5 class="text-muted">No hay cuestionarios disponibles</h5>
+                    <p class="text-muted">Haz clic en "Nuevo" para crear tu primer cuestionario.</p>
+                    {% if perms.cuestionarios.add_cuestionario %}
+                    <a href="{% url 'cuestionarios:create' %}" class="btn btn-success mt-2">
+                        <i class="fas fa-plus-circle"></i> Crear Cuestionario
+                    </a>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Paginación -->
+            {% if is_paginated %}
+            <nav class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.tipo %}&tipo={{ request.GET.tipo }}{% endif %}">
+                            <i class="fas fa-chevron-left"></i> Anterior
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for num in page_obj.paginator.page_range %}
+                    <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                        <a class="page-link" href="?page={{ num }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.tipo %}&tipo={{ request.GET.tipo }}{% endif %}">
+                            {{ num }}
+                        </a>
+                    </li>
                     {% endfor %}
-                </select>
-            </div>
-            <div class="filtro-group">
-                <button type="submit" class="btn-filtrar">🔍 Filtrar</button>
-            </div>
-        </form>
-    </div>
-    
-    <!-- Grid de cuestionarios -->
-    <div class="cuestionarios-grid">
-        {% for cuestionario in cuestionarios %}
-        <div class="cuestionario-card">
-            <div class="card-header">
-                <h3>{{ cuestionario.nombre }}</h3>
-                <span class="badge-tipo">{{ cuestionario.get_tipo_cuestionario_display }}</span>
-            </div>
-            <div class="card-body">
-                <p>{{ cuestionario.descripcion|truncatechars:120 }}</p>
-                <small style="color: #999;">Creado: {{ cuestionario.created_at|date:"d/m/Y" }}</small>
-            </div>
-            <div class="card-footer">
-                <a href="{% url 'cuestionarios:detail' cuestionario.pk %}" class="btn btn-primary">Ver detalles</a>
-                {% if perms.cuestionarios.change_cuestionario %}
-                <a href="{% url 'cuestionarios:update' cuestionario.pk %}" class="btn btn-secondary btn-sm">Editar</a>
-                {% endif %}
-            </div>
+                    
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.tipo %}&tipo={{ request.GET.tipo }}{% endif %}">
+                            Siguiente <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
         </div>
-        {% empty %}
-        <div style="grid-column: 1/-1; text-align: center; padding: 50px; background: white; border-radius: 15px;">
-            <p>No hay cuestionarios disponibles</p>
-        </div>
-        {% endfor %}
     </div>
-    
-    <!-- Paginación -->
-    {% if is_paginated %}
-    <div class="pagination">
-        {% if page_obj.has_previous %}
-        <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.tipo %}&tipo={{ request.GET.tipo }}{% endif %}" class="page-link">Anterior</a>
-        {% endif %}
-        
-        <span class="page-link active">{{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
-        
-        {% if page_obj.has_next %}
-        <a href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.tipo %}&tipo={{ request.GET.tipo }}{% endif %}" class="page-link">Siguiente</a>
-        {% endif %}
-    </div>
-    {% endif %}
 </div>
 
-<!-- Botón flotante -->
-{% if perms.cuestionarios.add_cuestionario %}
-<a href="{% url 'cuestionarios:create' %}" class="btn-flotante" title="Crear nuevo cuestionario">+</a>
-{% endif %}
-</body>
-</html>
+<!-- SweetAlert2 para confirmación de eliminación -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+function confirmarEliminacion(id, nombre) {
+    Swal.fire({
+        title: '¿Eliminar cuestionario?',
+        html: `Está a punto de eliminar el cuestionario: <strong>${nombre}</strong><br><br>
+               <span class="text-danger">⚠️ Esta acción no se puede deshacer. Todas las preguntas asociadas también serán eliminadas.</span>`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc3545',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar',
+        reverseButtons: true
+    }).then((result) => {
+        if (result.isConfirmed) {
+            Swal.fire({
+                title: 'Eliminando...',
+                text: 'Por favor espere',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            
+            fetch(`/cuestionarios/${id}/eliminar/`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Eliminado',
+                        text: 'El cuestionario ha sido eliminado exitosamente.',
+                        timer: 2000,
+                        showConfirmButton: false
+                    }).then(() => {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'No se pudo eliminar el cuestionario.'
+                    });
+                }
+            })
+            .catch(error => {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Ocurrió un error al intentar eliminar.'
+                });
+            });
+        }
+    });
+}
+</script>
 {% endblock %}

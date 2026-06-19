@@ -1,167 +1,189 @@
 {% extends 'layout/base.html' %}
 {% load static %}
+
+{% block title %}Dashboard Clínico{% endblock %}
+
 {% block content %}
-<!-- Begin Page Content -->
 <div class="container-fluid">
 
-    <!-- Page Heading -->
-    <div class="d-sm-flex align-items-center justify-content-between mb-4">
-        <h1 class="h3 mb-0 text-gray-800">Dashboard</h1>
-        <a href="#" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm"><i
-                class="fas fa-download fa-sm text-white-50"></i> Generate Report</a>
+    <!-- Dashboard Header -->
+    <div class="dashboard-header">
+        <div class="d-flex justify-content-between align-items-center flex-wrap header-content">
+            <div>
+                <h1><i class="fas fa-heartbeat me-2"></i> Dashboard Clínico</h1>
+                <p><i class="far fa-calendar-alt me-1"></i> {{ now|date:"l, d \d\e F \d\e Y" }} - Resumen general del centro</p>
+            </div>
+            <a href="#" class="btn-reporte">
+                <i class="fas fa-file-pdf"></i> Generar Reporte
+            </a>
+        </div>
     </div>
 
-    <!-- Content Row -->
-    <div class="row">
+    <!-- ============================================ -->
+    <!-- NOTIFICACIONES RÁPIDAS -->
+    <!-- ============================================ -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow mb-4 card-chart">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-verde">
+                        <i class="fas fa-bell me-2"></i> Notificaciones de Citas
+                        <span class="badge badge-danger ms-2" id="notificacionesCount">{{ notificaciones_citas|length }}</span>
+                    </h6>
+                    <small class="text-muted">
+                        {% if user_tipo == 'ADMIN' %}
+                            Todas las citas
+                        {% elif user_tipo in 'MEDIC,FISIO' %}
+                            Mis pacientes
+                        {% else %}
+                            Citas del día
+                        {% endif %}
+                    </small>
+                </div>
+                <div class="card-body" style="max-height: 250px; overflow-y: auto;">
+                    {% if notificaciones_citas %}
+                        {% for cita in notificaciones_citas %}
+                        <div class="cita-item">
+                            <div class="cita-info">
+                                <span class="cita-hora">{{ cita.fecha|date:"H:i" }}</span>
+                                <div>
+                                    <div class="cita-paciente">
+                                        {{ cita.paciente.get_full_name }}
+                                        {% if cita.paciente %}
+                                            <small class="text-muted ms-2">({{ cita.paciente.documento_identidad }})</small>
+                                        {% endif %}
+                                    </div>
+                                    <small class="text-muted">
+                                        {{ cita.fecha|date:"d/m/Y" }}
+                                        {% if cita.profesional %}
+                                            - Dr(a). {{ cita.profesional.get_full_name }}
+                                        {% endif %}
+                                    </small>
+                                </div>
+                                <span class="cita-tipo {{ cita.tipo_cita|lower }}">
+                                    {% if cita.tipo_cita == 'PRIMERA_CONSULTA' %}🔍 Primera
+                                    {% elif cita.tipo_cita == 'SEGUIMIENTO' %}📋 Seguimiento
+                                    {% elif cita.tipo_cita == 'FINALIZACION' %}✅ Finalización
+                                    {% else %}📌 {{ cita.get_tipo_cita_display }}{% endif %}
+                                </span>
+                            </div>
+                            <div>
+                                {% if cita.estado == 'PENDIENTE' %}
+                                    <span class="badge-estado-cita pendiente">
+                                        <i class="fas fa-clock"></i> Pendiente
+                                    </span>
+                                {% elif cita.estado == 'CONFIRMADA' %}
+                                    <span class="badge-estado-cita confirmada">
+                                        <i class="fas fa-check-circle"></i> Confirmada
+                                    </span>
+                                {% elif cita.estado == 'NO_ASISTIO' %}
+                                    <span class="badge-estado-cita no_asistio">
+                                        <i class="fas fa-times-circle"></i> No Asistió
+                                    </span>
+                                {% else %}
+                                    <span class="badge-estado-cita {{ cita.estado|lower }}">
+                                        {{ cita.get_estado_display }}
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-3">
+                            <i class="fas fa-check-circle fa-2x text-success mb-2 d-block"></i>
+                            <p class="text-muted">No hay notificaciones de citas pendientes</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
 
-        <!-- Earnings (Monthly) Card Example -->
+    <!-- ============================================ -->
+    <!-- STATS CARDS - PRIMERA FILA -->
+    <!-- ============================================ -->
+    <div class="row">
+        <!-- Total Pacientes -->
         <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card border-left-verde shadow h-100 py-2 card-stat">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-verde text-uppercase mb-1">
+                                <i class="fas fa-users me-1"></i> Total Pacientes
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_pacientes|default:"0" }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <div class="stat-icon stat-icon-verde">
+                                <i class="fas fa-user"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hombres / Mujeres -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-azul shadow h-100 py-2 card-stat">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                GANANCIAS (MENSUALES)</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">$40,000</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-calendar fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Earnings (Annual) Card Example -->
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-success shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                GANANCIAS (ANUALES)</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">$215,000</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Tasks Card Example -->
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-info shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">TAREAS
+                                <i class="fas fa-venus-mars me-1"></i> Pacientes por Género
                             </div>
-                            <div class="row no-gutters align-items-center">
-                                <div class="col-auto">
-                                    <div class="h5 mb-0 mr-3 font-weight-bold text-gray-800">50%</div>
-                                </div>
-                                <div class="col">
-                                    <div class="progress progress-sm mr-2">
-                                        <div class="progress-bar bg-info" role="progressbar"
-                                            style="width: 50%" aria-valuenow="50" aria-valuemin="0"
-                                            aria-valuemax="100"></div>
-                                    </div>
-                                </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                <span class="text-verde"><i class="fas fa-female me-1"></i> {{ total_mujeres|default:"0" }}</span>
+                                <span class="text-primary ms-2"><i class="fas fa-male me-1"></i> {{ total_hombres|default:"0" }}</span>
                             </div>
                         </div>
                         <div class="col-auto">
-                            <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
+                            <div class="stat-icon stat-icon-azul">
+                                <i class="fas fa-venus-mars"></i>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Pending Requests Card Example -->
+        <!-- Médicos -->
         <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card border-left-verde-claro shadow h-100 py-2 card-stat">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                SOLICITUDES PENDIENTES</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">18</div>
+                            <div class="text-xs font-weight-bold text-verde-claro text-uppercase mb-1">
+                                <i class="fas fa-user-md me-1"></i> Médicos
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_medicos|default:"0" }}</div>
                         </div>
                         <div class="col-auto">
-                            <i class="fas fa-comments fa-2x text-gray-300"></i>
+                            <div class="stat-icon stat-icon-verde-claro">
+                                <i class="fas fa-stethoscope"></i>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-                <!-- Pending Requests Card Example -->
+        <!-- Fisioterapeutas -->
         <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card border-left-verde-oscuro shadow h-100 py-2 card-stat">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                USUARIOS</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">18</div>
+                            <div class="text-xs font-weight-bold text-verde-oscuro text-uppercase mb-1">
+                                <i class="fas fa-hand-holding-heart me-1"></i> Fisioterapeutas
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_fisioterapeutas|default:"0" }}</div>
                         </div>
                         <div class="col-auto">
-                            <i class="fas fa-user-friends fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-                        <!-- Pending Requests Card Example -->
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-warning shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                CLIENTES</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">18</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-uber fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-       <!-- Pending Requests Card Example -->
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-warning shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                CATEGORIAS</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">18</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-sale fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Pending Requests Card Example -->
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-warning shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                PRODUCTOS</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">18</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-uber fa-2x text-gray-300"></i>
+                            <div class="stat-icon stat-icon-verde">
+                                <i class="fas fa-dumbbell"></i>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -169,304 +191,370 @@
         </div>
     </div>
 
-    <!-- Content Row -->
-
+    <!-- ============================================ -->
+    <!-- STATS CARDS - SEGUNDA FILA -->
+    <!-- ============================================ -->
     <div class="row">
-
-        <!-- Area Chart -->
-        <div class="col-xl-8 col-lg-7">
-            <div class="card shadow mb-4">
-                <!-- Card Header - Dropdown -->
-                <div
-                    class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                    <h6 class="m-0 font-weight-bold text-primary">RESUMEN DE GANANCIAS</h6>
-                    <div class="dropdown no-arrow">
-                        <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
-                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
-                        </a>
-                        <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in"
-                            aria-labelledby="dropdownMenuLink">
-                            <div class="dropdown-header">Dropdown Header:</div>
-                            <a class="dropdown-item" href="#">Action</a>
-                            <a class="dropdown-item" href="#">Another action</a>
-                            <div class="dropdown-divider"></div>
-                            <a class="dropdown-item" href="#">Something else here</a>
+        <!-- Citas Hoy -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-naranja shadow h-100 py-2 card-stat">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                <i class="fas fa-calendar-day me-1"></i> Citas Hoy
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ citas_hoy|default:"0" }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <div class="stat-icon stat-icon-naranja">
+                                <i class="fas fa-calendar-check"></i>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <!-- Card Body -->
+            </div>
+        </div>
+
+        <!-- Citas Pendientes -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-rojo shadow h-100 py-2 card-stat">
                 <div class="card-body">
-                    <div class="chart-area">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                                <i class="fas fa-clock me-1"></i> Citas Pendientes
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ citas_pendientes|default:"0" }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <div class="stat-icon stat-icon-rojo">
+                                <i class="fas fa-hourglass-half"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Sesiones -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-morado shadow h-100 py-2 card-stat">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-purple text-uppercase mb-1">
+                                <i class="fas fa-chart-line me-1"></i> Sesiones Realizadas
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_sesiones|default:"0" }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <div class="stat-icon stat-icon-morado">
+                                <i class="fas fa-clipboard-check"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cuestionarios Respondidos -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-verde shadow h-100 py-2 card-stat">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-verde text-uppercase mb-1">
+                                <i class="fas fa-clipboard-list me-1"></i> Cuestionarios
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_cuestionarios|default:"0" }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <div class="stat-icon stat-icon-verde">
+                                <i class="fas fa-edit"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- GRÁFICOS -->
+    <!-- ============================================ -->
+    <div class="row">
+        <!-- Área Chart - Sesiones por Mes -->
+        <div class="col-xl-8 col-lg-7">
+            <div class="card shadow mb-4 card-chart">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-verde">
+                        <i class="fas fa-chart-area me-2"></i> Sesiones por Mes
+                    </h6>
+                    <div class="dropdown no-arrow">
+                        <a class="dropdown-toggle" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in">
+                            <a class="dropdown-item" href="#"><i class="fas fa-download fa-sm fa-fw mr-2"></i> Exportar</a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="#"><i class="fas fa-sync fa-sm fa-fw mr-2"></i> Actualizar</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-area" style="height: 320px;">
                         <canvas id="myAreaChart"></canvas>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Pie Chart -->
+        <!-- Pie Chart - Distribución de Pacientes -->
         <div class="col-xl-4 col-lg-5">
-            <div class="card shadow mb-4">
-                <!-- Card Header - Dropdown -->
-                <div
-                    class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                    <h6 class="m-0 font-weight-bold text-primary">FUENTES DE INGRESOS</h6>
+            <div class="card shadow mb-4 card-chart">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-verde">
+                        <i class="fas fa-chart-pie me-2"></i> Distribución de Pacientes
+                    </h6>
                     <div class="dropdown no-arrow">
-                        <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
-                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <a class="dropdown-toggle" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                             <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
                         </a>
-                        <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in"
-                            aria-labelledby="dropdownMenuLink">
-                            <div class="dropdown-header">Dropdown Header:</div>
-                            <a class="dropdown-item" href="#">Action</a>
-                            <a class="dropdown-item" href="#">Another action</a>
+                        <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in">
+                            <a class="dropdown-item" href="#"><i class="fas fa-download fa-sm fa-fw mr-2"></i> Exportar</a>
                             <div class="dropdown-divider"></div>
-                            <a class="dropdown-item" href="#">Something else here</a>
+                            <a class="dropdown-item" href="#"><i class="fas fa-sync fa-sm fa-fw mr-2"></i> Actualizar</a>
                         </div>
                     </div>
                 </div>
-
-                
-                <!-- Card Body -->
                 <div class="card-body">
-                    <div class="chart-pie pt-4 pb-2">
+                    <div class="chart-pie pt-4 pb-2" style="height: 280px;">
                         <canvas id="myPieChart"></canvas>
                     </div>
                     <div class="mt-4 text-center small">
-                        <span class="mr-2">
-                            <i class="fas fa-circle text-primary"></i> Direct
+                        <span class="mr-3">
+                            <i class="fas fa-circle" style="color: #2e7d64;"></i> Hombres
                         </span>
-                        <span class="mr-2">
-                            <i class="fas fa-circle text-success"></i> Social
-                        </span>
-                        <span class="mr-2">
-                            <i class="fas fa-circle text-info"></i> Referral
+                        <span class="mr-3">
+                            <i class="fas fa-circle" style="color: #48c9b0;"></i> Mujeres
                         </span>
                     </div>
                 </div>
             </div>
         </div>
-
-        <div class="container-fluid">
-    <!-- ... (código anterior sin cambios) ... -->
-
-    <!-- Content Row -->
-    <div class="row">
-        <!-- Area Chart -->
-        <div class="col-xl-8 col-lg-7">
-            <!-- ... (código del área chart sin cambios) ... -->
-        </div>
-
-        <!-- Pie Chart -->
-        <div class="col-xl-4 col-lg-5">
-            <!-- ... (código del pie chart sin cambios) ... -->
-        </div>
     </div>
 
-    <!-- New Content Row for Stock Minimum Chart -->
+    <!-- ============================================ -->
+    <!-- PRÓXIMAS CITAS -->
+    <!-- ============================================ -->
     <div class="row">
-        <!-- Stock Minimum Chart -->
         <div class="col-xl-8 col-lg-7">
-            <div class="card shadow mb-4">
-                <!-- Card Header - Dropdown -->
+            <div class="card shadow mb-4 card-chart">
                 <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                    <h6 class="m-0 font-weight-bold text-primary">STOCK MÍNIMO POR PRODUCTO</h6>
-                    <div class="dropdown no-arrow">
-                        <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
-                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
-                        </a>
-                        <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in"
-                            aria-labelledby="dropdownMenuLink">
-                            <div class="dropdown-header">Opciones:</div>
-                            <a class="dropdown-item" href="#">Ver detalles</a>
-                            <a class="dropdown-item" href="#">Actualizar datos</a>
-                            <div class="dropdown-divider"></div>
-                            <a class="dropdown-item" href="#">Generar reporte</a>
-                        </div>
-                    </div>
+                    <h6 class="m-0 font-weight-bold text-verde">
+                        <i class="fas fa-calendar-alt me-2"></i> Próximas Citas
+                    </h6>
+                    <a href="{% url 'citas:calendario' %}" class="btn btn-sm" style="background: #2e7d64; color: white; border-radius: 8px;">
+                        <i class="fas fa-arrow-right"></i> Ver todas
+                    </a>
                 </div>
-                <!-- Card Body -->
                 <div class="card-body">
-                    <div class="chart-bar">
-                        <canvas id="myBarChart"></canvas>
-                    </div>
+                    {% if proximas_citas %}
+                        {% for cita in proximas_citas %}
+                        <div class="cita-item">
+                            <div class="cita-info">
+                                <span class="cita-hora">{{ cita.fecha|date:"H:i" }}</span>
+                                <div>
+                                    <div class="cita-paciente">{{ cita.paciente.get_full_name }}</div>
+                                    <small class="text-muted">{{ cita.fecha|date:"d/m/Y" }}</small>
+                                </div>
+                                <span class="cita-tipo {{ cita.tipo_cita|lower }}">
+                                    {% if cita.tipo_cita == 'PRIMERA_CONSULTA' %}Primera Consulta
+                                    {% elif cita.tipo_cita == 'SEGUIMIENTO' %}Seguimiento
+                                    {% elif cita.tipo_cita == 'FINALIZACION' %}Finalización
+                                    {% else %}{{ cita.get_tipo_cita_display }}{% endif %}
+                                </span>
+                            </div>
+                            <span class="badge-estado-cita {{ cita.estado|lower }}">
+                                {{ cita.get_estado_display }}
+                            </span>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-calendar-check fa-3x text-muted mb-3 d-block"></i>
+                            <p class="text-muted">No hay citas programadas para los próximos días</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Actividad Reciente -->
+        <div class="col-xl-4 col-lg-5">
+            <div class="card shadow mb-4 card-chart">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-verde">
+                        <i class="fas fa-clock me-2"></i> Actividad Reciente
+                    </h6>
+                </div>
+                <div class="card-body" style="max-height: 320px; overflow-y: auto;">
+                    {% if actividades_recientes %}
+                        {% for actividad in actividades_recientes %}
+                        <div class="cita-item">
+                            <div>
+                                <div class="cita-paciente">{{ actividad.paciente }}</div>
+                                <small class="text-muted">{{ actividad.descripcion }}</small>
+                            </div>
+                            <small class="text-muted">{{ actividad.fecha|timesince }}</small>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-hourglass-start fa-3x text-muted mb-3 d-block"></i>
+                            <p class="text-muted">No hay actividad reciente</p>
+                        </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
     </div>
-
-
-        
-    </div>
-
-    <!-- Content Row -->
-    <div class="row">
-
-        <!-- Content Column -->
-        <div class="col-lg-6 mb-4">
-
-            <!-- Project Card Example -->
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Projects</h6>
-                </div>
-                <div class="card-body">
-                    <h4 class="small font-weight-bold">Server Migration <span
-                            class="float-right">20%</span></h4>
-                    <div class="progress mb-4">
-                        <div class="progress-bar bg-danger" role="progressbar" style="width: 20%"
-                            aria-valuenow="20" aria-valuemin="0" aria-valuemax="100"></div>
-                    </div>
-                    <h4 class="small font-weight-bold">Sales Tracking <span
-                            class="float-right">40%</span></h4>
-                    <div class="progress mb-4">
-                        <div class="progress-bar bg-warning" role="progressbar" style="width: 40%"
-                            aria-valuenow="40" aria-valuemin="0" aria-valuemax="100"></div>
-                    </div>
-                    <h4 class="small font-weight-bold">Customer Database <span
-                            class="float-right">60%</span></h4>
-                    <div class="progress mb-4">
-                        <div class="progress-bar" role="progressbar" style="width: 60%"
-                            aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"></div>
-                    </div>
-                    <h4 class="small font-weight-bold">Payout Details <span
-                            class="float-right">80%</span></h4>
-                    <div class="progress mb-4">
-                        <div class="progress-bar bg-info" role="progressbar" style="width: 80%"
-                            aria-valuenow="80" aria-valuemin="0" aria-valuemax="100"></div>
-                    </div>
-                    <h4 class="small font-weight-bold">Account Setup <span
-                            class="float-right">Complete!</span></h4>
-                    <div class="progress">
-                        <div class="progress-bar bg-success" role="progressbar" style="width: 100%"
-                            aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Color System -->
-            <div class="row">
-                <div class="col-lg-6 mb-4">
-                    <div class="card bg-primary text-white shadow">
-                        <div class="card-body">
-                            Primary
-                            <div class="text-white-50 small">#4e73df</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-6 mb-4">
-                    <div class="card bg-success text-white shadow">
-                        <div class="card-body">
-                            Success
-                            <div class="text-white-50 small">#1cc88a</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-6 mb-4">
-                    <div class="card bg-info text-white shadow">
-                        <div class="card-body">
-                            Info
-                            <div class="text-white-50 small">#36b9cc</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-6 mb-4">
-                    <div class="card bg-warning text-white shadow">
-                        <div class="card-body">
-                            Warning
-                            <div class="text-white-50 small">#f6c23e</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-6 mb-4">
-                    <div class="card bg-danger text-white shadow">
-                        <div class="card-body">
-                            Danger
-                            <div class="text-white-50 small">#e74a3b</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-6 mb-4">
-                    <div class="card bg-secondary text-white shadow">
-                        <div class="card-body">
-                            Secondary
-                            <div class="text-white-50 small">#858796</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-6 mb-4">
-                    <div class="card bg-light text-black shadow">
-                        <div class="card-body">
-                            Light
-                            <div class="text-black-50 small">#f8f9fc</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-6 mb-4">
-                    <div class="card bg-dark text-white shadow">
-                        <div class="card-body">
-                            Dark
-                            <div class="text-white-50 small">#5a5c69</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-
-        <div class="col-lg-6 mb-4">
-
-            <!-- Illustrations -->
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Illustrations</h6>
-                </div>
-                <div class="card-body">
-                    <div class="text-center">
-                        <img class="img-fluid px-3 px-sm-4 mt-3 mb-4" style="width: 25rem;"
-                            src="{% static 'img/undraw_posting_photo.svg' %}" alt="...">
-                    </div>
-                    <p>Add some quality, svg illustrations to your project courtesy of <a
-                            target="_blank" rel="nofollow" href="https://undraw.co/">unDraw</a>, a
-                        constantly updated collection of beautiful svg images that you can use
-                        completely free and without attribution!</p>
-                    <a target="_blank" rel="nofollow" href="https://undraw.co/">Browse Illustrations on
-                        unDraw &rarr;</a>
-                </div>
-            </div>
-
-            <!-- Approach -->
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Development Approach</h6>
-                </div>
-                <div class="card-body">
-                    <p>SB Admin 2 makes extensive use of Bootstrap 4 utility classes in order to reduce
-                        CSS blo
-                        CSS bloat and poor page performance. Custom CSS classes are used to create
-                        custom components and custom utility classes.</p>
-                    <p class="mb-0">Before working with this theme, you should become familiar with the
-                        Bootstrap framework, especially the utility classes.</p>
-                </div>
-            </div>
-
-        </div>
-    </div>
-    
 
 </div>
 <!-- /.container-fluid -->
-
+{% endblock %}
 {% block extra_js %}
 <!-- Page level plugins -->
 <script src="{% static 'vendor/chart.js/Chart.min.js' %}"></script>
 
-<!-- Page level custom scripts -->
-<script src="{% static 'js/demo/chart-area-demo.js' %}"></script>
-<script src="{% static 'js/demo/chart-bar-demo.js' %}"></script>
-<script src="{% static 'js/demo/chart-pie-demo.js' %}"></script>
-{% endblock %}
-{% endblock %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Dashboard iniciado');
 
+    // ============================================
+    // ÁREA CHART - SESIONES POR MES
+    // ============================================
+    var ctx1 = document.getElementById("myAreaChart");
+    if (ctx1) {
+        var gradient = ctx1.getContext('2d').createLinearGradient(0, 0, 0, 350);
+        gradient.addColorStop(0, 'rgba(46, 125, 100, 0.25)');
+        gradient.addColorStop(0.5, 'rgba(46, 125, 100, 0.10)');
+        gradient.addColorStop(1, 'rgba(46, 125, 100, 0)');
+
+        var sesionesData = {{ sesiones_mes|default:"[]"|safe }};
+        var meses = {{ meses_labels|default:"[]"|safe }};
+
+        new Chart(ctx1, {
+            type: 'line',
+            data: {
+                labels: meses.length ? meses : ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
+                datasets: [{
+                    label: 'Sesiones',
+                    data: sesionesData.length ? sesionesData : [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    lineTension: 0.3,
+                    backgroundColor: gradient,
+                    borderColor: '#2e7d64',
+                    borderWidth: 3,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#2e7d64',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointHoverRadius: 6,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: '#fff',
+                        titleColor: '#1a2634',
+                        bodyColor: '#1a2634',
+                        borderColor: '#e2e8f0',
+                        borderWidth: 1,
+                        padding: 12,
+                        callbacks: {
+                            label: function(context) {
+                                return 'Sesiones: ' + context.raw;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            color: '#8b96a8'
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1,
+                            color: '#8b96a8'
+                        },
+                        grid: {
+                            color: '#eef2f7'
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // ============================================
+    // PIE CHART - DISTRIBUCIÓN DE PACIENTES
+    // ============================================
+    var ctx2 = document.getElementById("myPieChart");
+    if (ctx2) {
+        var hombres = {{ total_hombres|default:"0" }};
+        var mujeres = {{ total_mujeres|default:"0" }};
+
+        new Chart(ctx2, {
+            type: 'doughnut',
+            data: {
+                labels: ['Hombres', 'Mujeres'],
+                datasets: [{
+                    data: [hombres, mujeres],
+                    backgroundColor: ['#2e7d64', '#48c9b0'],
+                    borderWidth: 3,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '65%',
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: '#fff',
+                        titleColor: '#1a2634',
+                        bodyColor: '#1a2634',
+                        borderColor: '#e2e8f0',
+                        borderWidth: 1,
+                        padding: 12,
+                        callbacks: {
+                            label: function(context) {
+                                var total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                var percentage = ((context.raw / total) * 100).toFixed(1);
+                                return context.label + ': ' + context.raw + ' (' + percentage + '%)';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

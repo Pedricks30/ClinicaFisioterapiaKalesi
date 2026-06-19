@@ -1,0 +1,790 @@
+/* expedientes/static/css/evolucion_grafica.css */
+
+/* ============================================
+   EVOLUCIÓN GRÁFICA - ESTILOS CLÍNICOS
+   Paleta: Verde Salud (#2e7d64, #3d9b81)
+   FULL WIDTH - Ocupa todo el espacio disponible
+   ============================================ */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* === CONTENEDOR PRINCIPAL === */
+.container-evolucion {
+    width: 100%;
+    padding: 0;
+}
+
+/* === CARD PRINCIPAL === */
+.card-evolucion {
+    background: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0 15px 45px rgba(0, 0, 0, 0.06);
+    padding: 25px 30px;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(0, 0, 0, 0.03);
+    width: 100%;
+}
+
+/* === HEADER === */
+.header-evolucion {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.icon-salud {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: #e7f9ef;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    color: #16a34a;
+    flex-shrink: 0;
+}
+
+.header-left h2 {
+    font-size: 26px;
+    font-weight: 700;
+    color: #1a2634;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.header-left .subtitle {
+    font-size: 14px;
+    color: #8b96a8;
+    font-weight: 400;
+}
+
+.header-right {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+/* === BADGE DE PACIENTE === */
+.patient-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: #f3f6fb;
+    padding: 8px 18px;
+    border-radius: 30px;
+    font-size: 14px;
+    color: #1a2634;
+}
+
+.patient-badge strong {
+    font-weight: 600;
+    color: #1a2634;
+}
+
+.patient-badge .separator {
+    color: #cbd5e1;
+}
+
+/* === BOTÓN EXPORTAR === */
+.btn-export {
+    background: white;
+    border: 1px solid #dfe6ef;
+    padding: 10px 18px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #1a2634;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-export:hover {
+    background: #2563eb;
+    color: white;
+    border-color: #2563eb;
+    box-shadow: 0 6px 20px rgba(37, 99, 235, 0.15);
+    transform: translateY(-1px);
+}
+
+.btn-export i {
+    font-size: 16px;
+}
+
+/* === ESTADÍSTICAS RÁPIDAS === */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 25px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #edf2f7;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 12px 10px;
+    background: #fafcff;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    border: 1px solid transparent;
+}
+
+.stat-item:hover {
+    background: #f1f6fe;
+    border-color: #e2ebf6;
+    transform: translateY(-2px);
+}
+
+.stat-item .stat-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: #8b96a8;
+    margin-bottom: 4px;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+}
+
+.stat-item .stat-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: #1a2634;
+    line-height: 1.2;
+}
+
+.stat-item.blue .stat-value {
+    color: #2563eb;
+}
+
+.stat-item.green .stat-value {
+    color: #16a34a;
+}
+
+.stat-item.orange .stat-value {
+    color: #f59e0b;
+}
+
+.stat-item.red .stat-value {
+    color: #ef4444;
+}
+
+/* === GRÁFICO PRINCIPAL === */
+.grafico-principal-wrapper {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 20px;
+    border: 1px solid #edf2f7;
+    margin-bottom: 25px;
+}
+
+.grafico-principal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.grafico-principal-header h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1a2634;
+    margin: 0;
+}
+
+.chart-wrapper-principal {
+    position: relative;
+    height: 350px;
+    width: 100%;
+}
+
+.chart-wrapper-principal canvas {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+/* === GRÁFICOS INDIVIDUALES === */
+.section-title-individual {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1a2634;
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+}
+
+.section-title-individual .badge {
+    font-size: 12px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    background: #6c757d;
+    color: white;
+}
+
+.graficos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
+    gap: 20px;
+}
+
+.grafico-card {
+    background: white;
+    border-radius: 14px;
+    padding: 18px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    border: 1px solid #edf2f7;
+    transition: all 0.3s ease;
+}
+
+.grafico-card:hover {
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
+}
+
+.grafico-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.grafico-header h3 {
+    color: #1a2634;
+    font-size: 14px;
+    font-weight: 600;
+    margin: 0;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.tendencia-badge {
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.tendencia-MEJORANDO {
+    background: #d4edda;
+    color: #155724;
+}
+
+.tendencia-ESTABLE {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.tendencia-EMPEORANDO {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.grafico-body {
+    position: relative;
+    height: 220px;
+}
+
+.grafico-body canvas {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+/* === INFO DE EVOLUCIÓN === */
+.info-evolucion {
+    margin-top: 12px;
+    padding: 10px 12px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    font-size: 12px;
+}
+
+.info-item {
+    text-align: center;
+}
+
+.info-item .value {
+    font-size: 16px;
+    font-weight: 700;
+    color: #2e7d64;
+}
+
+.info-item .label {
+    color: #8b96a8;
+    font-size: 10px;
+    margin-top: 2px;
+}
+
+/* === STATS FOOTER (GRÁFICO PRINCIPAL) === */
+.stats-footer {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid #edf2f7;
+}
+
+.stats-footer .stat-item {
+    text-align: center;
+    padding: 10px;
+    background: #fafcff;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    border: 1px solid transparent;
+}
+
+.stats-footer .stat-item:hover {
+    background: #f1f6fe;
+    border-color: #e2ebf6;
+}
+
+.stats-footer .stat-item .stat-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: #8b96a8;
+    margin-bottom: 4px;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+}
+
+.stats-footer .stat-item .stat-value {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1a2634;
+    line-height: 1.2;
+}
+
+.stats-footer .stat-item.blue .stat-value {
+    color: #2563eb;
+}
+
+.stats-footer .stat-item.green .stat-value {
+    color: #16a34a;
+}
+
+.stats-footer .stat-item.orange .stat-value {
+    color: #f59e0b;
+}
+
+.stats-footer .stat-item.red .stat-value {
+    color: #ef4444;
+}
+
+/* === PREDICCIONES === */
+.predicciones-section {
+    background: white;
+    border-radius: 16px;
+    padding: 20px 25px;
+    margin-top: 25px;
+    border: 1px solid #edf2f7;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+}
+
+.predicciones-section .section-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1a2634;
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.predicciones-section .section-title .icon-pred {
+    font-size: 22px;
+}
+
+.predicciones-section .section-title .badge {
+    font-size: 13px;
+    padding: 3px 12px;
+    border-radius: 20px;
+    background: #28a745;
+    color: white;
+}
+
+.predicciones-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+}
+
+.prediccion-card {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f4f9 100%);
+    border-radius: 12px;
+    padding: 16px 18px;
+    border-left: 4px solid #2563eb;
+    transition: all 0.3s ease;
+}
+
+.prediccion-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.06);
+}
+
+.prediccion-card .pregunta-text {
+    font-size: 13px;
+    font-weight: 500;
+    color: #1a2634;
+    margin-bottom: 8px;
+}
+
+.prediccion-card .pred-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: #1a2634;
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+}
+
+.prediccion-card .pred-value .max-value {
+    font-size: 14px;
+    font-weight: 400;
+    color: #8b96a8;
+}
+
+.prediccion-card .pred-interval {
+    font-size: 12px;
+    color: #6f7d95;
+    margin-top: 4px;
+}
+
+.prediccion-card .pred-tendencia {
+    font-size: 12px;
+    font-weight: 500;
+    margin-top: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 12px;
+    border-radius: 20px;
+    background: #eef2f7;
+}
+
+.prediccion-card .pred-tendencia.mejorando {
+    background: #d4edda;
+    color: #155724;
+}
+
+.prediccion-card .pred-tendencia.empeorando {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.prediccion-card .pred-tendencia.estable {
+    background: #fff3cd;
+    color: #856404;
+}
+
+/* === ESTADO VACÍO === */
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    background: white;
+    border-radius: 15px;
+    border: 2px dashed #dbe4ef;
+}
+
+.empty-state .empty-icon {
+    font-size: 40px;
+    color: #cbd5e1;
+    margin-bottom: 12px;
+}
+
+.empty-state .empty-title {
+    font-size: 16px;
+    color: #1a2634;
+    margin-bottom: 6px;
+    font-weight: 600;
+}
+
+.empty-state .empty-text {
+    color: #8b96a8;
+    font-size: 13px;
+}
+
+/* === LOADING === */
+.loading-container {
+    padding: 30px 20px;
+}
+
+/* === RESPONSIVE === */
+@media (max-width: 1200px) {
+    .graficos-grid {
+        grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+    }
+}
+
+@media (max-width: 992px) {
+    .card-evolucion {
+        padding: 20px;
+    }
+    
+    .graficos-grid {
+        grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    }
+    
+    .chart-wrapper-principal {
+        height: 280px;
+    }
+}
+
+@media (max-width: 768px) {
+    .container-evolucion {
+        padding: 0;
+    }
+    
+    .card-evolucion {
+        padding: 16px;
+        border-radius: 14px;
+    }
+
+    .header-evolucion {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .header-left h2 {
+        font-size: 20px;
+    }
+
+    .header-right {
+        justify-content: flex-start;
+        flex-wrap: wrap;
+    }
+
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+    .stat-item .stat-value {
+        font-size: 20px;
+    }
+    
+    .stat-item .stat-label {
+        font-size: 10px;
+    }
+
+    .graficos-grid {
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
+
+    .grafico-body {
+        height: 180px;
+    }
+    
+    .grafico-principal-header h3 {
+        font-size: 15px;
+    }
+    
+    .chart-wrapper-principal {
+        height: 220px;
+    }
+
+    .info-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 6px;
+    }
+
+    .info-item .value {
+        font-size: 14px;
+    }
+    
+    .info-item .label {
+        font-size: 9px;
+    }
+
+    .predicciones-section {
+        padding: 16px;
+    }
+
+    .predicciones-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .prediccion-card .pred-value {
+        font-size: 22px;
+    }
+    
+    .stats-footer {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+    
+    .stats-footer .stat-item .stat-value {
+        font-size: 18px;
+    }
+}
+
+@media (max-width: 480px) {
+    .card-evolucion {
+        padding: 12px;
+        border-radius: 12px;
+    }
+
+    .header-left {
+        flex-wrap: wrap;
+    }
+
+    .icon-salud {
+        width: 40px;
+        height: 40px;
+        font-size: 18px;
+    }
+
+    .header-left h2 {
+        font-size: 17px;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+    }
+
+    .stat-item {
+        padding: 8px 6px;
+    }
+
+    .stat-item .stat-value {
+        font-size: 17px;
+    }
+
+    .stat-item .stat-label {
+        font-size: 9px;
+    }
+
+    .btn-export {
+        padding: 6px 12px;
+        font-size: 11px;
+    }
+
+    .patient-badge {
+        font-size: 11px;
+        padding: 4px 10px;
+    }
+
+    .grafico-body {
+        height: 150px;
+    }
+    
+    .chart-wrapper-principal {
+        height: 180px;
+    }
+    
+    .grafico-principal-header h3 {
+        font-size: 13px;
+    }
+
+    .grafico-header h3 {
+        font-size: 12px;
+    }
+
+    .tendencia-badge {
+        font-size: 9px;
+        padding: 2px 8px;
+    }
+
+    .info-item .value {
+        font-size: 13px;
+    }
+
+    .predicciones-section .section-title {
+        font-size: 14px;
+    }
+
+    .prediccion-card {
+        padding: 12px 14px;
+    }
+
+    .prediccion-card .pregunta-text {
+        font-size: 12px;
+    }
+
+    .prediccion-card .pred-value {
+        font-size: 20px;
+    }
+    
+    .stats-footer {
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+    }
+    
+    .stats-footer .stat-item {
+        padding: 6px;
+    }
+    
+    .stats-footer .stat-item .stat-value {
+        font-size: 16px;
+    }
+    
+    .stats-footer .stat-item .stat-label {
+        font-size: 9px;
+    }
+}
+
+/* === SOPORTE PARA IMPRESIÓN === */
+@media print {
+    .btn-export {
+        display: none !important;
+    }
+
+    .card-evolucion {
+        box-shadow: none !important;
+        border: 1px solid #e2e8f0;
+        padding: 15px;
+    }
+
+    .grafico-card {
+        break-inside: avoid;
+        box-shadow: none !important;
+        border: 1px solid #e2e8f0;
+    }
+    
+    .grafico-principal-wrapper {
+        border: 1px solid #e2e8f0;
+        break-inside: avoid;
+    }
+
+    .prediccion-card {
+        break-inside: avoid;
+    }
+
+    .chart-wrapper-principal {
+        height: 250px;
+    }
+    
+    .grafico-body {
+        height: 180px;
+    }
+}

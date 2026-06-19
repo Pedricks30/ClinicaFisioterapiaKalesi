@@ -1,0 +1,642 @@
+<!-- expedientes/templates/expedientes/expediente_evolucion_grafica_paciente.html -->
+{% extends 'expedientes/expediente_wizard.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/evolucion_grafica.css' %}">
+{% endblock %}
+
+{% block wizard_content %}
+
+<!-- Pasar datos JSON de forma segura -->
+<script id="datosGraficosJson" type="application/json">
+    {{ datos_graficos_json|safe }}
+</script>
+<script id="prediccionesJson" type="application/json">
+    {{ predicciones_json|safe }}
+</script>
+<script id="promedioPorSesionJson" type="application/json">
+    {{ promedio_por_sesion_json|safe }}
+</script>
+
+<div class="container-evolucion">
+    <div class="card-evolucion">
+        <!-- HEADER -->
+        <div class="header-evolucion">
+            <div class="header-left">
+                <div class="icon-salud">
+                    <i class="fas fa-heartbeat"></i>
+                </div>
+                <div>
+                    <h2>Evolución del Paciente</h2>
+                    <span class="subtitle">Seguimiento clínico y tendencias</span>
+                </div>
+            </div>
+            <div class="header-right">
+                <span class="patient-badge">
+                    <strong>{{ expediente.paciente.get_full_name }}</strong>
+                    <span class="separator">|</span>
+                    <span>{{ expediente.numero_expediente }}</span>
+                </span>
+                <button class="btn-export" onclick="window.print()">
+                    <i class="fas fa-file-pdf"></i>
+                    Exportar PDF
+                </button>
+            </div>
+        </div>
+
+        <!-- ESTADÍSTICAS RÁPIDAS -->
+        <div class="stats-grid">
+            <div class="stat-item blue">
+                <div class="stat-label">Indicadores evaluados</div>
+                <div class="stat-value" id="totalIndicadores">{{ total_evoluciones }}</div>
+            </div>
+            <div class="stat-item green">
+                <div class="stat-label">Sesiones realizadas</div>
+                <div class="stat-value" id="totalSesiones">{{ total_sesiones }}</div>
+            </div>
+            <div class="stat-item orange">
+                <div class="stat-label">Predicciones activas</div>
+                <div class="stat-value" id="totalPredicciones">0</div>
+            </div>
+            <div class="stat-item red">
+                <div class="stat-label">Preguntas de escala</div>
+                <div class="stat-value" id="totalPreguntasEscala">{{ total_preguntas_escala }}</div>
+            </div>
+        </div>
+
+        <!-- ============================================ -->
+        <!-- GRÁFICO PRINCIPAL - PROMEDIO POR SESIÓN -->
+        <!-- ============================================ -->
+        <div id="graficoPrincipalContainer">
+            <div class="grafico-principal-wrapper">
+                <div class="grafico-principal-header">
+                    <h3>📊 Promedio General de Dolor por Sesión</h3>
+                    <span class="tendencia-badge" id="graficoPrincipalTendencia">
+                        {% if tendencia_principal == 'MEJORANDO' %}📈 Mejorando
+                        {% elif tendencia_principal == 'EMPEORANDO' %}📉 Empeorando
+                        {% elif tendencia_principal == 'ESTABLE' %}➡️ Estable
+                        {% else %}⏳ Sin datos{% endif %}
+                    </span>
+                </div>
+                <div class="chart-wrapper-principal">
+                    <canvas id="chartEvolucionPrincipal"></canvas>
+                </div>
+                <div class="stats-footer" id="statsPrincipal">
+                    <div class="stat-item blue">
+                        <div class="stat-label">Promedio General</div>
+                        <div class="stat-value" id="statPromedioPrincipal">--</div>
+                    </div>
+                    <div class="stat-item green">
+                        <div class="stat-label">Mejoría Total</div>
+                        <div class="stat-value" id="statMejoriaPrincipal">--</div>
+                    </div>
+                    <div class="stat-item orange">
+                        <div class="stat-label">Última Evaluación</div>
+                        <div class="stat-value" id="statUltimaPrincipal">--</div>
+                    </div>
+                    <div class="stat-item red">
+                        <div class="stat-label">Total Sesiones</div>
+                        <div class="stat-value" id="statSesionesPrincipal">--</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================ -->
+        <!-- TODOS LOS GRÁFICOS INDIVIDUALES -->
+        <!-- ============================================ -->
+        <div style="margin-top: 35px;">
+            <h4 class="section-title-individual">
+                <i class="fas fa-chart-line me-2"></i> Evolución por Indicador_ 
+                <span class="badge bg-secondary ms-2" id="totalGraficosIndicador">0</span>
+            </h4>
+            <div id="graficosContainer">
+                <div class="loading-container text-center py-4">
+                    <div class="spinner-border text-success" role="status">
+                        <span class="visually-hidden">Cargando gráficos...</span>
+                    </div>
+                    <p class="mt-2 text-muted small">Cargando gráficos de evolución...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- PREDICCIONES -->
+    <!-- ============================================ -->
+    <div id="prediccionesContainer">
+        <div class="predicciones-section">
+            <div class="section-title">
+                <span class="icon-pred">🔮</span>
+                Predicciones para próxima sesión
+                <span class="badge badge-success ms-2" id="prediccionesCount">0</span>
+            </div>
+            <div id="prediccionesGrid" class="predicciones-grid">
+                <div class="text-center py-4 text-muted">
+                    <i class="fas fa-hourglass-start fa-2x mb-2 d-block"></i>
+                    <p>Cargando predicciones...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Iniciando gráficos de evolución...');
+    
+    // ========================================
+    // OBTENER DATOS DE FORMA SEGURA
+    // ========================================
+    let datosGraficos = [];
+    let prediccionesData = [];
+    let promedioPorSesion = [];
+    
+    try {
+        const datosElement = document.getElementById('datosGraficosJson');
+        if (datosElement) {
+            const rawData = datosElement.textContent.trim();
+            if (rawData) {
+                datosGraficos = JSON.parse(rawData);
+                console.log('📊 Datos de gráficos cargados correctamente');
+                console.log('📊 Cantidad de gráficos:', datosGraficos.length);
+            }
+        }
+    } catch (e) {
+        console.warn('⚠️ Error al cargar datos de gráficos:', e.message);
+        datosGraficos = [];
+    }
+    
+    try {
+        const predElement = document.getElementById('prediccionesJson');
+        if (predElement) {
+            const rawData = predElement.textContent.trim();
+            if (rawData) {
+                prediccionesData = JSON.parse(rawData);
+                console.log('📊 Datos de predicciones cargados correctamente');
+                console.log('📊 Cantidad de predicciones:', prediccionesData.length);
+            }
+        }
+    } catch (e) {
+        console.warn('⚠️ Error al cargar predicciones:', e.message);
+        prediccionesData = [];
+    }
+    
+    try {
+        const promedioElement = document.getElementById('promedioPorSesionJson');
+        if (promedioElement) {
+            const rawData = promedioElement.textContent.trim();
+            if (rawData) {
+                promedioPorSesion = JSON.parse(rawData);
+                console.log('📊 Datos de promedio por sesión cargados correctamente');
+                console.log('📊 Cantidad de sesiones:', promedioPorSesion.length);
+            }
+        }
+    } catch (e) {
+        console.warn('⚠️ Error al cargar promedio por sesión:', e.message);
+        promedioPorSesion = [];
+    }
+
+    // ========================================
+    // ACTUALIZAR ESTADÍSTICAS
+    // ========================================
+    document.getElementById('totalPredicciones').textContent = prediccionesData.length;
+    document.getElementById('totalGraficosIndicador').textContent = datosGraficos.length;
+
+    // ========================================
+    // FUNCIÓN PARA CREAR GRÁFICO PRINCIPAL (PROMEDIO POR SESIÓN)
+    // ========================================
+    function crearGraficoPrincipal() {
+        const ctx = document.getElementById('chartEvolucionPrincipal');
+        if (!ctx) {
+            console.error('❌ Canvas principal no encontrado');
+            return;
+        }
+        
+        // Verificar si hay datos de promedio por sesión
+        let data = promedioPorSesion;
+        
+        // Si no hay datos reales, usar datos de ejemplo
+        if (!data || data.length === 0) {
+            console.warn('⚠️ No hay datos de promedio por sesión, usando datos de ejemplo');
+            data = [
+                { sesion: 1, fecha: '01/06', valor: 7.2, total_preguntas: 3 },
+                { sesion: 2, fecha: '05/06', valor: 6.8, total_preguntas: 3 },
+                { sesion: 3, fecha: '08/06', valor: 5.9, total_preguntas: 3 },
+                { sesion: 4, fecha: '12/06', valor: 5.1, total_preguntas: 3 },
+                { sesion: 5, fecha: '15/06', valor: 4.3, total_preguntas: 3 },
+                { sesion: 6, fecha: '18/06', valor: 3.8, total_preguntas: 3 },
+            ];
+        }
+        
+        // Crear gradiente
+        const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 350);
+        gradient.addColorStop(0, 'rgba(46, 125, 100, 0.35)');
+        gradient.addColorStop(0.5, 'rgba(46, 125, 100, 0.15)');
+        gradient.addColorStop(1, 'rgba(46, 125, 100, 0)');
+        
+        const labels = data.map(d => d.fecha ? d.fecha : `Sesión ${d.sesion}`);
+        const valores = data.map(d => parseFloat(d.valor) || 0);
+        const totalPreguntas = data.map(d => d.total_preguntas || 0);
+        
+        // Crear el gráfico
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Promedio de dolor (0-10)',
+                    data: valores,
+                    fill: true,
+                    backgroundColor: gradient,
+                    borderColor: '#2e7d64',
+                    borderWidth: 3,
+                    pointRadius: 6,
+                    pointHoverRadius: 9,
+                    pointBackgroundColor: '#2e7d64',
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2,
+                    tension: 0.3,
+                    spanGaps: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: '#ffffff',
+                        titleColor: '#1a2634',
+                        bodyColor: '#1a2634',
+                        borderColor: '#dbe4ef',
+                        borderWidth: 1,
+                        padding: 14,
+                        displayColors: false,
+                        callbacks: {
+                            label: function(context) {
+                                const index = context.dataIndex;
+                                const preguntas = totalPreguntas[index] || 0;
+                                return `Promedio: ${context.raw}/10 (${preguntas} preguntas)`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            color: '#7c8899',
+                            maxTicksLimit: 12,
+                            maxRotation: 30
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        max: 10,
+                        ticks: {
+                            stepSize: 2,
+                            color: '#7c8899',
+                            callback: function(value) {
+                                return value + '/10';
+                            }
+                        },
+                        grid: {
+                            color: '#eef2f7',
+                            drawBorder: false
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Actualizar estadísticas del gráfico principal
+        const valores2 = data.map(d => parseFloat(d.valor) || 0);
+        if (valores2.length > 0) {
+            const promedio = (valores2.reduce((a, b) => a + b, 0) / valores2.length).toFixed(1);
+            document.getElementById('statPromedioPrincipal').textContent = promedio;
+            
+            const primero = valores2[0];
+            const ultimo = valores2[valores2.length - 1];
+            if (primero > 0) {
+                const mejoria = ((primero - ultimo) / primero * 100).toFixed(1);
+                document.getElementById('statMejoriaPrincipal').textContent = (mejoria > 0 ? '+' : '') + mejoria + '%';
+            } else {
+                document.getElementById('statMejoriaPrincipal').textContent = '0%';
+            }
+            
+            const ultimaFecha = data[data.length - 1];
+            if (ultimaFecha && ultimaFecha.fecha) {
+                document.getElementById('statUltimaPrincipal').textContent = ultimaFecha.fecha;
+            } else {
+                document.getElementById('statUltimaPrincipal').textContent = 'Sesión ' + data.length;
+            }
+            
+            document.getElementById('statSesionesPrincipal').textContent = data.length;
+        }
+        
+        // Actualizar badge de tendencia
+        const tendenciaBadge = document.getElementById('graficoPrincipalTendencia');
+        const tendencia = '{{ tendencia_principal }}';
+        if (tendencia === 'MEJORANDO') {
+            tendenciaBadge.className = 'tendencia-badge tendencia-MEJORANDO';
+            tendenciaBadge.textContent = '📈 Mejorando';
+        } else if (tendencia === 'EMPEORANDO') {
+            tendenciaBadge.className = 'tendencia-badge tendencia-EMPEORANDO';
+            tendenciaBadge.textContent = '📉 Empeorando';
+        } else if (tendencia === 'ESTABLE') {
+            tendenciaBadge.className = 'tendencia-badge tendencia-ESTABLE';
+            tendenciaBadge.textContent = '➡️ Estable';
+        } else {
+            tendenciaBadge.className = 'tendencia-badge';
+            tendenciaBadge.textContent = '⏳ Sin datos';
+        }
+        
+        console.log('✅ Gráfico principal (promedio por sesión) creado');
+    }
+
+    // ========================================
+    // FUNCIÓN PARA CREAR GRÁFICO INDIVIDUAL
+    // ========================================
+    function crearGraficoIndividual(canvasId, data, titulo, tendencia) {
+        const ctx = document.getElementById(canvasId);
+        if (!ctx) {
+            console.error('❌ Canvas no encontrado:', canvasId);
+            return;
+        }
+        
+        if (!data || data.length === 0) {
+            console.warn('⚠️ No hay datos para el gráfico:', titulo);
+            return;
+        }
+        
+        const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 260);
+        gradient.addColorStop(0, 'rgba(46, 125, 100, 0.25)');
+        gradient.addColorStop(0.5, 'rgba(46, 125, 100, 0.08)');
+        gradient.addColorStop(1, 'rgba(46, 125, 100, 0)');
+        
+        const labels = data.map(d => d.fecha ? d.fecha : `Sesión ${d.sesion}`);
+        const valores = data.map(d => parseFloat(d.valor) || 0);
+        
+        let color = '#2e7d64';
+        let puntoColor = '#2e7d64';
+        if (tendencia === 'MEJORANDO') {
+            color = '#28a745';
+            puntoColor = '#28a745';
+        } else if (tendencia === 'EMPEORANDO') {
+            color = '#dc3545';
+            puntoColor = '#dc3545';
+        }
+        
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Valor en escala (0-10)',
+                    data: valores,
+                    fill: true,
+                    backgroundColor: gradient,
+                    borderColor: color,
+                    borderWidth: 2.5,
+                    pointRadius: 4,
+                    pointHoverRadius: 7,
+                    pointBackgroundColor: puntoColor,
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2,
+                    tension: 0.3,
+                    spanGaps: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: '#ffffff',
+                        titleColor: '#1a2634',
+                        bodyColor: '#1a2634',
+                        borderColor: '#dbe4ef',
+                        borderWidth: 1,
+                        padding: 10,
+                        displayColors: false,
+                        callbacks: {
+                            label: function(context) {
+                                return 'Valor: ' + context.raw + '/10';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            color: '#7c8899',
+                            maxTicksLimit: 8,
+                            maxRotation: 25,
+                            font: {
+                                size: 9
+                            }
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        max: 10,
+                        ticks: {
+                            stepSize: 2,
+                            color: '#7c8899',
+                            font: {
+                                size: 9
+                            },
+                            callback: function(value) {
+                                return value + '/10';
+                            }
+                        },
+                        grid: {
+                            color: '#eef2f7',
+                            drawBorder: false
+                        }
+                    }
+                }
+            }
+        });
+        
+        console.log('✅ Gráfico creado:', titulo);
+    }
+
+    // ========================================
+    // RENDERIZAR TODOS LOS GRÁFICOS INDIVIDUALES
+    // ========================================
+    function renderizarGraficosIndividuales() {
+        const container = document.getElementById('graficosContainer');
+        
+        if (!datosGraficos || datosGraficos.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="empty-title">No hay datos de evolución</div>
+                    <div class="empty-text">Complete cuestionarios en las sesiones para ver gráficos evolutivos.</div>
+                </div>
+            `;
+            return;
+        }
+        
+        let html = '<div class="graficos-grid">';
+        let graficosConDatos = 0;
+        
+        datosGraficos.forEach((grafico, index) => {
+            const tieneDatos = grafico.datos && grafico.datos.length > 0;
+            if (tieneDatos) graficosConDatos++;
+            
+            const id = `grafico-${grafico.id || index}`;
+            
+            const tendencia = grafico.tendencia || 'ESTABLE';
+            let tendenciaLabel = '➡️ Estable';
+            let tendenciaClass = 'tendencia-ESTABLE';
+            if (tendencia === 'MEJORANDO') {
+                tendenciaLabel = '📈 Mejorando';
+                tendenciaClass = 'tendencia-MEJORANDO';
+            } else if (tendencia === 'EMPEORANDO') {
+                tendenciaLabel = '📉 Empeorando';
+                tendenciaClass = 'tendencia-EMPEORANDO';
+            }
+            
+            html += `
+                <div class="grafico-card">
+                    <div class="grafico-header">
+                        <h3 title="${grafico.titulo}">${grafico.titulo}</h3>
+                        <span class="tendencia-badge ${tendenciaClass}">${tendenciaLabel}</span>
+                    </div>
+                    <div class="grafico-body">
+                        ${tieneDatos ? `<canvas id="${id}"></canvas>` : `
+                            <div class="text-center py-4 text-muted">
+                                <i class="fas fa-info-circle fa-2x"></i>
+                                <p class="small mt-2">Sin datos para esta pregunta</p>
+                            </div>
+                        `}
+                    </div>
+                    <div class="info-evolucion">
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <div class="value">${tieneDatos ? (grafico.mejoria?.toFixed(1) || '0') : '--'}%</div>
+                                <div class="label">Mejoría</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="value">${tieneDatos ? (grafico.mejor_valor || '--') : '--'}</div>
+                                <div class="label">Mejor</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="value">${tieneDatos ? (grafico.peor_valor || '--') : '--'}</div>
+                                <div class="label">Peor</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="value">${tieneDatos ? (grafico.promedio || '--') : '--'}</div>
+                                <div class="label">Promedio</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        html += '</div>';
+        container.innerHTML = html;
+        
+        // Actualizar contador
+        document.getElementById('totalGraficosIndicador').textContent = graficosConDatos;
+        
+        // Crear cada gráfico después de renderizar
+        setTimeout(() => {
+            datosGraficos.forEach((grafico, index) => {
+                if (grafico.datos && grafico.datos.length > 0) {
+                    const id = `grafico-${grafico.id || index}`;
+                    crearGraficoIndividual(id, grafico.datos, grafico.titulo, grafico.tendencia);
+                }
+            });
+        }, 150);
+    }
+
+    // ========================================
+    // RENDERIZAR PREDICCIONES
+    // ========================================
+    function renderizarPredicciones() {
+        const container = document.getElementById('prediccionesGrid');
+        const countBadge = document.getElementById('prediccionesCount');
+        
+        if (!prediccionesData || prediccionesData.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-4 text-muted">
+                    <i class="fas fa-check-circle fa-2x text-success mb-2 d-block"></i>
+                    <p>No hay predicciones disponibles para la próxima sesión</p>
+                    <small>Las predicciones se generan cuando hay suficientes datos de seguimiento.</small>
+                </div>
+            `;
+            countBadge.textContent = '0';
+            return;
+        }
+        
+        countBadge.textContent = prediccionesData.length;
+        
+        let html = '';
+        prediccionesData.forEach(pred => {
+            const tendenciaClass = pred.tendencia === 'MEJORANDO' ? 'mejorando' : 
+                                  pred.tendencia === 'EMPEORANDO' ? 'empeorando' : 'estable';
+            const tendenciaLabel = pred.tendencia === 'MEJORANDO' ? '📈 Mejorando' : 
+                                  pred.tendencia === 'EMPEORANDO' ? '📉 Empeorando' : '➡️ Estable';
+            
+            html += `
+                <div class="prediccion-card">
+                    <div class="pregunta-text">${pred.pregunta_texto}</div>
+                    <div class="pred-value">
+                        ${pred.prediccion_siguiente}
+                        <span class="max-value">/10</span>
+                    </div>
+                    <div class="pred-interval">
+                        Intervalo de confianza: ${pred.intervalo_confianza_min || '--'} - ${pred.intervalo_confianza_max || '--'}
+                    </div>
+                    <div class="pred-tendencia ${tendenciaClass}">
+                        ${tendenciaLabel}
+                    </div>
+                </div>
+            `;
+        });
+        
+        container.innerHTML = html;
+    }
+
+    // ========================================
+    // INICIALIZAR - ORDEN CORRECTO
+    // ========================================
+    // 1. Gráfico principal (promedio por sesión)
+    crearGraficoPrincipal();
+    
+    // 2. Gráficos individuales
+    renderizarGraficosIndividuales();
+    
+    // 3. Predicciones
+    renderizarPredicciones();
+    
+    console.log('✅ Todos los gráficos y predicciones renderizados correctamente');
+});
+</script>
+{% endblock %}

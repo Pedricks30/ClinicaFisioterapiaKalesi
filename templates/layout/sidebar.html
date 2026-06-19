@@ -1,136 +1,199 @@
 {% load static %}
 <!-- Sidebar -->
-<ul class="navbar-nav sidebar sidebar-dark accordion collapse show" id="accordionSidebar" style="background-color: #198754;">
-    <!-- Divider -->
-    <hr class="sidebar-divider my-1">
-    <!-- Logo container -->
-    <a class="sidebar-brand d-flex align-items-center justify-content-center" href="#">
-        <div class="sidebar-brand-icon">
-            <img class="rounded-circle" src="{% static 'img/logokalesi.webp' %}" alt="Centro medico de fisioterapia Kalesi" width="80" height="80">
-        </div>
-        <div class="sidebar-brand-text mx-2" style="font-size: 0.8rem;">
-            <div>Centro médico de</div>
-            <div>fisioterapia Kalesi</div>
-        </div>
-    </a>
-
-    <!-- Divider -->
-    <hr class="sidebar-divider my-2">
-
-    <!-- Nav Item - Dashboard -->
-    <li class="nav-item active">
+<ul class="navbar-nav sidebar sidebar-dark accordion collapse show" id="accordionSidebar" style="background: linear-gradient(180deg, #1a5a4a 0%, #2e7d64 100%); box-shadow: 4px 0 20px rgba(0,0,0,0.1);">
     
-        <a class="nav-link" href="#">
-            <i class="fas fa-fw fa-tachometer-alt"></i>
-            <span>Dashboard</span></a>
+    <!-- Divider -->
+    <hr class="sidebar-divider my-1" style="border-color: rgba(255,255,255,0.1);">
+    
+    <!-- Logo container -->
+    <a class="sidebar-brand d-flex align-items-center justify-content-center" href="#" style="padding: 10px 0;">
+        <div class="sidebar-brand-icon" style="position: relative;">
+            <img class="rounded-circle" src="{% static 'img/logokalesi.webp' %}" alt="Centro medico de fisioterapia Kalesi" width="70" height="70" style="border: 3px solid rgba(255,255,255,0.15); box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+            <span style="position: absolute; bottom: -2px; right: -2px; background: #48c9b0; border-radius: 50%; width: 18px; height: 18px; border: 2px solid #1a5a4a;"></span>
+        </div>
+        <div class="sidebar-brand-text mx-2" style="font-size: 0.75rem; line-height: 1.3;">
+            <div style="font-weight: 700; letter-spacing: 0.5px; color: #ffffff;">Centro médico de</div>
+            <div style="font-weight: 600; letter-spacing: 0.5px; color: #48c9b0;">fisioterapia Kalesi</div>
+            <div style="font-size: 0.6rem; opacity: 0.6; font-weight: 300; margin-top: 2px;">Excelencia en salud</div>
+        </div>
+    </a>
+
+    <!-- Divider -->
+    <hr class="sidebar-divider my-2" style="border-color: rgba(255,255,255,0.08);">
+
+    <!-- ============================================ -->
+    <!-- SECCIÓN: PRINCIPAL -->
+    <!-- ============================================ -->
+    <div class="sidebar-heading" style="color: rgba(255,255,255,0.5); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; padding: 8px 20px;">
+        <i class="fas fa-ellipsis-h me-1" style="font-size: 10px;"></i> Principal
+    </div>
+
+    <!-- Dashboard -->
+    <li class="nav-item active">
+        <a class="nav-link" href="{% url 'dashboard' %}" style="border-radius: 10px; margin: 2px 12px; transition: all 0.3s;">
+            <i class="fas fa-fw fa-tachometer-alt" style="font-size: 1.1rem;"></i>
+            <span style="font-weight: 500;">Dashboard</span>
+        </a>
     </li>
 
     <!-- Divider -->
-    <hr class="sidebar-divider">
+    <hr class="sidebar-divider" style="border-color: rgba(255,255,255,0.06);">
 
-    <!-- Heading -->
-    <div class="sidebar-heading">
-        Interface
+    <!-- ============================================ -->
+    <!-- SECCIÓN: GESTIÓN CLÍNICA -->
+    <!-- ============================================ -->
+    <div class="sidebar-heading" style="color: rgba(255,255,255,0.5); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; padding: 8px 20px;">
+        <i class="fas fa-heartbeat me-1" style="font-size: 10px;"></i> Gestión Clínica
     </div>
 
-<!-- Nav Item - Pages Collapse Menu 
-<li class="nav-item">
-    <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="true" aria-controls="collapseTwo">
-        <i class="fas fa-fw fa-cog"></i>
-        <span>Components</span>
-    </a>
-    <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
-        <div class="bg-white py-2 collapse-inner rounded">
-            <h6 class="collapse-header">Custom Components:</h6>
-            <a class="collapse-item" href="buttons.html">Buttons</a>
-            <a class="collapse-item" href="cards.html">Cards</a>
-        </div>
-    </div>
-</li>
--->
-<!-- Nav Item - Pages Collapse Menu -->
-<li class="nav-item">
-    <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseThree" aria-expanded="true" aria-controls="collapseThree">
-        <i class="fas fa-fw fa-cog"></i>
-        <span>Administración</span>
-    </a>
-    <div id="collapseThree" class="collapse" aria-labelledby="headingThree" data-parent="#accordionSidebar">
-        <div class="bg-white py-2 collapse-inner rounded">
-            <h6 class="collapse-header">Custom Components:</h6>
-            <a class="collapse-item" href="{% url 'listar_usuarios' %}">Gestion Usuarios</a>
-            <a class="collapse-item" href="{% url 'listar_documentos' %}">Gestion Documentos</a>
-            <a class="collapse-item" href="{% url 'listar_espacialidades' %}">Gestion Especialidades</a>
-            <a class="collapse-item" href="{% url 'listar_profesionales' %}">Gestion Medicos</a>
-            <a class="collapse-item" href="{% url 'listar_fisioterapeuta' %}">Gestion Fisioterapeutas</a>
-            <a class="collapse-item" href="{% url 'listar_horarios' %}">Asignar Horarios</a>
-            <a class="collapse-item" href="{% url 'citas:calendario' %}"> Calendario de citas</a>
-            
-        </div>
-    </div>
-</li>
-
-    <!-- Nav Item - Utilities Collapse Menu -->
+    <!-- Pacientes -->
     <li class="nav-item">
-        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseUtilities" aria-expanded="true" aria-controls="collapseUtilities">
-            <i class="fas fa-fw fa-wrench"></i>
-            <span>Recepcion</span>
+        <a class="nav-link" href="{% url 'listar_pacientes' %}" style="border-radius: 10px; margin: 2px 12px; transition: all 0.3s;">
+            <i class="fas fa-fw fa-users" style="font-size: 1.1rem;"></i>
+            <span style="font-weight: 500;">Pacientes</span>
         </a>
-        <div id="collapseUtilities" class="collapse" aria-labelledby="headingUtilities" data-parent="#accordionSidebar">
-            <div class="bg-white py-2 collapse-inner rounded">
-                <h6 class="collapse-header">Gestion  </h6>
-                <a class="collapse-item" href="{% url 'listar_pacientes' %}">Gestion Pacientes </a>
+    </li>
+
+    <!-- Expedientes -->
+    <li class="nav-item">
+        <a class="nav-link" href="#" style="border-radius: 10px; margin: 2px 12px; transition: all 0.3s;">
+            <i class="fas fa-fw fa-folder-open" style="font-size: 1.1rem;"></i>
+            <span style="font-weight: 500;">Expedientes</span>
+        </a>
+    </li>
+
+    <!-- Calendario de Citas -->
+    <li class="nav-item">
+        <a class="nav-link" href="{% url 'citas:calendario' %}" style="border-radius: 10px; margin: 2px 12px; transition: all 0.3s;">
+            <i class="fas fa-fw fa-calendar-alt" style="font-size: 1.1rem;"></i>
+            <span style="font-weight: 500;">Calendario de Citas</span>
+        </a>
+    </li>
+
+    <!-- Reporte de Citas -->
+    <li class="nav-item">
+        <a class="nav-link" href="{% url 'citas:busqueda' %}" style="border-radius: 10px; margin: 2px 12px; transition: all 0.3s;">
+            <i class="fas fa-fw fa-file-alt" style="font-size: 1.1rem;"></i>
+            <span style="font-weight: 500;">Reporte de Citas</span>
+        </a>
+    </li>
+
+    <!-- Divider -->
+    <hr class="sidebar-divider" style="border-color: rgba(255,255,255,0.06);">
+
+    <!-- ============================================ -->
+    <!-- SECCIÓN: HERRAMIENTAS CLÍNICAS -->
+    <!-- ============================================ -->
+    <div class="sidebar-heading" style="color: rgba(255,255,255,0.5); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; padding: 8px 20px;">
+        <i class="fas fa-tools me-1" style="font-size: 10px;"></i> Herramientas Clínicas
+    </div>
+
+    <!-- Visualizador 3D -->
+    <li class="nav-item">
+        <a class="nav-link" href="{% url 'expedientes:visualizar_modelo_3d' %}" style="border-radius: 10px; margin: 2px 12px; transition: all 0.3s;">
+            <i class="fas fa-fw fa-cube" style="font-size: 1.1rem;"></i>
+            <span style="font-weight: 500;">Visualizador 3D</span>
+        </a>
+    </li>
+
+    <!-- Buscador de Pacientes -->
+    <li class="nav-item">
+        <a class="nav-link" href="{% url 'cuestionarios:buscador_pacientes' %}" style="border-radius: 10px; margin: 2px 12px; transition: all 0.3s;">
+            <i class="fas fa-fw fa-search" style="font-size: 1.1rem;"></i>
+            <span style="font-weight: 500;">Historial de Pacientes</span>
+        </a>
+    </li>
+
+    <!-- Cuestionarios - Submenú -->
+    <li class="nav-item">
+        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseCuestionarios" aria-expanded="true" aria-controls="collapseCuestionarios" style="border-radius: 10px; margin: 2px 12px; transition: all 0.3s;">
+            <i class="fas fa-fw fa-clipboard-list" style="font-size: 1.1rem;"></i>
+            <span style="font-weight: 500;">Cuestionarios</span>
+        </a>
+        <div id="collapseCuestionarios" class="collapse" aria-labelledby="headingCuestionarios" data-parent="#accordionSidebar">
+            <div class="bg-white py-2 collapse-inner rounded" style="border-radius: 10px; margin: 4px 12px; background: rgba(255,255,255,0.05) !important; border: 1px solid rgba(255,255,255,0.06);">
+                <h6 class="collapse-header" style="color: rgba(255,255,255,0.4); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.5px; padding: 8px 16px 4px;">
+                    <i class="fas fa-edit me-1"></i> Gestión de Cuestionarios
+                </h6>
+                <a class="collapse-item" href="{% url 'cuestionarios:list' %}" style="color: rgba(255,255,255,0.7); padding: 6px 16px; border-radius: 6px; transition: all 0.2s; font-size: 0.85rem;">
+                    <i class="fas fa-list me-2" style="font-size: 0.7rem; opacity: 0.6;"></i> Ver Todos
+                </a>
+                {% if perms.cuestionarios.add_cuestionario %}
+                <a class="collapse-item" href="{% url 'cuestionarios:create' %}" style="color: rgba(255,255,255,0.7); padding: 6px 16px; border-radius: 6px; transition: all 0.2s; font-size: 0.85rem;">
+                    <i class="fas fa-plus-circle me-2" style="font-size: 0.7rem; opacity: 0.6;"></i> Crear Nuevo
+                </a>
+                {% endif %}
             </div>
         </div>
     </li>
 
-    <!-- Divider 
-    <hr class="sidebar-divider">
+    <!-- Divider -->
+    <hr class="sidebar-divider" style="border-color: rgba(255,255,255,0.06);">
 
-    <!-- Heading 
-    <div class="sidebar-heading">
-        Addons
+    <!-- ============================================ -->
+    <!-- SECCIÓN: ADMINISTRACIÓN -->
+    <!-- ============================================ -->
+    <div class="sidebar-heading" style="color: rgba(255,255,255,0.5); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; padding: 8px 20px;">
+        <i class="fas fa-cog me-1" style="font-size: 10px;"></i> Administración
     </div>
 
-    <!-- Nav Item - Pages Collapse Menu 
+    <!-- Usuarios del Sistema -->
     <li class="nav-item">
-        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapsePages" aria-expanded="true" aria-controls="collapsePages">
-            <i class="fas fa-fw fa-folder"></i>
-            <span>Pages</span>
+        <a class="nav-link" href="{% url 'listar_usuarios' %}" style="border-radius: 10px; margin: 2px 12px; transition: all 0.3s;">
+            <i class="fas fa-fw fa-user-circle" style="font-size: 1.1rem;"></i>
+            <span style="font-weight: 500;">Usuarios del Sistema</span>
         </a>
-        <div id="collapsePages" class="collapse" aria-labelledby="headingPages" data-parent="#accordionSidebar">
-            <div class="bg-white py-2 collapse-inner rounded">
-                <h6 class="collapse-header">Login Screens:</h6>
-                <a class="collapse-item" href="login.html">Login</a>
-                <a class="collapse-item" href="register.html">Register</a>
-                <a class="collapse-item" href="forgot-password.html">Forgot Password</a>
-                <div class="collapse-divider"></div>
-                <h6 class="collapse-header">Other Pages:</h6>
-                <a class="collapse-item" href="404.html">404 Page</a>
-                <a class="collapse-item" href="blank.html">Blank Page</a>
+    </li>
+
+    <!-- Gestión de Personal - Submenú -->
+    <li class="nav-item">
+        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapsePersonal" aria-expanded="true" aria-controls="collapsePersonal" style="border-radius: 10px; margin: 2px 12px; transition: all 0.3s;">
+            <i class="fas fa-fw fa-user-md" style="font-size: 1.1rem;"></i>
+            <span style="font-weight: 500;">Personal</span>
+        </a>
+        <div id="collapsePersonal" class="collapse" aria-labelledby="headingPersonal" data-parent="#accordionSidebar">
+            <div class="bg-white py-2 collapse-inner rounded" style="border-radius: 10px; margin: 4px 12px; background: rgba(255,255,255,0.05) !important; border: 1px solid rgba(255,255,255,0.06);">
+                <h6 class="collapse-header" style="color: rgba(255,255,255,0.4); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.5px; padding: 8px 16px 4px;">
+                    <i class="fas fa-users-cog me-1"></i> Gestión de Personal
+                </h6>
+                <a class="collapse-item" href="{% url 'listar_profesionales' %}" style="color: rgba(255,255,255,0.7); padding: 6px 16px; border-radius: 6px; transition: all 0.2s; font-size: 0.85rem;">
+                    <i class="fas fa-user-md me-2" style="font-size: 0.7rem; opacity: 0.6;"></i> Médicos
+                </a>
+                <a class="collapse-item" href="{% url 'listar_fisioterapeuta' %}" style="color: rgba(255,255,255,0.7); padding: 6px 16px; border-radius: 6px; transition: all 0.2s; font-size: 0.85rem;">
+                    <i class="fas fa-hand-holding-heart me-2" style="font-size: 0.7rem; opacity: 0.6;"></i> Fisioterapeutas
+                </a>
+                <a class="collapse-item" href="{% url 'listar_espacialidades' %}" style="color: rgba(255,255,255,0.7); padding: 6px 16px; border-radius: 6px; transition: all 0.2s; font-size: 0.85rem;">
+                    <i class="fas fa-tag me-2" style="font-size: 0.7rem; opacity: 0.6;"></i> Especialidades
+                </a>
+                <a class="collapse-item" href="{% url 'listar_horarios' %}" style="color: rgba(255,255,255,0.7); padding: 6px 16px; border-radius: 6px; transition: all 0.2s; font-size: 0.85rem;">
+                    <i class="fas fa-clock me-2" style="font-size: 0.7rem; opacity: 0.6;"></i> Horarios
+                </a>
             </div>
         </div>
     </li>
 
-    <!-- Nav Item - Charts 
+    <!-- Gestión de Documentos -->
     <li class="nav-item">
-        <a class="nav-link" href="charts.html">
-            <i class="fas fa-fw fa-chart-area"></i>
-            <span>Charts</span></a>
-    </li>
--->
-    <!-- Nav Item - User -->
-    <li class="nav-item">
-        <a class="nav-link" href="{% url 'listar_usuarios' %}">
-            <i class="fas fa-fw fa-user-circle"></i>
-            <span>Usuarios Sistema</span></a>
+        <a class="nav-link" href="{% url 'listar_documentos' %}" style="border-radius: 10px; margin: 2px 12px; transition: all 0.3s;">
+            <i class="fas fa-fw fa-file-alt" style="font-size: 1.1rem;"></i>
+            <span style="font-weight: 500;">Documentos</span>
+        </a>
     </li>
 
     <!-- Divider -->
-    <hr class="sidebar-divider d-none d-md-block">
+    <hr class="sidebar-divider d-none d-md-block" style="border-color: rgba(255,255,255,0.06);">
 
-    <!-- Sidebar Toggler (Sidebar) -->
-    <div class="text-center d-none d-md-inline">
-        <button type="button" class="rounded-circle border-0" id="sidebarToggle" data-toggle="collapse" data-target="#accordionSidebar" aria-controls="accordionSidebar" aria-expanded="true" aria-label="Toggle sidebar"></button>
+    <!-- Sidebar Toggler -->
+    <div class="text-center d-none d-md-inline" style="padding: 12px 0;">
+        <button type="button" class="rounded-circle border-0" id="sidebarToggle" 
+                data-toggle="collapse" data-target="#accordionSidebar" 
+                aria-controls="accordionSidebar" aria-expanded="true" 
+                aria-label="Toggle sidebar"
+                style="background: rgba(255,255,255,0.15); color: #ffffff; width: 38px; height: 38px; 
+                       transition: all 0.3s; font-size: 16px; cursor: pointer; 
+                       border: 2px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; margin: 0 auto;">
+            <i class="fas fa-chevron-left" style="transition: transform 0.3s;"></i>
+        </button>
     </div>
 </ul>
 <!-- End of Sidebar -->

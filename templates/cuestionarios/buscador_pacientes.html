@@ -1,0 +1,124 @@
+<!-- cuestionarios/templates/cuestionarios/buscador_pacientes.html -->
+{% extends 'layout/base.html' %}
+{% load static %}
+
+{% block title %}Buscador de Pacientes - Cuestionarios{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/historial_pacientes.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="buscador-container">
+    <!-- Header -->
+    <div class="buscador-header">
+        <h1><i class="fas fa-search"></i> Buscador de Pacientes</h1>
+        <p>Busca pacientes por número de expediente, nombre o cédula para ver su historial de respuestas</p>
+    </div>
+
+    <!-- Buscador -->
+    <div class="search-box">
+        <form method="GET" class="input-group">
+            <input type="text" name="search" placeholder="Buscar por expediente, nombre o cédula..." 
+                   value="{{ search }}" autofocus>
+            <button type="submit" class="btn-buscar">
+                <i class="fas fa-search"></i> Buscar
+            </button>
+            {% if search %}
+                <a href="{% url 'cuestionarios:buscador_pacientes' %}" class="btn-buscar btn-limpiar">
+                    <i class="fas fa-times"></i> Limpiar
+                </a>
+            {% endif %}
+        </form>
+    </div>
+
+    <!-- Resultados -->
+    <div class="table-container">
+        <div class="table-header">
+            <h3><i class="fas fa-users"></i> Pacientes</h3>
+            <span class="badge-count">{{ paginator.count }} pacientes</span>
+        </div>
+
+        {% if pacientes %}
+        <table class="table-pacientes">
+            <thead>
+                <tr>
+                    <th>Paciente</th>
+                    <th>Expediente</th>
+                    <th>Estado</th>
+                    <th>Sesiones</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for paciente in pacientes %}
+                <tr>
+                    <td>
+                        <div class="paciente-info">
+                            <div class="avatar">
+                                {{ paciente.nombres|first }}{{ paciente.apellidos|first }}
+                            </div>
+                            <div>
+                                <div class="nombre">{{ paciente.nombres }} {{ paciente.apellidos }}</div>
+                                <small style="color: #8b96a8;">Cédula: {{ paciente.cedula|default:"No registrada" }}</small>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="expediente-num">#{{ paciente.expediente.numero_expediente }}</span>
+                    </td>
+                    <td>
+                        <span class="badge-estado {{ paciente.expediente.estado|lower }}">
+                            {{ paciente.expediente.get_estado_display }}
+                        </span>
+                    </td>
+                    <td>
+                        {{ paciente.expediente.seguimientos.count }}
+                    </td>
+                    <td>
+                        <a href="{% url 'cuestionarios:historial_paciente' paciente.id %}" class="btn-ver">
+                            <i class="fas fa-eye"></i> Ver historial
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Paginación -->
+        {% if is_paginated %}
+        <div class="pagination-container">
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}{% if search %}&search={{ search }}{% endif %}" class="page-link">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                    <span class="page-link active">{{ num }}</span>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <a href="?page={{ num }}{% if search %}&search={{ search }}{% endif %}" class="page-link">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if search %}&search={{ search }}{% endif %}" class="page-link">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">
+                <i class="fas fa-user-slash"></i>
+            </div>
+            <h3>No se encontraron pacientes</h3>
+            <p>Intenta con otro término de búsqueda</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

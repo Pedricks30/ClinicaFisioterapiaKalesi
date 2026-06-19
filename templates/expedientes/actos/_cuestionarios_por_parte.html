@@ -1,0 +1,436 @@
+<!-- expedientes/templates/expedientes/actos/_cuestionarios_por_parte.html -->
+<div class="seccion-cuestionario">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 style="color: var(--primary-color); margin: 0;">
+            <i class="fas fa-clipboard-list"></i> Evaluación de {{ parte|capfirst }}
+            <span class="badge bg-primary ms-2">{{ preguntas|length }} preguntas</span>
+        </h5>
+        <div class="d-flex gap-2">
+            <!-- Botón para alternar modo edición -->
+            <button type="button" class="btn btn-sm btn-outline-primary" id="toggleModoEdicion">
+                <i class="fas fa-edit"></i> Editar Preguntas
+            </button>
+        </div>
+    </div>
+    
+    <!-- Contenedor de preguntas -->
+    <div id="preguntasContainer">
+        {% if preguntas %}
+            {% for pregunta in preguntas %}
+            <div class="pregunta-item" data-pregunta-id="{{ pregunta.id }}" data-pregunta-index="{{ forloop.counter0 }}">
+                <!-- Modo visualización (respuesta) -->
+                <div class="pregunta-view">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="texto">
+                            {{ forloop.counter }}. {{ pregunta.texto_pregunta }}
+                            {% if pregunta.obligatorio %}
+                            <span class="obligatorio">*</span>
+                            {% endif %}
+                            <span class="badge bg-light text-muted ms-2" style="font-size: 10px;">
+                                {{ pregunta.get_tipo_pregunta_display }}
+                            </span>
+                        </div>
+                        <div class="pregunta-actions" style="display: none;">
+                            <button type="button" class="btn btn-sm btn-outline-warning editar-pregunta" data-pregunta-id="{{ pregunta.id }}">
+                                <i class="fas fa-pen"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-danger eliminar-pregunta" data-pregunta-id="{{ pregunta.id }}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Campos de respuesta según tipo -->
+                    <div class="respuesta-container">
+                        {% if pregunta.tipo_pregunta == 'ESCALA_NUMERICA' or pregunta.tipo_pregunta == 'ESCALA' %}
+                        <div class="escala-container">
+                            <input type="range" 
+                                   class="escala-slider" 
+                                   name="pregunta_{{ pregunta.id }}" 
+                                   min="{{ pregunta.escala_min|default:0 }}" 
+                                   max="{{ pregunta.escala_max|default:10 }}" 
+                                   value="0"
+                                   data-pregunta="{{ pregunta.id }}">
+                            <div class="escala-labels">
+                                <span>{{ pregunta.etiqueta_min|default:"Sin dolor" }}</span>
+                                <span>{{ pregunta.etiqueta_max|default:"Máximo dolor" }}</span>
+                            </div>
+                            <div class="escala-value">
+                                <span id="valor_pregunta_{{ pregunta.id }}">0</span>/{{ pregunta.escala_max|default:10 }}
+                            </div>
+                        </div>
+                        
+                        {% elif pregunta.tipo_pregunta == 'SI_NO' %}
+                        <div class="opciones-radio">
+                            <label>
+                                <input type="radio" name="pregunta_{{ pregunta.id }}" value="si"> Sí
+                            </label>
+                            <label>
+                                <input type="radio" name="pregunta_{{ pregunta.id }}" value="no"> No
+                            </label>
+                        </div>
+                        
+                        {% elif pregunta.tipo_pregunta == 'TEXTO' %}
+                        <textarea name="pregunta_{{ pregunta.id }}" 
+                                  placeholder="Escriba su respuesta aquí..." 
+                                  rows="2"></textarea>
+                        
+                        {% elif pregunta.tipo_pregunta == 'MULTIPLE' %}
+                        <select name="pregunta_{{ pregunta.id }}">
+                            <option value="">Seleccione una opción...</option>
+                            {% for opcion in pregunta.opciones %}
+                            <option value="{{ opcion }}">{{ opcion }}</option>
+                            {% endfor %}
+                        </select>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Modo edición (oculto por defecto) -->
+                <div class="pregunta-edit" style="display: none;">
+                    <div class="edit-form">
+                        <div class="row g-2">
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label class="form-label small fw-bold">Texto de la pregunta</label>
+                                    <textarea class="form-control form-control-sm edit-texto-pregunta" rows="2">{{ pregunta.texto_pregunta }}</textarea>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label small fw-bold">Tipo de pregunta</label>
+                                    <select class="form-select form-select-sm edit-tipo-pregunta">
+                                        <option value="ESCALA_NUMERICA" {% if pregunta.tipo_pregunta == 'ESCALA_NUMERICA' %}selected{% endif %}>Escala numérica (0-10)</option>
+                                        <option value="ESCALA" {% if pregunta.tipo_pregunta == 'ESCALA' %}selected{% endif %}>Escala de dolor</option>
+                                        <option value="SI_NO" {% if pregunta.tipo_pregunta == 'SI_NO' %}selected{% endif %}>Sí/No</option>
+                                        <option value="TEXTO" {% if pregunta.tipo_pregunta == 'TEXTO' %}selected{% endif %}>Texto libre</option>
+                                        <option value="MULTIPLE" {% if pregunta.tipo_pregunta == 'MULTIPLE' %}selected{% endif %}>Opción múltiple</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label class="form-label small fw-bold">Orden</label>
+                                    <input type="number" class="form-control form-control-sm edit-orden" value="{{ pregunta.orden }}" min="0">
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label class="form-label small fw-bold">Obligatorio</label>
+                                    <div class="form-check">
+                                        <input type="checkbox" class="form-check-input edit-obligatorio" {% if pregunta.obligatorio %}checked{% endif %}>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Campos específicos para escala -->
+                            <div class="col-md-3 edit-escala-min" {% if pregunta.tipo_pregunta not in 'ESCALA,ESCALA_NUMERICA' %}style="display:none;"{% endif %}>
+                                <div class="form-group">
+                                    <label class="form-label small fw-bold">Mínimo</label>
+                                    <input type="number" class="form-control form-control-sm" value="{{ pregunta.escala_min|default:0 }}" min="0">
+                                </div>
+                            </div>
+                            <div class="col-md-3 edit-escala-max" {% if pregunta.tipo_pregunta not in 'ESCALA,ESCALA_NUMERICA' %}style="display:none;"{% endif %}>
+                                <div class="form-group">
+                                    <label class="form-label small fw-bold">Máximo</label>
+                                    <input type="number" class="form-control form-control-sm" value="{{ pregunta.escala_max|default:10 }}" max="10">
+                                </div>
+                            </div>
+                            <div class="col-md-3 edit-etiqueta-min" {% if pregunta.tipo_pregunta not in 'ESCALA,ESCALA_NUMERICA' %}style="display:none;"{% endif %}>
+                                <div class="form-group">
+                                    <label class="form-label small fw-bold">Etiqueta mínima</label>
+                                    <input type="text" class="form-control form-control-sm" value="{{ pregunta.etiqueta_min|default:'Sin dolor' }}">
+                                </div>
+                            </div>
+                            <div class="col-md-3 edit-etiqueta-max" {% if pregunta.tipo_pregunta not in 'ESCALA,ESCALA_NUMERICA' %}style="display:none;"{% endif %}>
+                                <div class="form-group">
+                                    <label class="form-label small fw-bold">Etiqueta máxima</label>
+                                    <input type="text" class="form-control form-control-sm" value="{{ pregunta.etiqueta_max|default:'Máximo dolor' }}">
+                                </div>
+                            </div>
+                            <!-- Opciones para múltiple -->
+                            <div class="col-12 edit-opciones-multiple" {% if pregunta.tipo_pregunta != 'MULTIPLE' %}style="display:none;"{% endif %}>
+                                <div class="form-group">
+                                    <label class="form-label small fw-bold">Opciones (una por línea)</label>
+                                    <textarea class="form-control form-control-sm edit-opciones" rows="2">{% for opcion in pregunta.opciones %}{{ opcion }}{% if not forloop.last %}\n{% endif %}{% endfor %}</textarea>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="d-flex gap-2 mt-2">
+                                    <button type="button" class="btn btn-sm btn-success guardar-edicion-pregunta" data-pregunta-id="{{ pregunta.id }}">
+                                        <i class="fas fa-save"></i> Guardar cambios
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-secondary cancelar-edicion-pregunta">
+                                        <i class="fas fa-times"></i> Cancelar
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-danger eliminar-pregunta-btn ms-auto" data-pregunta-id="{{ pregunta.id }}">
+                                        <i class="fas fa-trash"></i> Eliminar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="alert alert-info text-center py-4">
+                <i class="fas fa-info-circle fa-2x mb-2 d-block"></i>
+                <p class="mb-0">No hay preguntas para esta parte del cuerpo.</p>
+                <small class="text-muted">Puede agregar preguntas personalizadas usando el botón "Agregar pregunta".</small>
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Botón para agregar nueva pregunta -->
+    <div id="addPreguntaContainer" style="display: none;">
+        <div class="card mt-3" style="border: 2px dashed var(--border-medium);">
+            <div class="card-body">
+                <h6 class="mb-2"><i class="fas fa-plus-circle text-success"></i> Nueva pregunta personalizada</h6>
+                <div class="row g-2">
+                    <div class="col-12">
+                        <div class="form-group">
+                            <label class="form-label small fw-bold">Texto de la pregunta</label>
+                            <textarea class="form-control form-control-sm" id="nuevaPreguntaTexto" rows="2" placeholder="Escriba la pregunta aquí..."></textarea>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label small fw-bold">Tipo de pregunta</label>
+                            <select class="form-select form-select-sm" id="nuevaPreguntaTipo">
+                                <option value="ESCALA_NUMERICA">Escala numérica (0-10)</option>
+                                <option value="ESCALA">Escala de dolor</option>
+                                <option value="SI_NO">Sí/No</option>
+                                <option value="TEXTO">Texto libre</option>
+                                <option value="MULTIPLE">Opción múltiple</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="form-label small fw-bold">Obligatorio</label>
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="nuevaPreguntaObligatorio" checked>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="form-label small fw-bold">Orden</label>
+                            <input type="number" class="form-control form-control-sm" id="nuevaPreguntaOrden" value="{{ preguntas|length|add:1 }}" min="0">
+                        </div>
+                    </div>
+                    <!-- Campos específicos para nueva escala -->
+                    <div class="col-md-3 nueva-escala-min" style="display:none;">
+                        <div class="form-group">
+                            <label class="form-label small fw-bold">Mínimo</label>
+                            <input type="number" class="form-control form-control-sm" id="nuevaPreguntaMin" value="0">
+                        </div>
+                    </div>
+                    <div class="col-md-3 nueva-escala-max" style="display:none;">
+                        <div class="form-group">
+                            <label class="form-label small fw-bold">Máximo</label>
+                            <input type="number" class="form-control form-control-sm" id="nuevaPreguntaMax" value="10">
+                        </div>
+                    </div>
+                    <div class="col-md-3 nueva-etiqueta-min" style="display:none;">
+                        <div class="form-group">
+                            <label class="form-label small fw-bold">Etiqueta mínima</label>
+                            <input type="text" class="form-control form-control-sm" id="nuevaPreguntaEtiquetaMin" value="Sin dolor">
+                        </div>
+                    </div>
+                    <div class="col-md-3 nueva-etiqueta-max" style="display:none;">
+                        <div class="form-group">
+                            <label class="form-label small fw-bold">Etiqueta máxima</label>
+                            <input type="text" class="form-control form-control-sm" id="nuevaPreguntaEtiquetaMax" value="Máximo dolor">
+                        </div>
+                    </div>
+                    <div class="col-12 nueva-opciones-multiple" style="display:none;">
+                        <div class="form-group">
+                            <label class="form-label small fw-bold">Opciones (una por línea)</label>
+                            <textarea class="form-control form-control-sm" id="nuevaPreguntaOpciones" rows="2" placeholder="Opción 1&#10;Opción 2&#10;Opción 3"></textarea>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="d-flex gap-2 mt-2">
+                            <button type="button" class="btn btn-sm btn-success" id="btnAgregarPregunta">
+                                <i class="fas fa-plus"></i> Agregar pregunta
+                            </button>
+                            <button type="button" class="btn btn-sm btn-secondary" id="btnCancelarAgregar">
+                                <i class="fas fa-times"></i> Cancelar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Botón para agregar nueva pregunta (siempre visible en modo edición) -->
+    <div class="text-center mt-3" id="btnAddPreguntaWrapper" style="display: none;">
+        <button type="button" class="btn btn-outline-success btn-sm" id="btnMostrarAgregarPregunta">
+            <i class="fas fa-plus-circle"></i> Agregar nueva pregunta
+        </button>
+    </div>
+</div>
+
+<script>
+    // Inicializar sliders cuando se cargue el contenido
+    document.querySelectorAll('.escala-slider').forEach(slider => {
+        slider.addEventListener('input', function() {
+            const preguntaId = this.dataset.pregunta;
+            const valueSpan = document.getElementById(`valor_pregunta_${preguntaId}`);
+            if (valueSpan) {
+                valueSpan.textContent = this.value;
+            }
+        });
+    });
+// Función para agregar nueva pregunta - USANDO URL DE CUESTIONARIOS
+    function agregarNuevaPregunta() {
+        const texto = document.getElementById('nuevaPreguntaTexto').value.trim();
+        if (!texto) {
+            mostrarFeedback('Por favor, escriba el texto de la pregunta.', 'error');
+            return;
+        }
+        
+        const tipo = document.getElementById('nuevaPreguntaTipo').value;
+        const obligatorio = document.getElementById('nuevaPreguntaObligatorio').checked;
+        const orden = document.getElementById('nuevaPreguntaOrden').value || 0;
+        
+        const data = {
+            texto_pregunta: texto,
+            tipo_pregunta: tipo,
+            obligatorio: obligatorio,
+            orden: parseInt(orden),
+            parte: parteActual,
+        };
+        
+        // Campos específicos según tipo
+        if (tipo === 'ESCALA' || tipo === 'ESCALA_NUMERICA') {
+            data.escala_min = parseInt(document.getElementById('nuevaPreguntaMin').value) || 0;
+            data.escala_max = parseInt(document.getElementById('nuevaPreguntaMax').value) || 10;
+            data.etiqueta_min = document.getElementById('nuevaPreguntaEtiquetaMin').value || 'Sin dolor';
+            data.etiqueta_max = document.getElementById('nuevaPreguntaEtiquetaMax').value || 'Máximo dolor';
+        }
+        
+        if (tipo === 'MULTIPLE') {
+            const opcionesText = document.getElementById('nuevaPreguntaOpciones').value;
+            data.opciones = opcionesText.split('\n').filter(opt => opt.trim() !== '');
+        }
+        
+        // 🔥 NUEVA URL - Ahora usa la app cuestionarios
+        fetch('/cuestionarios/api/agregar-pregunta/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                mostrarFeedback('Pregunta agregada exitosamente');
+                ocultarAgregarPregunta();
+                document.getElementById('nuevaPreguntaTexto').value = '';
+                cargarCuestionario(parteActual);
+            } else {
+                mostrarFeedback(data.error || 'Error al agregar la pregunta', 'error');
+            }
+        })
+        .catch(error => {
+            mostrarFeedback('Error al agregar la pregunta', 'error');
+            console.error('Error:', error);
+        });
+    }
+
+    // Función para guardar cambios de una pregunta existente - USANDO URL DE CUESTIONARIOS
+    function guardarEdicionPregunta(preguntaId) {
+        const item = document.querySelector(`.pregunta-item[data-pregunta-id="${preguntaId}"]`);
+        if (!item) return;
+        
+        const texto = item.querySelector('.edit-texto-pregunta').value.trim();
+        if (!texto) {
+            mostrarFeedback('El texto de la pregunta no puede estar vacío', 'error');
+            return;
+        }
+        
+        const tipo = item.querySelector('.edit-tipo-pregunta').value;
+        const obligatorio = item.querySelector('.edit-obligatorio').checked;
+        const orden = parseInt(item.querySelector('.edit-orden').value) || 0;
+        
+        const data = {
+            pregunta_id: preguntaId,
+            texto_pregunta: texto,
+            tipo_pregunta: tipo,
+            obligatorio: obligatorio,
+            orden: orden,
+        };
+        
+        if (tipo === 'ESCALA' || tipo === 'ESCALA_NUMERICA') {
+            data.escala_min = parseInt(item.querySelector('.edit-escala-min input').value) || 0;
+            data.escala_max = parseInt(item.querySelector('.edit-escala-max input').value) || 10;
+            data.etiqueta_min = item.querySelector('.edit-etiqueta-min input').value || 'Sin dolor';
+            data.etiqueta_max = item.querySelector('.edit-etiqueta-max input').value || 'Máximo dolor';
+        }
+        
+        if (tipo === 'MULTIPLE') {
+            const opcionesText = item.querySelector('.edit-opciones').value;
+            data.opciones = opcionesText.split('\n').filter(opt => opt.trim() !== '');
+        }
+        
+        // 🔥 NUEVA URL - Ahora usa la app cuestionarios
+        fetch('/cuestionarios/api/editar-pregunta/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                mostrarFeedback('Pregunta actualizada exitosamente');
+                cargarCuestionario(parteActual);
+            } else {
+                mostrarFeedback(data.error || 'Error al actualizar la pregunta', 'error');
+            }
+        })
+        .catch(error => {
+            mostrarFeedback('Error al actualizar la pregunta', 'error');
+            console.error('Error:', error);
+        });
+    }
+
+    // Función para eliminar una pregunta - USANDO URL DE CUESTIONARIOS
+    function eliminarPregunta(preguntaId) {
+        if (!confirm('¿Está seguro de eliminar esta pregunta?')) return;
+        
+        const data = {
+            pregunta_id: preguntaId,
+        };
+        
+        // 🔥 NUEVA URL - Ahora usa la app cuestionarios
+        fetch('/cuestionarios/api/eliminar-pregunta/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                mostrarFeedback('Pregunta eliminada exitosamente');
+                cargarCuestionario(parteActual);
+            } else {
+                mostrarFeedback(data.error || 'Error al eliminar la pregunta', 'error');
+            }
+        })
+        .catch(error => {
+            mostrarFeedback('Error al eliminar la pregunta', 'error');
+            console.error('Error:', error);
+        });
+    }
+</script>

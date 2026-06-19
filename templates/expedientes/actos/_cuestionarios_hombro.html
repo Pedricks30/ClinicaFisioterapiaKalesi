@@ -1,0 +1,73 @@
+<!-- expedientes/templates/expedientes/actos/_cuestionarios_hombro.html -->
+<div class="seccion-cuestionario">
+    <h3>🏋️ Evaluación de Hombro y Pectoral</h3>
+    
+    <!-- Preguntas del cuestionario de hombro -->
+    {% for pregunta in preguntas_hombro %}
+    <div class="pregunta-item" data-pregunta-id="{{ pregunta.id }}">
+        <div class="texto">
+            {{ forloop.counter }}. {{ pregunta.texto_pregunta }}
+            {% if pregunta.obligatorio %}
+            <span class="obligatorio">*</span>
+            {% endif %}
+        </div>
+        
+        {% if pregunta.tipo_pregunta == 'ESCALA_NUMERICA' or pregunta.tipo_pregunta == 'ESCALA' %}
+        <div class="escala-container">
+            <input type="range" 
+                   class="escala-slider" 
+                   name="pregunta_{{ pregunta.id }}" 
+                   min="{{ pregunta.escala_min|default:0 }}" 
+                   max="{{ pregunta.escala_max|default:10 }}" 
+                   value="0"
+                   data-pregunta="{{ pregunta.id }}">
+            <div class="escala-labels">
+                <span>{{ pregunta.etiqueta_min|default:"Sin dolor" }}</span>
+                <span>{{ pregunta.etiqueta_max|default:"Máximo dolor" }}</span>
+            </div>
+            <div class="escala-value">
+                <span id="valor_pregunta_{{ pregunta.id }}">0</span>/{{ pregunta.escala_max|default:10 }}
+            </div>
+        </div>
+        
+        {% elif pregunta.tipo_pregunta == 'SI_NO' %}
+        <div class="opciones-radio">
+            <label>
+                <input type="radio" name="pregunta_{{ pregunta.id }}" value="si"> Sí
+            </label>
+            <label>
+                <input type="radio" name="pregunta_{{ pregunta.id }}" value="no"> No
+            </label>
+        </div>
+        
+        {% elif pregunta.tipo_pregunta == 'TEXTO' %}
+        <textarea name="pregunta_{{ pregunta.id }}" 
+                  placeholder="Escriba su respuesta aquí..." 
+                  rows="2"></textarea>
+        
+        {% elif pregunta.tipo_pregunta == 'MULTIPLE' %}
+        <select name="pregunta_{{ pregunta.id }}">
+            <option value="">Seleccione una opción...</option>
+            {% for opcion in pregunta.opciones %}
+            <option value="{{ opcion }}">{{ opcion }}</option>
+            {% endfor %}
+        </select>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+
+<script>
+    // Actualizar valores de sliders
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.escala-slider').forEach(slider => {
+            slider.addEventListener('input', function() {
+                const preguntaId = this.dataset.pregunta;
+                const valueSpan = document.getElementById(`valor_pregunta_${preguntaId}`);
+                if (valueSpan) {
+                    valueSpan.textContent = this.value;
+                }
+            });
+        });
+    });
+</script>

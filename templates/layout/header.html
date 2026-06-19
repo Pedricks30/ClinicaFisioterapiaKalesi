@@ -9,13 +9,23 @@
     </button>
 
     <!-- Topbar Search -->
-    <form class="d-none d-sm-inline-block form-inline mr-auto ml-md-3 my-2 my-md-0 mw-100 navbar-search">
-        <div class="input-group">
-            <input type="text" class="form-control bg-light border-0 small" placeholder="Search for..." aria-label="Search">
+    <form class="d-none d-sm-inline-block form-inline mr-auto ml-md-3 my-2 my-md-0 mw-100 navbar-search" id="searchForm" autocomplete="off">
+        <div class="input-group" style="position: relative;">
+            <input type="text" 
+                   class="form-control bg-light border-0 small" 
+                   placeholder="Buscar pacientes, expedientes, citas..." 
+                   aria-label="Search"
+                   id="searchInput"
+                   style="border-radius: 25px 0 0 25px; padding-left: 20px;">
             <div class="input-group-append">
-                <button class="btn btn-primary" type="button" style="background-color: #047857; border-color: #047857;">
+                <button class="btn btn-primary" type="submit" style="background-color: #047857; border-color: #047857; border-radius: 0 25px 25px 0; padding: 0 20px;">
                     <i class="fas fa-search fa-sm text-white"></i>
                 </button>
+            </div>
+            
+            <!-- Resultados de búsqueda -->
+            <div id="searchResults" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); z-index: 1000; margin-top: 8px; max-height: 400px; overflow-y: auto; padding: 8px 0;">
+                <div id="searchResultsContent"></div>
             </div>
         </div>
     </form>
@@ -28,11 +38,10 @@
             <a class="nav-link dropdown-toggle" href="#" id="searchDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                 <i class="fas fa-search fa-fw"></i>
             </a>
-            <!-- Dropdown - Search -->
             <div class="dropdown-menu dropdown-menu-right p-3 shadow animated--grow-in" aria-labelledby="searchDropdown">
                 <form class="form-inline mr-auto w-100 navbar-search">
                     <div class="input-group">
-                        <input type="text" class="form-control bg-light border-0 small" placeholder="Search for..." aria-label="Search">
+                        <input type="text" class="form-control bg-light border-0 small" placeholder="Buscar..." aria-label="Search">
                         <div class="input-group-append">
                             <button class="btn btn-primary" type="button" style="background-color: #047857; border-color: #047857;">
                                 <i class="fas fa-search fa-sm"></i>
@@ -43,91 +52,55 @@
             </div>
         </li>
 
-        <!-- Nav Item - Alerts (Notificaciones) -->
+        <!-- Nav Item - Notificaciones de Citas -->
         <li class="nav-item dropdown no-arrow mx-1">
-            <a class="nav-link dropdown-toggle" href="#" id="alertsDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                <i class="fas fa-bell fa-fw"></i>
-                <!-- Counter - Alerts -->
-                <span class="badge badge-danger badge-counter">{{ user.notificaciones.no_leidas.count }}</span>
+            <a class="nav-link dropdown-toggle" href="#" id="citasDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <i class="fas fa-calendar-alt fa-fw"></i>
+                <!-- Counter - Citas Pendientes -->
+                <span class="badge badge-danger badge-counter" id="citasCount">0</span>
             </a>
-            <!-- Dropdown - Alerts -->
-            <div class="dropdown-list dropdown-menu dropdown-menu-right shadow animated--grow-in" aria-labelledby="alertsDropdown">
-                <h6 class="dropdown-header">
-                    Centro de Notificaciones
+            <div class="dropdown-list dropdown-menu dropdown-menu-right shadow animated--grow-in" aria-labelledby="citasDropdown" style="width: 400px; border-radius: 12px; border: none; box-shadow: 0 10px 40px rgba(0,0,0,0.12);">
+                <h6 class="dropdown-header d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #2e7d64, #3d9b81); color: white; border-radius: 12px 12px 0 0; padding: 16px 20px;">
+                    <span><i class="fas fa-calendar-alt me-2"></i> Citas Pendientes</span>
+                    <span class="badge badge-light" id="citasCountHeader" style="font-size: 14px; padding: 4px 12px; border-radius: 20px;">0</span>
                 </h6>
-                {% for notificacion in user.notificaciones.no_leidas|slice:":5" %}
-                <a class="dropdown-item d-flex align-items-center" href="{{ notificacion.get_absolute_url }}" onclick="marcarComoLeida({{ notificacion.id }})">
-                    <div class="mr-3">
-                        <div class="icon-circle bg-{{ notificacion.tipo }}">
-                            <i class="fas fa-{% if notificacion.tipo == 'success' %}check-circle{% elif notificacion.tipo == 'danger' %}exclamation-triangle{% else %}info-circle{% endif %} text-white"></i>
+                <div id="citasListContainer" style="max-height: 350px; overflow-y: auto; padding: 8px 0;">
+                    <div class="text-center py-4">
+                        <div class="spinner-border spinner-border-sm text-primary" role="status">
+                            <span class="visually-hidden">Cargando...</span>
                         </div>
+                        <p class="small text-muted mt-2">Cargando citas...</p>
                     </div>
-                    <div>
-                        <div class="small text-gray-500">{{ notificacion.fecha_creacion|date:"d M Y - H:i" }}</div>
-                        <span class="font-weight-bold">{{ notificacion.mensaje }}</span>
-                    </div>
+                </div>
+                <a class="dropdown-item text-center small" href="{% url 'citas:calendario' %}" style="border-top: 1px solid #edf2f7; padding: 12px; color: #2e7d64; font-weight: 600; border-radius: 0 0 12px 12px;">
+                    <i class="fas fa-arrow-right me-1"></i> Ver todas las citas
                 </a>
-                {% empty %}
-                <a class="dropdown-item text-center small text-gray-500">No hay notificaciones nuevas</a>
-                {% endfor %}
-                <a class="dropdown-item text-center small text-gray-500" href="{% url 'notifications:ver_notificaciones' %}">Ver todas las notificaciones</a>
             </div>
         </li>
-        
 
-        <!-- Nav Item - Messages -->
+        <!-- Nav Item - Alertas de Pacientes -->
         <li class="nav-item dropdown no-arrow mx-1">
-            <a class="nav-link dropdown-toggle" href="#" id="messagesDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                <i class="fas fa-envelope fa-fw"></i>
-                <!-- Counter - Messages -->
-                <span class="badge badge-danger badge-counter">7</span>
+            <a class="nav-link dropdown-toggle" href="#" id="pacientesDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <i class="fas fa-users fa-fw"></i>
+                <!-- Counter - Alertas -->
+                <span class="badge badge-warning badge-counter" id="alertasCount">0</span>
             </a>
-            <!-- Dropdown - Messages -->
-            <div class="dropdown-list dropdown-menu dropdown-menu-right shadow animated--grow-in" aria-labelledby="messagesDropdown">
-                <h6 class="dropdown-header">
-                    Message Center
+            <div class="dropdown-list dropdown-menu dropdown-menu-right shadow animated--grow-in" aria-labelledby="pacientesDropdown" style="width: 400px; border-radius: 12px; border: none; box-shadow: 0 10px 40px rgba(0,0,0,0.12);">
+                <h6 class="dropdown-header d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #f9a826, #e67e22); color: white; border-radius: 12px 12px 0 0; padding: 16px 20px;">
+                    <span><i class="fas fa-exclamation-triangle me-2"></i> Alertas de Pacientes</span>
+                    <span class="badge badge-light" id="alertasCountHeader" style="font-size: 14px; padding: 4px 12px; border-radius: 20px;">0</span>
                 </h6>
-                <a class="dropdown-item d-flex align-items-center" href="#">
-                    <div class="dropdown-list-image mr-3">
-                        <img class="rounded-circle" src="{% static 'img/undraw_profile_1.svg' %}" alt="...">
-                        <div class="status-indicator bg-success"></div>
+                <div id="alertasListContainer" style="max-height: 350px; overflow-y: auto; padding: 8px 0;">
+                    <div class="text-center py-4">
+                        <div class="spinner-border spinner-border-sm text-primary" role="status">
+                            <span class="visually-hidden">Cargando...</span>
+                        </div>
+                        <p class="small text-muted mt-2">Cargando alertas...</p>
                     </div>
-                    <div class="font-weight-bold">
-                        <div class="text-truncate">Hi there! I am wondering if you can help me with a problem I've been having.</div>
-                        <div class="small text-gray-500">Emily Fowler · 58m</div>
-                    </div>
+                </div>
+                <a class="dropdown-item text-center small" href="{% url 'cuestionarios:buscador_pacientes' %}" style="border-top: 1px solid #edf2f7; padding: 12px; color: #f9a826; font-weight: 600; border-radius: 0 0 12px 12px;">
+                    <i class="fas fa-arrow-right me-1"></i> Ver historial de pacientes
                 </a>
-                <a class="dropdown-item d-flex align-items-center" href="#">
-                    <div class="dropdown-list-image mr-3">
-                        <img class="rounded-circle" src="{% static 'img/undraw_profile_2.svg' %}" alt="...">
-                        <div class="status-indicator"></div>
-                    </div>
-                    <div>
-                        <div class="text-truncate">I have the photos that you ordered last month, how would you like them sent to you?</div>
-                        <div class="small text-gray-500">Jae Chun · 1d</div>
-                    </div>
-                </a>
-                <a class="dropdown-item d-flex align-items-center" href="#">
-                    <div class="dropdown-list-image mr-3">
-                        <img class="rounded-circle" src="{% static 'img/undraw_profile_3.svg' %}" alt="...">
-                        <div class="status-indicator bg-warning"></div>
-                    </div>
-                    <div>
-                        <div class="text-truncate">Last month's report looks great, I am very happy with the progress so far, keep up the good work!</div>
-                        <div class="small text-gray-500">Morgan Alvarez · 2d</div>
-                    </div>
-                </a>
-                <a class="dropdown-item d-flex align-items-center" href="#">
-                    <div class="dropdown-list-image mr-3">
-                        <img class="rounded-circle" src="https://source.unsplash.com/Mv9hjnEUHR4/60x60" alt="...">
-                        <div class="status-indicator bg-success"></div>
-                    </div>
-                    <div>
-                        <div class="text-truncate">Am I a good boy? The reason I ask is because someone told me that people say this to all dogs, even if they aren't good...</div>
-                        <div class="small text-gray-500">Chicken the Dog · 2w</div>
-                    </div>
-                </a>
-                <a class="dropdown-item text-center small text-gray-500" href="#">Read More Messages</a>
             </div>
         </li>
 
@@ -137,34 +110,82 @@
         <!-- Nav Item - User Information -->
         <li class="nav-item dropdown no-arrow">
             <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                <span class="mr-2 d-none d-lg-inline text-gray-600 small">
-                    {% if user.is_authenticated %}
-                        Bienvenido, {{ user.username }}
-                    {% else %}
-                        Invitado
-                    {% endif %}
-                </span>
-                <img class="img-profile rounded-circle" src="{% if user.is_authenticated and user.profile_image %}{{ user.profile_image.url }}{% else %}{% static 'img/undraw_profile_2.svg' %}{% endif %}" alt="User Profile">
+                <!-- Avatar -->
+                <img class="img-profile rounded-circle" src="{% if user.is_authenticated and user.profile_image %}{{ user.profile_image.url }}{% else %}{% static 'img/undraw_profile_2.svg' %}{% endif %}" alt="User Profile" width="40" height="40">
+                
+                <!-- Información del usuario -->
+                <div class="d-none d-lg-inline-block ml-2 text-left">
+                    <div class="small text-gray-600" style="font-size: 11px; font-weight: 500; letter-spacing: 0.3px;">
+                        <i class="fas fa-hand-wave me-1" style="color: #f9a826;"></i> Bienvenido
+                    </div>
+                    <div class="font-weight-bold text-gray-800" style="font-size: 14px; line-height: 1.2;">
+                        {{ user.get_full_name|default:user.username }}
+                    </div>
+                    <div>
+                        <span class="badge 
+                            {% if user.tipo_usuario == 'ADMIN' %}badge-danger
+                            {% elif user.tipo_usuario == 'MEDIC' %}badge-primary
+                            {% elif user.tipo_usuario == 'FISIO' %}badge-success
+                            {% elif user.tipo_usuario == 'RECEP' %}badge-info
+                            {% else %}badge-secondary{% endif %}" 
+                            style="font-size: 9px; padding: 2px 8px; border-radius: 12px; font-weight: 500; letter-spacing: 0.3px; text-transform: uppercase;">
+                            <i class="fas 
+                                {% if user.tipo_usuario == 'ADMIN' %}fa-crown
+                                {% elif user.tipo_usuario == 'MEDIC' %}fa-user-md
+                                {% elif user.tipo_usuario == 'FISIO' %}fa-hand-holding-heart
+                                {% elif user.tipo_usuario == 'RECEP' %}fa-user-tie
+                                {% else %}fa-user{% endif %} me-1" 
+                                style="font-size: 8px;">
+                            </i>
+                            {{ user.get_tipo_usuario_display|default:"Sin rol" }}
+                        </span>
+                    </div>
+                </div>
             </a>
+            
             <!-- Dropdown - User Information -->
-            <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in" aria-labelledby="userDropdown">
-                <a class="dropdown-item" href="{% url 'perfil_usuario' %}">
-                    <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
-                    Perfil
-                </a>
-                <a class="dropdown-item" href="#">
-                    <i class="fas fa-cogs fa-sm fa-fw mr-2 text-gray-400"></i>
-                    Configuración
-                </a>
-                <a class="dropdown-item" href="#">
-                    <i class="fas fa-list fa-sm fa-fw mr-2 text-gray-400"></i>
-                    Registro de actividad
-                </a>
-                <div class="dropdown-divider"></div>
-                <a class="dropdown-item" href="{% url 'logout' %}" data-toggle="modal" data-target="#logoutModal">
-                    <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
-                    Cerrar Sesión
-                </a>
+            <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in" aria-labelledby="userDropdown" style="border-radius: 12px; border: none; box-shadow: 0 10px 40px rgba(0,0,0,0.12); width: 280px; padding: 0; overflow: hidden;">
+                <!-- Header del dropdown -->
+                <div class="text-center p-4" style="background: linear-gradient(135deg, #2e7d64, #3d9b81); color: white;">
+                    <img class="rounded-circle mb-2" src="{% if user.is_authenticated and user.profile_image %}{{ user.profile_image.url }}{% else %}{% static 'img/undraw_profile_2.svg' %}{% endif %}" alt="User Profile" width="70" height="70" style="border: 3px solid rgba(255,255,255,0.3);">
+                    <h6 class="mb-0 font-weight-bold">{{ user.get_full_name|default:user.username }}</h6>
+                    <div class="mt-1">
+                        <span class="badge badge-light" style="font-size: 11px; padding: 4px 12px; border-radius: 20px; color: #2e7d64;">
+                            <i class="fas 
+                                {% if user.tipo_usuario == 'ADMIN' %}fa-crown
+                                {% elif user.tipo_usuario == 'MEDIC' %}fa-user-md
+                                {% elif user.tipo_usuario == 'FISIO' %}fa-hand-holding-heart
+                                {% elif user.tipo_usuario == 'RECEP' %}fa-user-tie
+                                {% else %}fa-user{% endif %} me-1">
+                            </i>
+                            {{ user.get_tipo_usuario_display|default:"Sin rol" }}
+                        </span>
+                    </div>
+                    <div class="small mt-2" style="opacity: 0.8;">
+                        <i class="far fa-envelope me-1"></i> {{ user.email|default:"Sin email" }}
+                    </div>
+                </div>
+                
+                <!-- Opciones del dropdown -->
+                <div style="padding: 8px 0;">
+                    <a class="dropdown-item" href="{% url 'perfil_usuario' %}" style="padding: 10px 20px; border-radius: 8px; margin: 2px 8px; transition: all 0.2s;">
+                        <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
+                        <span>Mi Perfil</span>
+                    </a>
+                    <a class="dropdown-item" href="#" style="padding: 10px 20px; border-radius: 8px; margin: 2px 8px; transition: all 0.2s;">
+                        <i class="fas fa-cogs fa-sm fa-fw mr-2 text-gray-400"></i>
+                        <span>Configuración</span>
+                    </a>
+                    <a class="dropdown-item" href="#" style="padding: 10px 20px; border-radius: 8px; margin: 2px 8px; transition: all 0.2s;">
+                        <i class="fas fa-list fa-sm fa-fw mr-2 text-gray-400"></i>
+                        <span>Registro de actividad</span>
+                    </a>
+                    <div class="dropdown-divider" style="margin: 8px 16px;"></div>
+                    <a class="dropdown-item" href="{% url 'logout' %}" data-toggle="modal" data-target="#logoutModal" style="padding: 10px 20px; border-radius: 8px; margin: 2px 8px; transition: all 0.2s; color: #e74c3c;">
+                        <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2"></i>
+                        <span>Cerrar Sesión</span>
+                    </a>
+                </div>
             </div>
         </li>
 
@@ -172,3 +193,303 @@
 
 </nav>
 <!-- End of Topbar -->
+
+<!-- Script para cargar notificaciones vía AJAX -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Header - Iniciando notificaciones');
+    console.log('👤 Usuario:', '{{ user.username }}');
+    console.log('🎯 Rol:', '{{ user.tipo_usuario }}');
+
+    // ============================================
+    // CARGAR NOTIFICACIONES DE CITAS
+    // ============================================
+    function cargarNotificacionesCitas() {
+        const container = document.getElementById('citasListContainer');
+        const countBadge = document.getElementById('citasCount');
+        const countHeader = document.getElementById('citasCountHeader');
+        
+        if (!container) return;
+        
+        fetch('/api/notificaciones/citas/')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Error en la respuesta del servidor');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.citas && data.citas.length > 0) {
+                    let html = '';
+                    data.citas.forEach(cita => {
+                        const estadoClass = cita.estado.toLowerCase().replace(' ', '_');
+                        const estadoIcon = cita.estado === 'Pendiente' ? 'fa-clock' : 
+                                         cita.estado === 'Confirmada' ? 'fa-check-circle' : 'fa-times-circle';
+                        const tipoColor = cita.tipo === 'PRIMERA_CONSULTA' ? 'primary' : 
+                                         cita.tipo === 'SEGUIMIENTO' ? 'info' : 'success';
+                        
+                        html += `
+                            <a class="dropdown-item d-flex align-items-center" href="#" style="padding: 10px 16px; transition: all 0.2s; border-radius: 8px; margin: 2px 8px;">
+                                <div class="mr-3">
+                                    <div class="icon-circle bg-${tipoColor}" style="width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                        <i class="fas ${estadoIcon} text-white"></i>
+                                    </div>
+                                </div>
+                                <div style="flex: 1;">
+                                    <div class="small text-gray-500">${cita.fecha} - ${cita.hora}</div>
+                                    <span class="font-weight-bold">${cita.paciente}</span>
+                                    <span class="badge badge-${estadoClass} ms-1" style="font-size: 10px;">${cita.estado}</span>
+                                    <br>
+                                    <small class="text-muted">${cita.profesional}</small>
+                                </div>
+                            </a>
+                        `;
+                    });
+                    container.innerHTML = html;
+                    if (countBadge) countBadge.textContent = data.citas.length;
+                    if (countHeader) countHeader.textContent = data.citas.length;
+                } else {
+                    container.innerHTML = `
+                        <div class="text-center py-4">
+                            <i class="fas fa-check-circle fa-2x text-success mb-2 d-block"></i>
+                            <p class="text-muted small mb-0">No hay citas pendientes</p>
+                        </div>
+                    `;
+                    if (countBadge) countBadge.textContent = '0';
+                    if (countHeader) countHeader.textContent = '0';
+                }
+            })
+            .catch(error => {
+                console.error('Error al cargar citas:', error);
+                container.innerHTML = `
+                    <div class="text-center py-4">
+                        <i class="fas fa-exclamation-triangle fa-2x text-danger mb-2 d-block"></i>
+                        <p class="text-muted small mb-0">Error al cargar citas</p>
+                    </div>
+                `;
+                if (countBadge) countBadge.textContent = '!';
+                if (countHeader) countHeader.textContent = '!';
+            });
+    }
+
+    // ============================================
+    // CARGAR ALERTAS DE PACIENTES
+    // ============================================
+    function cargarAlertasPacientes() {
+        const container = document.getElementById('alertasListContainer');
+        const countBadge = document.getElementById('alertasCount');
+        const countHeader = document.getElementById('alertasCountHeader');
+        
+        if (!container) return;
+        
+        fetch('/api/notificaciones/alertas/')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Error en la respuesta del servidor');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.alertas && data.alertas.length > 0) {
+                    let html = '';
+                    data.alertas.forEach(alerta => {
+                        const tipoColor = alerta.tipo === 'no_asistio' ? 'danger' : 'warning';
+                        const icono = alerta.tipo === 'no_asistio' ? 'fa-times-circle' : 'fa-exclamation-circle';
+                        
+                        html += `
+                            <a class="dropdown-item d-flex align-items-center" href="${alerta.url}" style="padding: 10px 16px; transition: all 0.2s; border-radius: 8px; margin: 2px 8px;">
+                                <div class="mr-3">
+                                    <div class="icon-circle bg-${tipoColor}" style="width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                        <i class="fas ${icono} text-white"></i>
+                                    </div>
+                                </div>
+                                <div style="flex: 1;">
+                                    <div class="small text-gray-500">${alerta.fecha}</div>
+                                    <span class="font-weight-bold">${alerta.paciente}</span>
+                                    <br>
+                                    <small class="text-${tipoColor}">${alerta.mensaje}</small>
+                                </div>
+                            </a>
+                        `;
+                    });
+                    container.innerHTML = html;
+                    if (countBadge) countBadge.textContent = data.alertas.length;
+                    if (countHeader) countHeader.textContent = data.alertas.length;
+                } else {
+                    container.innerHTML = `
+                        <div class="text-center py-4">
+                            <i class="fas fa-check-circle fa-2x text-success mb-2 d-block"></i>
+                            <p class="text-muted small mb-0">No hay alertas de pacientes</p>
+                        </div>
+                    `;
+                    if (countBadge) countBadge.textContent = '0';
+                    if (countHeader) countHeader.textContent = '0';
+                }
+            })
+            .catch(error => {
+                console.error('Error al cargar alertas:', error);
+                container.innerHTML = `
+                    <div class="text-center py-4">
+                        <i class="fas fa-exclamation-triangle fa-2x text-danger mb-2 d-block"></i>
+                        <p class="text-muted small mb-0">Error al cargar alertas</p>
+                    </div>
+                `;
+                if (countBadge) countBadge.textContent = '!';
+                if (countHeader) countHeader.textContent = '!';
+            });
+    }
+
+    // ============================================
+    // CARGAR DATOS INICIALES
+    // ============================================
+    setTimeout(() => {
+        cargarNotificacionesCitas();
+        cargarAlertasPacientes();
+    }, 500);
+
+    // Actualizar cada 60 segundos
+    setInterval(() => {
+        cargarNotificacionesCitas();
+        cargarAlertasPacientes();
+    }, 60000);
+});
+
+// ============================================
+// BUSCADOR RÁPIDO
+// ============================================
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchInput');
+    const searchResults = document.getElementById('searchResults');
+    const searchResultsContent = document.getElementById('searchResultsContent');
+    let searchTimeout = null;
+    
+    // Función para realizar la búsqueda
+    function realizarBusqueda(query) {
+        if (query.length < 2) {
+            searchResults.style.display = 'none';
+            return;
+        }
+        
+        fetch(`/api/busqueda-rapida/?q=${encodeURIComponent(query)}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Error en la respuesta del servidor');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.results && data.results.length > 0) {
+                    let html = '';
+                    
+                    // Agrupar por tipo
+                    const grupos = {};
+                    data.results.forEach(item => {
+                        if (!grupos[item.tipo]) {
+                            grupos[item.tipo] = [];
+                        }
+                        grupos[item.tipo].push(item);
+                    });
+                    
+                    // Títulos de grupos
+                    const titulosGrupos = {
+                        'paciente': '👤 Pacientes',
+                        'expediente': '📁 Expedientes',
+                        'cita': '📅 Citas',
+                        'profesional': '👨‍⚕️ Profesionales'
+                    };
+                    
+                    // Generar HTML
+                    Object.keys(grupos).forEach(tipo => {
+                        html += `<div style="padding: 4px 16px; font-size: 11px; color: #8b96a8; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; margin-top: 4px;">${titulosGrupos[tipo] || tipo}</div>`;
+                        
+                        grupos[tipo].forEach(item => {
+                            html += `
+                                <a href="${item.url}" style="display: flex; align-items: center; padding: 8px 16px; text-decoration: none; color: #1a2634; transition: all 0.2s; border-radius: 6px; margin: 2px 8px;">
+                                    <div style="width: 36px; height: 36px; border-radius: 8px; background: ${item.color}15; display: flex; align-items: center; justify-content: center; margin-right: 12px; flex-shrink: 0;">
+                                        <i class="fas ${item.icono}" style="color: ${item.color}; font-size: 14px;"></i>
+                                    </div>
+                                    <div style="flex: 1; min-width: 0;">
+                                        <div style="font-weight: 500; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.titulo}</div>
+                                        <div style="font-size: 12px; color: #8b96a8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.subtitulo}</div>
+                                    </div>
+                                    <div style="font-size: 11px; color: #8b96a8; margin-left: 8px; flex-shrink: 0;">
+                                        <i class="fas fa-arrow-right"></i>
+                                    </div>
+                                </a>
+                            `;
+                        });
+                    });
+                    
+                    // Pie de página
+                    html += `
+                        <div style="border-top: 1px solid #edf2f7; padding: 8px 16px; text-align: center; font-size: 12px; color: #8b96a8; margin-top: 4px;">
+                            <i class="fas fa-search me-1"></i> ${data.results.length} resultado${data.results.length > 1 ? 's' : ''} encontrado${data.results.length > 1 ? 's' : ''}
+                        </div>
+                    `;
+                    
+                    searchResultsContent.innerHTML = html;
+                    searchResults.style.display = 'block';
+                } else {
+                    searchResultsContent.innerHTML = `
+                        <div style="text-align: center; padding: 30px 20px; color: #8b96a8;">
+                            <i class="fas fa-search fa-2x mb-2 d-block" style="color: #dbe4ef;"></i>
+                            <p style="margin: 0; font-weight: 500;">No se encontraron resultados</p>
+                            <p style="font-size: 13px; margin-top: 4px;">Intenta con otro término de búsqueda</p>
+                        </div>
+                    `;
+                    searchResults.style.display = 'block';
+                }
+            })
+            .catch(error => {
+                console.error('Error en la búsqueda:', error);
+                searchResultsContent.innerHTML = `
+                    <div style="text-align: center; padding: 20px; color: #e74c3c;">
+                        <i class="fas fa-exclamation-triangle fa-2x mb-2 d-block"></i>
+                        <p style="margin: 0; font-weight: 500;">Error al buscar</p>
+                    </div>
+                `;
+                searchResults.style.display = 'block';
+            });
+    }
+    
+    // Evento de input con debounce
+    searchInput.addEventListener('input', function() {
+        const query = this.value.trim();
+        
+        clearTimeout(searchTimeout);
+        
+        if (query.length < 2) {
+            searchResults.style.display = 'none';
+            return;
+        }
+        
+        searchTimeout = setTimeout(() => {
+            realizarBusqueda(query);
+        }, 300);
+    });
+    
+    // Evento de submit (para evitar recargar la página)
+    document.getElementById('searchForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const query = searchInput.value.trim();
+        if (query.length >= 2) {
+            realizarBusqueda(query);
+        }
+    });
+    
+    // Cerrar resultados al hacer clic fuera
+    document.addEventListener('click', function(e) {
+        if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+            searchResults.style.display = 'none';
+        }
+    });
+    
+    // Cerrar con Escape
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            searchResults.style.display = 'none';
+            searchInput.blur();
+        }
+    });
+});
+</script>

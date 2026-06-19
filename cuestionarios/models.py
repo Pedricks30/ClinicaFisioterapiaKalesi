@@ -19,6 +19,14 @@ class Cuestionario(models.Model):
         ('PECHO', 'Pecho'),
         ('GENERAL', 'General'),
         ('PERSONALIZADO', 'Personalizado'),
+        ('TOBILLO', 'Tobillo'),
+        ('MUÑECA', 'Muñeca'),
+        ('CADERA', 'Cadera'),
+        ('MANO', 'Mano'),
+        ('PIE', 'Pie'),
+        ('CODOS', 'Codos'),
+        ('MANDIBULA', 'Mandíbula'),
+        ('HOMBRO', 'Hombro'),
     ]
     
     nombre = models.CharField(max_length=200, verbose_name='Nombre del cuestionario')

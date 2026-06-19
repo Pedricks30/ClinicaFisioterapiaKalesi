@@ -1,0 +1,202 @@
+
+    /* CSS Moderno para las cards */
+    .cuestionario-card {
+        border: none;
+        border-radius: 20px;
+        overflow: hidden;
+        background: #fff;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+        transition: 0.3s;
+        height: 100%;
+        max-width: 380px;
+        margin: 0 auto;
+    }
+    .cuestionario-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+    }
+    .cuestionario-header {
+        background: linear-gradient(135deg, #00c853, #00bfa5);
+        color: white;
+        padding: 20px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        min-height: 80px;
+    }
+    .cuestionario-header .icono {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        border: 2px solid rgba(255, 255, 255, 0.4);
+        flex-shrink: 0;
+    }
+    .cuestionario-header h5 {
+        font-weight: 600;
+        font-size: 16px;
+        margin-bottom: 4px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .cuestionario-header .badge-estado {
+        font-size: 10px;
+        padding: 2px 10px;
+        border-radius: 20px;
+        font-weight: 500;
+        background: rgba(255, 255, 255, 0.25);
+        color: white;
+        white-space: nowrap;
+    }
+    .cuestionario-body {
+        padding: 20px;
+    }
+    .cuestionario-body .descripcion {
+        color: #555;
+        font-size: 14px;
+        margin-bottom: 12px;
+        min-height: 40px;
+    }
+    .cuestionario-body .meta-info {
+        font-size: 12px;
+        color: #888;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+    .badge-tipo {
+        background: #e0f7fa;
+        color: #00838f;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 11px;
+        display: inline-block;
+        font-weight: 500;
+    }
+    .badge-tipo.verde { background: #e8f5e9; color: #2e7d32; }
+    .badge-tipo.azul { background: #e3f2fd; color: #1565c0; }
+    .badge-tipo.morado { background: #f3e5f5; color: #6a1b9a; }
+    .badge-tipo.naranja { background: #fff3e0; color: #e65100; }
+    .badge-tipo.rojo { background: #ffebee; color: #c62828; }
+    .badge-tipo.gris { background: #f5f5f5; color: #616161; }
+    
+    .badge-preguntas {
+        background: #e8f5e9;
+        color: #2e7d32;
+        padding: 2px 10px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 500;
+    }
+    .badge-preguntas i {
+        margin-right: 3px;
+    }
+    
+    .btn-accion {
+        flex: 1;
+        border: 1px solid #ddd;
+        border-radius: 12px;
+        height: 42px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #555;
+        background: white;
+        transition: 0.2s;
+        text-decoration: none;
+        font-size: 14px;
+        gap: 6px;
+    }
+    .btn-accion:hover {
+        background: #f5f5f5;
+        color: #333;
+        text-decoration: none;
+    }
+    .btn-accion.primary {
+        background: linear-gradient(135deg, #00c853, #00bfa5);
+        color: white;
+        border: none;
+    }
+    .btn-accion.primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 200, 83, 0.3);
+        color: white;
+    }
+    .btn-accion.delete {
+        color: #dc3545;
+    }
+    .btn-accion.delete:hover {
+        background: #ffebee;
+        border-color: #dc3545;
+    }
+    .btn-accion.edit:hover {
+        background: #fff8e1;
+        border-color: #ffc107;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+    }
+    
+    .filter-bar {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+    .filter-bar .input-group {
+        width: 200px;
+    }
+    .filter-bar .form-select {
+        width: 150px;
+    }
+    
+    @media (max-width: 768px) {
+        .filter-bar .input-group {
+            width: 100%;
+        }
+        .filter-bar .form-select {
+            width: 100%;
+        }
+        .filter-bar {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .cuestionario-card {
+            max-width: 100%;
+        }
+        .action-buttons {
+            flex-direction: column;
+        }
+        .cuestionario-header h5 {
+            font-size: 14px;
+        }
+        .cuestionario-header .icono {
+            width: 40px;
+            height: 40px;
+            font-size: 18px;
+        }
+    }
+    @media (max-width: 480px) {
+        .cuestionario-header {
+            padding: 15px;
+        }
+        .cuestionario-body {
+            padding: 15px;
+        }
+        .cuestionario-body .descripcion {
+            font-size: 13px;
+        }
+        .btn-accion {
+            height: 38px;
+            font-size: 13px;
+        }
+    }

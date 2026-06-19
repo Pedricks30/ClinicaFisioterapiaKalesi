@@ -1,0 +1,906 @@
+/* ============================================
+   CUESTIONARIOS CLÍNICOS - MODELO 3D
+   Paleta Verde Salud - Basada en el Calendario
+   ============================================ */
+
+/* === VARIABLES GLOBALES === */
+:root {
+    /* Colores principales - Verde clínica */
+    --primary-color: #2e7d64;
+    --secondary-color: #3d9b81;
+    --accent-color: #48c9b0;
+    --success-color: #2ecc71;
+    --danger-color: #e74c3c;
+    --warning-color: #f9a826;
+    
+    /* Colores de fondo */
+    --bg-card: #ffffff;
+    --bg-light: #f0faf7;
+    --bg-hover: rgba(72, 201, 176, 0.12);
+    --bg-selected: rgba(46, 125, 100, 0.1);
+    
+    /* Bordes y sombras */
+    --border-light: #d4ece4;
+    --border-medium: #b8dfd3;
+    --shadow-sm: 0 2px 8px rgba(46, 125, 100, 0.08);
+    --shadow-md: 0 4px 16px rgba(46, 125, 100, 0.12);
+    --shadow-lg: 0 8px 24px rgba(46, 125, 100, 0.15);
+    --shadow-hover: 0 6px 20px rgba(46, 125, 100, 0.18);
+    
+    /* Espaciado */
+    --spacing-sm: 8px;
+    --spacing-md: 16px;
+    --spacing-lg: 24px;
+    --spacing-xl: 32px;
+    
+    /* Transiciones */
+    --transition-fast: 0.2s ease;
+    --transition-normal: 0.3s ease;
+}
+
+/* === CONTENEDOR PRINCIPAL === */
+.cuestionarios-container {
+    padding: var(--spacing-lg);
+    max-width: 100%;
+    background: var(--bg-light);
+    min-height: calc(100vh - 60px);
+}
+
+/* === HEADER === */
+.cuestionarios-header {
+    border-radius: 16px;
+    padding: var(--spacing-lg) var(--spacing-xl);
+    margin-bottom: var(--spacing-lg);
+    box-shadow: var(--shadow-md);
+    transition: all var(--transition-normal);
+}
+
+.header-creacion {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+}
+
+.header-edicion {
+    background: linear-gradient(135deg, var(--warning-color), #e67e22);
+    color: white;
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--spacing-md);
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.header-icon {
+    width: 48px;
+    height: 48px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+}
+
+.header-title {
+    font-size: 24px;
+    font-weight: 700;
+    margin: 0;
+    letter-spacing: -0.3px;
+}
+
+.header-info {
+    font-size: 14px;
+    opacity: 0.9;
+    margin-top: 4px;
+}
+
+.header-right {
+    display: flex;
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+}
+
+.badge-status {
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.badge-creacion {
+    background: rgba(255, 255, 255, 0.25);
+    color: white;
+}
+
+.badge-edicion {
+    background: rgba(255, 255, 255, 0.25);
+    color: white;
+}
+
+.badge-bodypart {
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* === LAYOUT PRINCIPAL === */
+.cuestionarios-layout {
+    display: flex;
+    gap: var(--spacing-lg);
+    min-height: 70vh;
+}
+
+/* === LADO IZQUIERDO - CUESTIONARIOS === */
+.cuestionarios-side {
+    flex: 0 0 45%;
+    max-width: 45%;
+}
+
+.card-cuestionario {
+    background: var(--bg-card);
+    border-radius: 16px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-light);
+    overflow: hidden;
+    height: 100%;
+}
+
+.card-body-cuestionario {
+    padding: var(--spacing-lg);
+    max-height: 75vh;
+    overflow-y: auto;
+}
+
+.card-body-cuestionario::-webkit-scrollbar {
+    width: 6px;
+}
+
+.card-body-cuestionario::-webkit-scrollbar-track {
+    background: var(--border-light);
+    border-radius: 3px;
+}
+
+.card-body-cuestionario::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    border-radius: 3px;
+}
+
+/* === SELECTOR DE PARTE DEL CUERPO === */
+.body-parts-selector {
+    margin-bottom: var(--spacing-lg);
+}
+
+.selector-label {
+    display: block;
+    font-weight: 600;
+    color: var(--primary-color);
+    margin-bottom: var(--spacing-sm);
+    font-size: 14px;
+}
+
+.body-parts-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.btn-part {
+    padding: 8px 18px;
+    border: 2px solid var(--border-medium);
+    background: transparent;
+    color: var(--primary-color);
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all var(--transition-fast);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-part:hover {
+    background: var(--bg-hover);
+    border-color: var(--secondary-color);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+}
+
+.btn-part.active {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    border-color: var(--primary-color);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-part i {
+    font-size: 14px;
+}
+
+/* === PREGUNTAS DEL CUESTIONARIO === */
+.pregunta-item {
+    margin-bottom: 20px;
+    padding: 16px 18px;
+    background: #f8fdfb;
+    border-radius: 12px;
+    border-left: 4px solid var(--accent-color);
+    transition: all var(--transition-fast);
+}
+
+.pregunta-item:hover {
+    background: #f0faf7;
+    box-shadow: var(--shadow-sm);
+}
+
+.pregunta-item .texto {
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: var(--primary-color);
+    font-size: 15px;
+}
+
+.pregunta-item .obligatorio {
+    color: var(--danger-color);
+    margin-left: 4px;
+}
+
+.pregunta-item .respuesta-existente {
+    font-size: 12px;
+    color: var(--success-color);
+    margin-top: 6px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* === ESCALA (SLIDER) === */
+.escala-container {
+    margin-top: 8px;
+}
+
+.escala-slider {
+    width: 100%;
+    -webkit-appearance: none;
+    height: 8px;
+    border-radius: 4px;
+    background: linear-gradient(to right, #28a745, #ffc107, #dc3545);
+    outline: none;
+    transition: all var(--transition-fast);
+}
+
+.escala-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: white;
+    border: 3px solid var(--primary-color);
+    cursor: pointer;
+    box-shadow: var(--shadow-sm);
+    transition: all var(--transition-fast);
+}
+
+.escala-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.15);
+    box-shadow: var(--shadow-md);
+}
+
+.escala-slider::-moz-range-thumb {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: white;
+    border: 3px solid var(--primary-color);
+    cursor: pointer;
+}
+
+.escala-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #666;
+    margin-top: 5px;
+}
+
+.escala-value {
+    text-align: center;
+    margin-top: 6px;
+    font-weight: 700;
+    color: var(--primary-color);
+    font-size: 16px;
+}
+
+/* === OPCIONES RADIO === */
+.opciones-radio {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    margin-top: 4px;
+}
+
+.opciones-radio label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    color: #333;
+    transition: color var(--transition-fast);
+}
+
+.opciones-radio label:hover {
+    color: var(--primary-color);
+}
+
+.opciones-radio input[type="radio"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--primary-color);
+    cursor: pointer;
+}
+
+/* === TEXTAREA Y SELECT === */
+textarea {
+    width: 100%;
+    padding: 10px 14px;
+    border: 2px solid var(--border-light);
+    border-radius: 8px;
+    resize: vertical;
+    font-family: inherit;
+    font-size: 14px;
+    transition: all var(--transition-fast);
+    background: white;
+}
+
+textarea:focus {
+    border-color: var(--secondary-color);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(46, 125, 100, 0.15);
+}
+
+select {
+    width: 100%;
+    padding: 10px 14px;
+    border: 2px solid var(--border-light);
+    border-radius: 8px;
+    background: white;
+    font-size: 14px;
+    transition: all var(--transition-fast);
+}
+
+select:focus {
+    border-color: var(--secondary-color);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(46, 125, 100, 0.15);
+}
+
+/* === BOTONES DE ACCIÓN === */
+.form-actions {
+    display: flex;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-lg);
+    padding-top: var(--spacing-lg);
+    border-top: 2px solid var(--border-light);
+}
+
+.btn {
+    padding: 10px 24px;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    box-shadow: var(--shadow-sm);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    filter: brightness(1.05);
+}
+
+.btn-secondary {
+    background: #e8f0ee;
+    color: var(--primary-color);
+}
+
+.btn-secondary:hover {
+    background: #d4ece4;
+    transform: translateY(-2px);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, var(--success-color), #27ae60);
+    color: white;
+    box-shadow: var(--shadow-sm);
+}
+
+.btn-success:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    filter: brightness(1.05);
+}
+
+.btn-guardar {
+    background: linear-gradient(135deg, var(--success-color), #27ae60);
+    color: white;
+    box-shadow: var(--shadow-sm);
+}
+
+.btn-guardar:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    filter: brightness(1.05);
+}
+
+/* === LADO DERECHO - MODELO 3D === */
+.modelo-side {
+    flex: 1;
+    min-width: 0;
+}
+
+.card-modelo {
+    background: var(--bg-card);
+    border-radius: 16px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-light);
+    overflow: hidden;
+    height: 100%;
+}
+
+.modelo-container {
+    position: relative;
+    background: #1a1a2e;
+    border-radius: 16px;
+    overflow: visible; /* Cambiado de hidden a visible para que los botones se vean fuera */
+    min-height: 500px;
+    padding-bottom: 60px; /* Espacio adicional para los botones */
+}
+
+.modelo-header {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    right: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 10;
+    pointer-events: none;
+}
+
+.modelo-label {
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    color: white;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    pointer-events: none;
+}
+
+.modelo-hint {
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    color: rgba(255, 255, 255, 0.7);
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    pointer-events: none;
+}
+
+/* === CONTENEDOR DEL IFRAME === */
+.modelo-iframe-wrapper {
+    width: 100%;
+    height: 100%;
+    min-height: 500px;
+    position: relative;
+}
+
+.modelo-iframe {
+    width: 100%;
+    height: 100%;
+    min-height: 500px;
+    border: none;
+    display: block;
+}
+
+/* === SELECTOR DE GÉNERO === */
+.gender-selector {
+    position: absolute;
+    bottom: -20px; /* Cambiado de 16px a -20px para bajar los botones */
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 12px;
+    z-index: 15;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(12px);
+    padding: 10px 20px;
+    border-radius: 30px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.btn-gender {
+    padding: 8px 24px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    background: transparent;
+    color: rgba(255, 255, 255, 0.7);
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    letter-spacing: 0.3px;
+}
+
+.btn-gender:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.4);
+    transform: translateY(-2px);
+    color: white;
+}
+
+.btn-gender.active {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    border-color: var(--primary-color);
+    color: white;
+    box-shadow: 0 4px 15px rgba(46, 125, 100, 0.4);
+}
+
+.btn-gender.active:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(46, 125, 100, 0.5);
+}
+
+.btn-gender i {
+    font-size: 16px;
+}
+
+/* Animación para el feedback */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translate(-50%, 10px);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, 0);
+    }
+}
+
+/* === LOADING === */
+.loading-cuestionario {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.spinner-clinico {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto 16px;
+    border: 4px solid var(--border-light);
+    border-top: 4px solid var(--primary-color);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading-text {
+    color: var(--secondary-color);
+    font-weight: 500;
+}
+
+/* === ALERTAS === */
+.alert {
+    padding: 16px 20px;
+    border-radius: 12px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.alert-danger {
+    background: #fde8e8;
+    border: 1px solid #f5c6c6;
+    color: #721c24;
+}
+
+/* === RESPONSIVE === */
+@media (max-width: 992px) {
+    .cuestionarios-layout {
+        flex-direction: column-reverse;
+    }
+    
+    .cuestionarios-side {
+        flex: 1;
+        max-width: 100%;
+    }
+    
+    .modelo-container {
+        min-height: 400px;
+        padding-bottom: 50px;
+    }
+    
+    .modelo-iframe {
+        min-height: 400px;
+    }
+    
+    .modelo-iframe-wrapper {
+        min-height: 400px;
+    }
+}
+
+@media (max-width: 768px) {
+    .cuestionarios-container {
+        padding: var(--spacing-md);
+    }
+    
+    .cuestionarios-header {
+        padding: var(--spacing-md);
+    }
+    
+    .header-content {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .header-title {
+        font-size: 20px;
+    }
+    
+    .header-right {
+        width: 100%;
+        flex-wrap: wrap;
+    }
+    
+    .card-body-cuestionario {
+        padding: var(--spacing-md);
+        max-height: 60vh;
+    }
+    
+    .body-parts-buttons {
+        gap: 6px;
+    }
+    
+    .btn-part {
+        padding: 6px 14px;
+        font-size: 12px;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .form-actions .btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .modelo-container {
+        min-height: 350px;
+        padding-bottom: 45px;
+    }
+    
+    .modelo-iframe {
+        min-height: 350px;
+    }
+    
+    .modelo-iframe-wrapper {
+        min-height: 350px;
+    }
+    
+    .gender-selector {
+        bottom: -15px;
+        padding: 8px 12px;
+        gap: 8px;
+    }
+    
+    .btn-gender {
+        padding: 6px 16px;
+        font-size: 12px;
+    }
+    
+    .btn-gender i {
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 480px) {
+    .card-body-cuestionario {
+        padding: var(--spacing-sm);
+    }
+    
+    .pregunta-item {
+        padding: 12px 14px;
+    }
+    
+    .pregunta-item .texto {
+        font-size: 14px;
+    }
+    
+    .header-title {
+        font-size: 18px;
+    }
+    
+    .modelo-container {
+        min-height: 300px;
+        padding-bottom: 40px;
+    }
+    
+    .modelo-iframe {
+        min-height: 300px;
+    }
+    
+    .modelo-iframe-wrapper {
+        min-height: 300px;
+    }
+    
+    .gender-selector {
+        bottom: -12px;
+        padding: 6px 10px;
+        gap: 6px;
+        border-radius: 20px;
+    }
+    
+    .btn-gender {
+        padding: 5px 12px;
+        font-size: 11px;
+    }
+    
+    .btn-gender i {
+        font-size: 12px;
+    }
+}
+
+
+
+/* ============================================
+   MODO EDICIÓN DE PREGUNTAS
+   ============================================ */
+
+/* Estado de edición - resaltar preguntas */
+.pregunta-item.modo-edicion {
+    border-left-color: var(--warning-color) !important;
+    background: #fffcf0 !important;
+    box-shadow: 0 0 0 2px var(--warning-color);
+}
+
+.pregunta-item.modo-edicion .pregunta-actions {
+    display: flex !important;
+    gap: 4px;
+}
+
+.pregunta-item.modo-edicion .respuesta-container {
+    opacity: 0.4;
+    pointer-events: none;
+}
+
+/* Modo edición - formulario de edición */
+.pregunta-edit {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 12px;
+    margin-top: 8px;
+    border: 1px solid var(--border-medium);
+}
+
+.edit-form .form-group {
+    margin-bottom: 6px;
+}
+
+.edit-form .form-label {
+    color: var(--primary-color);
+    margin-bottom: 2px;
+}
+
+.edit-form .form-control-sm,
+.edit-form .form-select-sm {
+    font-size: 13px;
+    padding: 4px 8px;
+}
+
+/* Botones de acción en modo edición */
+.btn-outline-warning {
+    color: var(--warning-color);
+    border-color: var(--warning-color);
+    background: transparent;
+}
+
+.btn-outline-warning:hover {
+    background: var(--warning-color);
+    color: white;
+}
+
+.btn-outline-danger {
+    color: var(--danger-color);
+    border-color: var(--danger-color);
+    background: transparent;
+}
+
+.btn-outline-danger:hover {
+    background: var(--danger-color);
+    color: white;
+}
+
+/* Contenedor de agregar pregunta */
+#addPreguntaContainer .card {
+    background: #f8fdfb;
+}
+
+/* Feedback de cambios */
+.feedback-cambio {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: var(--success-color);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 10px;
+    box-shadow: var(--shadow-lg);
+    font-weight: 500;
+    z-index: 1000;
+    animation: slideInRight 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.feedback-cambio.error {
+    background: var(--danger-color);
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}

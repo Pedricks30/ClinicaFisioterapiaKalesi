@@ -16,11 +16,19 @@ urlpatterns = [
     path('<int:cuestionario_pk>/pregunta/crear/', views.PreguntaCreateView.as_view(), name='pregunta_create'),
     path('pregunta/<int:pk>/editar/', views.PreguntaUpdateView.as_view(), name='pregunta_update'),
     path('pregunta/<int:pk>/eliminar/', views.PreguntaDeleteView.as_view(), name='pregunta_delete'),
-    
-    # Responder cuestionario
-    path('<int:cuestionario_pk>/responder/<int:consulta_pk>/', views.responder_cuestionario, name='responder'),
+
+    # APIs para gestión de preguntas (desde la interfaz de expedientes)
+    path('api/agregar-pregunta/', views.api_agregar_pregunta_cuestionario, name='api_agregar_pregunta'),
+    path('api/editar-pregunta/', views.api_editar_pregunta_cuestionario, name='api_editar_pregunta'),
+    path('api/eliminar-pregunta/', views.api_eliminar_pregunta_cuestionario, name='api_eliminar_pregunta'),
     
     # Evolución y gráficos
     path('evolucion/expediente/<int:expediente_pk>/', views.EvolucionGraficoView.as_view(), name='evolucion'),
     path('api/evolucion/<int:expediente_pk>/<int:pregunta_pk>/', views.api_evolucion_data, name='api_evolucion'),
+
+    # Buscador de pacientes
+    path('buscador/', views.BuscadorPacientesView.as_view(), name='buscador_pacientes'),
+    
+    # Historial de paciente
+    path('historial/<int:pk>/', views.VerHistorialPacienteView.as_view(), name='historial_paciente'),
 ]

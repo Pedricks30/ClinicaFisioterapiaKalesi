@@ -19,6 +19,12 @@ from paciente.models import Patient
 from .models import ConsultaFinalizacion, ConsultaSegumiento, Expediente, PrimeraConsulta
 from .forms import PrimeraConsultaForm, ConsultaSegumientoForm, ConsultaFinalizacionForm
 
+# Obtener cuestionarios disponibles por tipo
+from cuestionarios.models import Cuestionario, PreguntaCuestionario, RespuestaCuestionario
+from django.http import JsonResponse
+from django.template.loader import render_to_string  # <-- Asegúrate de importar esto
+import json
+from django.core.serializers.json import DjangoJSONEncoder
 
 # ============================================================================
 # VISTAS BASADAS EN FUNCIONES
@@ -354,6 +360,154 @@ class ExpedienteActosView(TemplateView):
         return tiempo_transcurrido < timedelta(hours=1)
 
 
+# expedientes/views.py - Agregar al final del archivo
+class ExpedienteEvolucionGraficaView(LoginRequiredMixin, TemplateView):
+    """Vista para mostrar la evolución gráfica del paciente"""
+    template_name = 'expedientes/expediente_evolucion_grafica_paciente.html'
+    
+    def dispatch(self, request, *args, **kwargs):
+        self.expediente = get_object_or_404(Expediente, id=kwargs['expediente_id'])
+        return super().dispatch(request, *args, **kwargs)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        expediente = self.expediente
+        
+        from cuestionarios.models import EvolucionPaciente, AnalisisPredictivoEscala, PreguntaCuestionario, RespuestaCuestionario
+        from collections import defaultdict
+        
+        # ============================================
+        # OBTENER TODAS LAS EVOLUCIONES DEL PACIENTE
+        # ============================================
+        evoluciones = EvolucionPaciente.objects.filter(expediente=expediente)
+        
+        datos_graficos = []
+        for evol in evoluciones:
+            # Verificar que evolucion_historica sea una lista
+            historica = evol.evolucion_historica
+            if isinstance(historica, str):
+                try:
+                    historica = json.loads(historica)
+                except:
+                    historica = []
+            elif not isinstance(historica, list):
+                historica = []
+            
+            # Obtener el título de la pregunta
+            titulo = evol.tipo_evaluacion
+            if evol.pregunta_relacionada:
+                titulo = evol.pregunta_relacionada.texto_pregunta
+            
+            datos_graficos.append({
+                'id': evol.id,
+                'titulo': titulo,
+                'datos': historica if historica else [],
+                'tendencia': evol.tendencia_general,
+                'mejoria': evol.porcentaje_mejoria,
+                'mejor_valor': evol.mejor_valor,
+                'peor_valor': evol.peor_valor,
+                'promedio': round(evol.promedio, 2),
+                'pregunta_id': evol.pregunta_relacionada.id if evol.pregunta_relacionada else None,
+            })
+        
+        # ============================================
+        # CALCULAR PROMEDIO POR SESIÓN (GRÁFICO PRINCIPAL)
+        # ============================================
+        # Diccionario para almacenar los valores por sesión
+        valores_por_sesion = defaultdict(list)
+        fechas_por_sesion = {}
+        
+        # Recorrer todas las respuestas de escala del paciente
+        respuestas = RespuestaCuestionario.objects.filter(
+            consulta_seguimiento__expediente=expediente,
+            pregunta__tipo_pregunta__in=['ESCALA', 'ESCALA_NUMERICA'],
+            respuesta_escala__isnull=False
+        ).select_related('consulta_seguimiento', 'pregunta')
+        
+        for respuesta in respuestas:
+            sesion = respuesta.consulta_seguimiento
+            sesion_num = sesion.numero_sesion
+            valores_por_sesion[sesion_num].append(respuesta.respuesta_escala)
+            fechas_por_sesion[sesion_num] = sesion.fecha_consulta.strftime('%d/%m/%Y')
+        
+        # Calcular promedio por sesión
+        promedio_por_sesion = []
+        for sesion_num in sorted(valores_por_sesion.keys()):
+            valores = valores_por_sesion[sesion_num]
+            promedio = sum(valores) / len(valores) if valores else 0
+            promedio_por_sesion.append({
+                'sesion': sesion_num,
+                'fecha': fechas_por_sesion.get(sesion_num, ''),
+                'valor': round(promedio, 1),
+                'total_preguntas': len(valores)
+            })
+        
+        # Calcular tendencia de la gráfica principal
+        if len(promedio_por_sesion) >= 2:
+            valores = [p['valor'] for p in promedio_por_sesion]
+            if valores[-1] < valores[0]:
+                tendencia_principal = 'MEJORANDO'
+            elif valores[-1] > valores[0]:
+                tendencia_principal = 'EMPEORANDO'
+            else:
+                tendencia_principal = 'ESTABLE'
+        else:
+            tendencia_principal = 'SIN_DATOS'
+        
+        # Calcular mejoría total de la gráfica principal
+        if len(promedio_por_sesion) >= 2:
+            primero = promedio_por_sesion[0]['valor']
+            ultimo = promedio_por_sesion[-1]['valor']
+            if primero > 0:
+                mejoria_principal = ((primero - ultimo) / primero * 100)
+            else:
+                mejoria_principal = 0
+        else:
+            mejoria_principal = 0
+        
+        # ============================================
+        # OBTENER TODAS LAS PREDICCIONES
+        # ============================================
+        predicciones_qs = AnalisisPredictivoEscala.objects.filter(
+            consulta_seguimiento__expediente=expediente,
+            prediccion_siguiente__isnull=False
+        ).select_related('pregunta').order_by('pregunta__orden')
+        
+        predicciones = []
+        for pred in predicciones_qs:
+            predicciones.append({
+                'id': pred.id,
+                'pregunta_id': pred.pregunta.id,
+                'pregunta_texto': pred.pregunta.texto_pregunta if pred.pregunta else '',
+                'prediccion_siguiente': pred.prediccion_siguiente,
+                'intervalo_confianza_min': pred.intervalo_confianza_min,
+                'intervalo_confianza_max': pred.intervalo_confianza_max,
+                'tendencia': pred.tendencia,
+                'valor_escala': pred.valor_escala,
+            })
+        
+        # ============================================
+        # CONTEXTO PARA EL TEMPLATE
+        # ============================================
+        context.update({
+            'expediente': expediente,
+            'paciente': expediente.paciente,
+            'seccion': 'evolucion',
+            'datos_graficos_json': json.dumps(datos_graficos, cls=DjangoJSONEncoder),
+            'predicciones_json': json.dumps(predicciones, cls=DjangoJSONEncoder),
+            'promedio_por_sesion_json': json.dumps(promedio_por_sesion, cls=DjangoJSONEncoder),
+            'tendencia_principal': tendencia_principal,
+            'mejoria_principal': round(mejoria_principal, 1),
+            'total_evoluciones': evoluciones.count(),
+            'total_sesiones': expediente.seguimientos.count(),
+            'total_preguntas_escala': RespuestaCuestionario.objects.filter(
+                consulta_seguimiento__expediente=expediente,
+                pregunta__tipo_pregunta__in=['ESCALA', 'ESCALA_NUMERICA'],
+                respuesta_escala__isnull=False
+            ).count(),
+        })
+        
+        return context
 # ============================================================================
 # PRIMERA CONSULTA
 # ============================================================================
@@ -563,10 +717,18 @@ class CrearSeguimientoView(LoginRequiredMixin, BaseExpedienteActoView, CreateVie
 
         messages.success(self.request, f'Sesión {form.instance.numero_sesion} creada exitosamente. La cita ha sido marcada como COMPLETADA.')
 
-        success_url = self.get_success_url()
-        print(f"✅ Redirigiendo a: {success_url}")
-
-        return redirect(success_url)
+        # Guardar datos temporales en sesión
+        self.request.session['seguimiento_data'] = {
+            'form_data': self.request.POST,
+            'files_data': self.request.FILES,
+        }
+        
+        # Redirigir a la vista de cuestionarios con modelo 3D
+        return redirect(
+            'expedientes:seguimiento_cuestionarios',
+            expediente_id=self.expediente.id,
+            cita_id=self.cita.id
+        )
     
     def form_invalid(self, form):
     
@@ -611,13 +773,42 @@ class EditarSeguimientoView(LoginRequiredMixin, BaseExpedienteActoView, UpdateVi
         context['titulo'] = 'Seguimiento'
         context['accion'] = 'Editar'
         context['es_admin'] = self.request.user.tipo_usuario == 'ADMIN'
+        context['es_edicion'] = True
         return context
     
     def form_valid(self, form):
-        messages.success(self.request, 'Seguimiento actualizado exitosamente.')
-        return super().form_valid(form)
+        # Guardar el seguimiento editado
+        self.object = form.save()
+        
+        messages.success(self.request, f'Sesión {self.object.numero_sesion} actualizada exitosamente.')
+        
+        # Guardar datos en sesión para la vista de cuestionarios
+        self.request.session['editar_seguimiento_data'] = {
+            'seguimiento_id': self.object.id,
+            'form_data': self.request.POST.dict(),  # Convertir QueryDict a dict
+            'files_data': self.request.FILES,
+        }
+        
+        # Redirigir a la vista de cuestionarios con modo edición
+        return redirect(
+            'expedientes:editar_seguimiento_cuestionarios',
+            expediente_id=self.expediente.id,
+            seguimiento_id=self.object.id
+        )
+    
+    def form_invalid(self, form):
+        print("=== ERRORES DEL FORMULARIO DE SEGUIMIENTO (EDICIÓN) ===")
+        print(f"Errores: {form.errors}")
+        print(f"Datos enviados: {self.request.POST}")
+        
+        for field, errors in form.errors.items():
+            for error in errors:
+                messages.error(self.request, f'Error en {field}: {error}')
+        
+        return super().form_invalid(form)
     
     def get_success_url(self):
+        # Esta URL ya no se usa porque redirigimos manualmente en form_valid
         return reverse('expedientes:expediente_actos', args=[self.expediente.id])
     
 class CrearFinalizacionView(LoginRequiredMixin, BaseExpedienteActoView, CreateView):
@@ -762,7 +953,9 @@ class EditarFinalizacionView(LoginRequiredMixin, BaseExpedienteActoView, UpdateV
     
     def get_success_url(self):
         return reverse('expedientes:expediente_actos', args=[self.expediente.id])
-
+    
+# ============================================================================
+# ELIMINAR ACTOS CLÍNICOS (AJAX)
 @require_http_methods(["DELETE"])
 @login_required
 def eliminar_acto_clinico(request, tipo, id_acto):
@@ -825,3 +1018,369 @@ def eliminar_acto_clinico(request, tipo, id_acto):
             'success': False, 
             'error': f'Error al eliminar: {str(e)}'
         }, status=500)
+
+class SeguimientoConCuestionariosView(LoginRequiredMixin, BaseExpedienteActoView, TemplateView):
+    """Vista para crear evaluación con modelo 3D y cuestionarios"""
+    template_name = 'expedientes/actos/seguimiento_cuestionarios.html'
+    
+    def dispatch(self, request, *args, **kwargs):
+        self.verificar_permiso(request)
+        self.expediente = get_object_or_404(Expediente, id=kwargs['expediente_id'])
+        self.cita = get_object_or_404(Cita, id=kwargs['cita_id'])
+        
+        if not hasattr(self.expediente, 'primera_consulta'):
+            messages.error(request, 'Debe existir una Primera Consulta antes de crear seguimientos.')
+            return redirect('expedientes:expediente_actos', expediente_id=self.expediente.id)
+        
+        self.seguimiento = ConsultaSegumiento.objects.filter(
+            expediente=self.expediente,
+            cita=self.cita
+        ).order_by('-numero_sesion').first()
+        
+        if not self.seguimiento:
+            messages.error(request, 'No se encontró la sesión de seguimiento.')
+            return redirect('expedientes:expediente_actos', expediente_id=self.expediente.id)
+        
+        return super().dispatch(request, *args, **kwargs)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({
+            'expediente': self.expediente,
+            'paciente': self.expediente.paciente,
+            'cita': self.cita,
+            'seguimiento': self.seguimiento,
+            'es_edicion': False,  # <-- Modo creación
+        })
+        return context
+    
+    
+    def post(self, request, *args, **kwargs):
+        """Procesa las respuestas de los cuestionarios y las asocia al seguimiento existente"""
+        self.expediente = get_object_or_404(Expediente, id=kwargs['expediente_id'])
+        self.cita = get_object_or_404(Cita, id=kwargs['cita_id'])
+        
+        # Obtener el seguimiento que ya fue creado
+        seguimiento = ConsultaSegumiento.objects.filter(
+            expediente=self.expediente,
+            cita=self.cita
+        ).order_by('-numero_sesion').first()
+        
+        if not seguimiento:
+            messages.error(request, 'No se encontró la sesión de seguimiento.')
+            return redirect('expedientes:expediente_actos', expediente_id=self.expediente.id)
+        
+        # Procesar las respuestas de los cuestionarios
+        preguntas = PreguntaCuestionario.objects.filter(
+            cuestionario__activo=True
+        )
+        
+        respuestas_guardadas = 0
+        for pregunta in preguntas:
+            respuesta_key = f'pregunta_{pregunta.id}'
+            
+            if respuesta_key in request.POST:
+                valor = request.POST.get(respuesta_key)
+                
+                # Verificar si ya existe una respuesta para esta pregunta en este seguimiento
+                respuesta_existente = RespuestaCuestionario.objects.filter(
+                    consulta_seguimiento=seguimiento,
+                    pregunta=pregunta
+                ).first()
+                
+                # Crear o actualizar respuesta según tipo de pregunta
+                if pregunta.tipo_pregunta in ['ESCALA', 'ESCALA_NUMERICA']:
+                    if valor and valor.isdigit():
+                        if respuesta_existente:
+                            respuesta_existente.respuesta_escala = int(valor)
+                            respuesta_existente.save()
+                        else:
+                            RespuestaCuestionario.objects.create(
+                                consulta_seguimiento=seguimiento,
+                                pregunta=pregunta,
+                                respuesta_escala=int(valor)
+                            )
+                        respuestas_guardadas += 1
+                        
+                elif pregunta.tipo_pregunta == 'TEXTO':
+                    if valor:
+                        if respuesta_existente:
+                            respuesta_existente.respuesta_texto = valor
+                            respuesta_existente.save()
+                        else:
+                            RespuestaCuestionario.objects.create(
+                                consulta_seguimiento=seguimiento,
+                                pregunta=pregunta,
+                                respuesta_texto=valor
+                            )
+                        respuestas_guardadas += 1
+                        
+                elif pregunta.tipo_pregunta == 'SI_NO':
+                    if respuesta_existente:
+                        respuesta_existente.respuesta_booleana = (valor == 'si')
+                        respuesta_existente.save()
+                    else:
+                        RespuestaCuestionario.objects.create(
+                            consulta_seguimiento=seguimiento,
+                            pregunta=pregunta,
+                            respuesta_booleana=(valor == 'si')
+                        )
+                    respuestas_guardadas += 1
+                    
+                elif pregunta.tipo_pregunta == 'MULTIPLE':
+                    if valor:
+                        if respuesta_existente:
+                            respuesta_existente.respuesta_multiple = valor
+                            respuesta_existente.save()
+                        else:
+                            RespuestaCuestionario.objects.create(
+                                consulta_seguimiento=seguimiento,
+                                pregunta=pregunta,
+                                respuesta_multiple=valor
+                            )
+                        respuestas_guardadas += 1
+        
+        # Mensaje de éxito
+        messages.success(
+            request, 
+            f'Sesión {seguimiento.numero_sesion} completada exitosamente. '
+            f'Se guardaron {respuestas_guardadas} respuestas de cuestionarios.'
+        )
+        
+        return redirect('expedientes:expediente_actos', expediente_id=self.expediente.id)
+    
+def api_cuestionarios_por_parte(request):
+    """API para cargar cuestionarios según parte del cuerpo seleccionada"""
+    parte = request.GET.get('parte', 'hombro')
+    
+    # Mapeo de partes del cuerpo a tipos de cuestionario
+    mapping = {
+        'hombro': 'HOMBRO_PECTORAL',
+        'espalda': 'ESPALDA',
+        'rodilla': 'RODILLA',
+        'cuello': 'CUELLO',
+        'general': 'GENERAL',
+    }
+    
+    tipo = mapping.get(parte, 'GENERAL')
+    
+    cuestionario = Cuestionario.objects.filter(
+        tipo_cuestionario=tipo,
+        activo=True
+    ).first()
+    
+    preguntas = []
+    if cuestionario:
+        preguntas = cuestionario.preguntas.all().order_by('orden')
+    
+    # Renderizar HTML
+    html = render_to_string('expedientes/actos/_cuestionarios_por_parte.html', {
+        'preguntas': preguntas,
+        'parte': parte,
+    })
+    
+    return JsonResponse({'html': html, 'parte': parte})
+
+
+#EDITAR CUESTIONARIOS DE SEGUIMIENTO (NUEVA VISTA)
+# expedientes/views.py - Agregar esta nueva vista
+# expedientes/views.py - Verificar que esta vista esté completa
+
+class EditarSeguimientoCuestionariosView(LoginRequiredMixin, BaseExpedienteActoView, TemplateView):
+    """Vista para editar modelo 3D y cuestionarios de un seguimiento existente"""
+    template_name = 'expedientes/actos/seguimiento_cuestionarios.html'  # <-- Mismo template
+    
+    def dispatch(self, request, *args, **kwargs):
+        self.verificar_permiso(request)
+        self.expediente = get_object_or_404(Expediente, id=kwargs['expediente_id'])
+        self.seguimiento = get_object_or_404(ConsultaSegumiento, id=kwargs['seguimiento_id'])
+        
+        if self.seguimiento.expediente.id != self.expediente.id:
+            messages.error(request, 'El seguimiento no pertenece a este expediente.')
+            return redirect('expedientes:expediente_actos', expediente_id=self.expediente.id)
+        
+        if request.user.tipo_usuario != 'ADMIN':
+            tiempo_transcurrido = timezone.now() - self.seguimiento.created_at
+            if tiempo_transcurrido > timedelta(hours=1):
+                messages.error(request, 'Solo tienes 1 hora después de crear la historia para editarla.')
+                return redirect('expedientes:expediente_actos', expediente_id=self.expediente.id)
+        
+        return super().dispatch(request, *args, **kwargs)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # Obtener respuestas existentes
+        respuestas_existentes = {}
+        respuestas = RespuestaCuestionario.objects.filter(
+            consulta_seguimiento=self.seguimiento
+        ).select_related('pregunta')
+        
+        for respuesta in respuestas:
+            respuestas_existentes[respuesta.pregunta_id] = respuesta
+        
+        context.update({
+            'expediente': self.expediente,
+            'paciente': self.expediente.paciente,
+            'seguimiento': self.seguimiento,
+            'cita': self.seguimiento.cita,
+            'respuestas_existentes': respuestas_existentes,
+            'es_edicion': True,  # <-- Modo edición
+        })
+        return context
+    
+    def post(self, request, *args, **kwargs):
+        """Procesa y actualiza las respuestas de los cuestionarios"""
+        self.expediente = get_object_or_404(Expediente, id=kwargs['expediente_id'])
+        self.seguimiento = get_object_or_404(ConsultaSegumiento, id=kwargs['seguimiento_id'])
+        
+        # Procesar las respuestas de los cuestionarios
+        preguntas = PreguntaCuestionario.objects.filter(
+            cuestionario__activo=True
+        )
+        
+        respuestas_actualizadas = 0
+        respuestas_creadas = 0
+        
+        for pregunta in preguntas:
+            respuesta_key = f'pregunta_{pregunta.id}'
+            
+            if respuesta_key in request.POST:
+                valor = request.POST.get(respuesta_key)
+                
+                # Buscar respuesta existente
+                respuesta_existente = RespuestaCuestionario.objects.filter(
+                    consulta_seguimiento=self.seguimiento,
+                    pregunta=pregunta
+                ).first()
+                
+                # Crear o actualizar respuesta según tipo de pregunta
+                if pregunta.tipo_pregunta in ['ESCALA', 'ESCALA_NUMERICA']:
+                    if valor and valor.isdigit():
+                        if respuesta_existente:
+                            respuesta_existente.respuesta_escala = int(valor)
+                            respuesta_existente.save()
+                            respuestas_actualizadas += 1
+                        else:
+                            RespuestaCuestionario.objects.create(
+                                consulta_seguimiento=self.seguimiento,
+                                pregunta=pregunta,
+                                respuesta_escala=int(valor)
+                            )
+                            respuestas_creadas += 1
+                        
+                elif pregunta.tipo_pregunta == 'TEXTO':
+                    if valor:
+                        if respuesta_existente:
+                            respuesta_existente.respuesta_texto = valor
+                            respuesta_existente.save()
+                            respuestas_actualizadas += 1
+                        else:
+                            RespuestaCuestionario.objects.create(
+                                consulta_seguimiento=self.seguimiento,
+                                pregunta=pregunta,
+                                respuesta_texto=valor
+                            )
+                            respuestas_creadas += 1
+                        
+                elif pregunta.tipo_pregunta == 'SI_NO':
+                    if respuesta_existente:
+                        respuesta_existente.respuesta_booleana = (valor == 'si')
+                        respuesta_existente.save()
+                        respuestas_actualizadas += 1
+                    else:
+                        RespuestaCuestionario.objects.create(
+                            consulta_seguimiento=self.seguimiento,
+                            pregunta=pregunta,
+                            respuesta_booleana=(valor == 'si')
+                        )
+                        respuestas_creadas += 1
+                        
+                elif pregunta.tipo_pregunta == 'MULTIPLE':
+                    if valor:
+                        if respuesta_existente:
+                            respuesta_existente.respuesta_multiple = valor
+                            respuesta_existente.save()
+                            respuestas_actualizadas += 1
+                        else:
+                            RespuestaCuestionario.objects.create(
+                                consulta_seguimiento=self.seguimiento,
+                                pregunta=pregunta,
+                                respuesta_multiple=valor
+                            )
+                            respuestas_creadas += 1
+        
+        # Mensaje de éxito
+        messages.success(
+            request, 
+            f'Sesión {self.seguimiento.numero_sesion} actualizada exitosamente. '
+            f'Respuestas: {respuestas_creadas} creadas, {respuestas_actualizadas} actualizadas.'
+        )
+        
+        return redirect('expedientes:expediente_actos', expediente_id=self.expediente.id)
+
+# expedientes/views.py - Modificar api_cuestionarios_por_parte
+def api_cuestionarios_por_parte(request):
+    """API para cargar cuestionarios según parte del cuerpo seleccionada"""
+    parte = request.GET.get('parte', 'hombro')
+    es_edicion = request.GET.get('edicion', 'false') == 'true'
+    seguimiento_id = request.GET.get('seguimiento_id')
+    
+    from cuestionarios.models import Cuestionario, PreguntaCuestionario, RespuestaCuestionario
+    
+    mapping = {
+        'hombro': 'HOMBRO_PECTORAL',
+        'espalda': 'ESPALDA',
+        'rodilla': 'RODILLA',
+        'cuello': 'CUELLO',
+        'general': 'GENERAL',
+    }
+    
+    tipo = mapping.get(parte, 'GENERAL')
+    
+    cuestionario = Cuestionario.objects.filter(
+        tipo_cuestionario=tipo,
+        activo=True
+    ).first()
+    
+    preguntas = []
+    respuestas_existentes = {}
+    
+    if cuestionario:
+        preguntas = cuestionario.preguntas.all().order_by('orden')
+        
+        if es_edicion and seguimiento_id:
+            respuestas = RespuestaCuestionario.objects.filter(
+                consulta_seguimiento_id=seguimiento_id,
+                pregunta__in=preguntas
+            ).select_related('pregunta')
+            
+            for respuesta in respuestas:
+                respuestas_existentes[respuesta.pregunta_id] = respuesta
+    
+    html = render_to_string('expedientes/actos/_cuestionarios_por_parte.html', {
+        'preguntas': preguntas,
+        'parte': parte,
+        'es_edicion': es_edicion,
+        'respuestas_existentes': respuestas_existentes,
+    })
+    
+    return JsonResponse({'html': html, 'parte': parte})
+
+
+class VisualizarModelo3DView(LoginRequiredMixin, TemplateView):
+    """Vista para visualizar el modelo 3D del cuerpo humano"""
+    template_name = 'modelo_3d/visualizar_modelo.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # Obtener el paciente si se pasa un ID
+        paciente_id = self.request.GET.get('paciente_id')
+        if paciente_id:
+            from paciente.models import Patient
+            context['paciente'] = get_object_or_404(Patient, id=paciente_id)
+        else:
+            context['paciente'] = None
+        
+        return context

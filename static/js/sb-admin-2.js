@@ -9,6 +9,18 @@ var $ = jQuery.noConflict();
     if ($(".sidebar").hasClass("toggled")) {
       $('.sidebar .collapse').collapse('hide');
     };
+    
+    // Cambiar ícono del toggle
+    var toggleIcon = $(this).find('i');
+    if (toggleIcon.length) {
+      if ($(".sidebar").hasClass("toggled")) {
+        toggleIcon.removeClass('fa-chevron-left');
+        toggleIcon.addClass('fa-chevron-right');
+      } else {
+        toggleIcon.removeClass('fa-chevron-right');
+        toggleIcon.addClass('fa-chevron-left');
+      }
+    }
   });
 
   // Close any open menu accordions when window is resized below 768px
@@ -56,13 +68,6 @@ var $ = jQuery.noConflict();
 
 })(jQuery); // End of use strict
 
-// Función para abrir el modal dinámico
-// Función para abrir el modal de edición
-/*function abrir_modal_edicion(url) {
-  $('#edicion').load(url, function () {
-      $('#edicion').modal('show');
-  });
-}*/
 // Funciones para abrir modales (sin cambios)
 function abrir_modal_edicion(url) {
     $.ajax({

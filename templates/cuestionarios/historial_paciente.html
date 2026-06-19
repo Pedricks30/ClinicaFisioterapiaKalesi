@@ -1,0 +1,133 @@
+<!-- cuestionarios/templates/cuestionarios/historial_paciente.html -->
+{% extends 'layout/base.html' %}
+{% load static %}
+
+{% block title %}Historial de {{ paciente.nombres }} {{ paciente.apellidos }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/historial_pacientes.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="historial-container">
+    <!-- Header del paciente -->
+    <div class="paciente-header">
+        <div class="info">
+            <div class="avatar-grande">
+                {{ paciente.nombres|first }}{{ paciente.apellidos|first }}
+            </div>
+            <div>
+                <div class="nombre-completo">{{ paciente.nombres }} {{ paciente.apellidos }}</div>
+                <div class="detalles">
+                    <span><i class="fas fa-id-card"></i> {{ paciente.cedula|default:"No registrada" }}</span>
+                    <span><i class="fas fa-folder"></i> Expediente #{{ expediente.numero_expediente }}</span>
+                    <span><i class="fas fa-phone"></i> {{ paciente.telefono|default:"No registrado" }}</span>
+                    <span><i class="fas fa-calendar-alt"></i> {{ paciente.fecha_nacimiento|date:"d/m/Y"|default:"N/A" }}</span>
+                </div>
+            </div>
+        </div>
+        <a href="{% url 'cuestionarios:buscador_pacientes' %}" class="btn-volver">
+            <i class="fas fa-arrow-left"></i> Volver al buscador
+        </a>
+    </div>
+
+    <!-- Estadísticas rápidas -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="numero">{{ total_sesiones }}</div>
+            <div class="label">Sesiones totales</div>
+        </div>
+        <div class="stat-card">
+            <div class="numero">{{ expediente.seguimientos.count }}</div>
+            <div class="label">Seguimientos</div>
+        </div>
+        <div class="stat-card">
+            <div class="numero">{{ paciente.edad|default:"N/A" }}</div>
+            <div class="label">Edad</div>
+        </div>
+        <div class="stat-card">
+            <div class="numero">{{ paciente.sexo|default:"N/A" }}</div>
+            <div class="label">Sexo</div>
+        </div>
+    </div>
+
+    <!-- Sesiones -->
+    <h3 style="margin-bottom: 20px; color: #1a2634;">
+        <i class="fas fa-history"></i> Historial de Sesiones
+    </h3>
+
+    <div class="sesiones-grid">
+        {% if sesiones %}
+            {% for item in sesiones %}
+            <div class="sesion-card">
+                <div class="card-header">
+                    <span class="sesion-numero">Sesión #{{ item.sesion.numero_sesion }}</span>
+                    <span class="sesion-fecha">{{ item.sesion.fecha_consulta|date:"d/m/Y H:i" }}</span>
+                    <span class="sesion-parte">{{ item.parte }}</span>
+                </div>
+                <div class="card-body">
+                    {% if item.promedio_dolor %}
+                        {% if item.promedio_dolor <= 3 %}
+                            <div class="promedio-dolor bajo">
+                                <i class="fas fa-smile"></i> Promedio dolor: {{ item.promedio_dolor }}/10
+                            </div>
+                        {% elif item.promedio_dolor <= 6 %}
+                            <div class="promedio-dolor medio">
+                                <i class="fas fa-meh"></i> Promedio dolor: {{ item.promedio_dolor }}/10
+                            </div>
+                        {% else %}
+                            <div class="promedio-dolor alto">
+                                <i class="fas fa-frown"></i> Promedio dolor: {{ item.promedio_dolor }}/10
+                            </div>
+                        {% endif %}
+                    {% endif %}
+
+                    {% for respuesta in item.respuestas %}
+                    <div class="pregunta-respuesta">
+                        <div class="pregunta-texto">
+                            {{ respuesta.pregunta.texto_pregunta }}
+                            <span class="tag-cuestionario">{{ respuesta.pregunta.get_tipo_pregunta_display }}</span>
+                        </div>
+                        <div class="respuesta-texto">
+                            {% if respuesta.pregunta.tipo_pregunta == 'ESCALA_NUMERICA' or respuesta.pregunta.tipo_pregunta == 'ESCALA' %}
+                                {% if respuesta.respuesta_escala is not None %}
+                                    <span class="escala-valor 
+                                        {% if respuesta.respuesta_escala <= 3 %}bajo
+                                        {% elif respuesta.respuesta_escala <= 6 %}medio
+                                        {% else %}alto{% endif %}">
+                                        {{ respuesta.respuesta_escala }}/10
+                                    </span>
+                                {% else %}
+                                    <span style="color: #8b96a8;">No respondida</span>
+                                {% endif %}
+                            {% elif respuesta.pregunta.tipo_pregunta == 'SI_NO' %}
+                                <span class="si-no-valor {% if respuesta.respuesta_booleana %}si{% else %}no{% endif %}">
+                                    {% if respuesta.respuesta_booleana %}✅ Sí{% else %}❌ No{% endif %}
+                                </span>
+                            {% elif respuesta.pregunta.tipo_pregunta == 'TEXTO' %}
+                                <span class="texto-respuesta">{{ respuesta.respuesta_texto|default:"No respondida" }}</span>
+                            {% elif respuesta.pregunta.tipo_pregunta == 'MULTIPLE' %}
+                                <span class="texto-respuesta">{{ respuesta.respuesta_multiple|default:"No respondida" }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p style="color: #8b96a8; text-align: center; padding: 10px 0;">
+                        No hay respuestas en esta sesión
+                    </p>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-sesiones">
+                <div class="icon">
+                    <i class="fas fa-clipboard-list"></i>
+                </div>
+                <h3>No hay sesiones registradas</h3>
+                <p>Este paciente aún no tiene sesiones de seguimiento con cuestionarios respondidos.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
