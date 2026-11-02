@@ -54,11 +54,6 @@ class PatientForm(forms.ModelForm):
         label='Fecha de Nacimiento',
         input_formats=['%Y-%m-%d', '%d/%m/%Y', '%d-%m-%Y']  # Formatos aceptados
     )
-    foto_perfil = forms.ImageField(
-        required=False,
-        widget=forms.FileInput(attrs={'class': 'form-control'}),
-        label='Imagen de Perfil'
-    )
     estado_civil = forms.ChoiceField(
         choices=Patient.ESTADO_CIVIL_CHOICES,
         required=False,
@@ -140,7 +135,7 @@ class PatientForm(forms.ModelForm):
         model = Patient
         fields = [
             'nombres', 'apellidos', 'tipo_documento', 'documento_identidad',
-            'nacionalidad', 'sexo', 'fecha_nacimiento', 'foto_perfil',
+            'nacionalidad', 'sexo', 'fecha_nacimiento',
             'estado_civil', 'ocupacion', 'lugar_nacimiento', 'estado',
             'numero_telefono', 'email', 'direccion',
             'nombre_acompanante', 'parentesco_acompanante', 

@@ -50,7 +50,7 @@ class CustomUser(AbstractUser, ImageCompressionMixin, ImageDeletionMixin):
     country = models.CharField(max_length=30, null=True, blank=True)  # País
     birthdate = models.DateField(null=True, blank=True)  # Fecha de nacimiento
     document_number = models.CharField(max_length=40, unique=True)  # Asegura que el Número de documento
-    profile_image = models.ImageField(upload_to='profile_images/', default='profile_images_default/user_default.webp')
+    profile_image = models.ImageField(upload_to='profile_images/', default='', blank=True, null=True)
     # Relaciones con otras tablas
     document_type = models.ForeignKey(DocumentType, on_delete=models.SET_NULL, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)

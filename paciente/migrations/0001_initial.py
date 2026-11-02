@@ -22,7 +22,7 @@ class Migration(migrations.Migration):
                 ('nacionalidad', models.CharField(blank=True, max_length=30, null=True)),
                 ('sexo', models.CharField(choices=[('Masculino', 'Masculino'), ('Femenino', 'Femenino'), ('Otro', 'Otro')], max_length=10)),
                 ('fecha_nacimiento', models.DateField()),
-                ('foto_perfil', models.ImageField(default='profile_images_default/user_default.webp', upload_to='profile_images/')),
+                ('foto_perfil', models.ImageField(blank=True, default='', upload_to='profile_images/')),
                 ('estado_civil', models.CharField(blank=True, choices=[('SOLTERO', 'Soltero/a'), ('CASADO', 'Casado/a'), ('DIVORCIADO', 'Divorciado/a'), ('VIUDO', 'Viudo/a'), ('UNION_LIBRE', 'Unión libre')], max_length=20)),
                 ('ocupacion', models.CharField(blank=True, max_length=100)),
                 ('lugar_nacimiento', models.CharField(blank=True, max_length=100)),

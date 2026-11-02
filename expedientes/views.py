@@ -1149,39 +1149,6 @@ class SeguimientoConCuestionariosView(LoginRequiredMixin, BaseExpedienteActoView
         
         return redirect('expedientes:expediente_actos', expediente_id=self.expediente.id)
     
-def api_cuestionarios_por_parte(request):
-    """API para cargar cuestionarios según parte del cuerpo seleccionada"""
-    parte = request.GET.get('parte', 'hombro')
-    
-    # Mapeo de partes del cuerpo a tipos de cuestionario
-    mapping = {
-        'hombro': 'HOMBRO_PECTORAL',
-        'espalda': 'ESPALDA',
-        'rodilla': 'RODILLA',
-        'cuello': 'CUELLO',
-        'general': 'GENERAL',
-    }
-    
-    tipo = mapping.get(parte, 'GENERAL')
-    
-    cuestionario = Cuestionario.objects.filter(
-        tipo_cuestionario=tipo,
-        activo=True
-    ).first()
-    
-    preguntas = []
-    if cuestionario:
-        preguntas = cuestionario.preguntas.all().order_by('orden')
-    
-    # Renderizar HTML
-    html = render_to_string('expedientes/actos/_cuestionarios_por_parte.html', {
-        'preguntas': preguntas,
-        'parte': parte,
-    })
-    
-    return JsonResponse({'html': html, 'parte': parte})
-
-
 #EDITAR CUESTIONARIOS DE SEGUIMIENTO (NUEVA VISTA)
 # expedientes/views.py - Agregar esta nueva vista
 # expedientes/views.py - Verificar que esta vista esté completa
@@ -1216,15 +1183,22 @@ class EditarSeguimientoCuestionariosView(LoginRequiredMixin, BaseExpedienteActoV
             consulta_seguimiento=self.seguimiento
         ).select_related('pregunta')
         
+        import json as _json
+        respuestas_existentes_json = {}
         for respuesta in respuestas:
-            respuestas_existentes[respuesta.pregunta_id] = respuesta
-        
+            respuestas_existentes_json[str(respuesta.pregunta_id)] = {
+                'respuesta_escala': respuesta.respuesta_escala,
+                'respuesta_texto': respuesta.respuesta_texto,
+                'respuesta_booleana': respuesta.respuesta_booleana,
+                'respuesta_multiple': respuesta.respuesta_multiple,
+            }
+
         context.update({
             'expediente': self.expediente,
             'paciente': self.expediente.paciente,
             'seguimiento': self.seguimiento,
             'cita': self.seguimiento.cita,
-            'respuestas_existentes': respuestas_existentes,
+            'respuestas_existentes': _json.dumps(respuestas_existentes_json),
             'es_edicion': True,  # <-- Modo edición
         })
         return context

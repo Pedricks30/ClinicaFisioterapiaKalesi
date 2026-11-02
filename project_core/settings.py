@@ -138,6 +138,15 @@ DATABASES = {
         'PORT': env.int('DB_PORT'),            # Puerto de PostgreSQL (por defecto es 5432)
     }
 }
+
+import sys
+if 'test' in sys.argv:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': ':memory:',
+        }
+    }
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -209,5 +218,5 @@ EMAIL_HOST_PASSWORD = env.str('EMAIL_HOST_PASSWORD') # Tu contraseña de correo
 
 
 # Configuración para la carpeta MEDIA
-MEDIA_URL = '/media/'  # URL para acceder a los archivos multimedia
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')  # Ruta donde se almacenarán los archivos
+# MEDIA_URL = '/media/'  # URL para acceder a los archivos multimedia
+# MEDIA_ROOT = os.path.join(BASE_DIR, 'media')  # Ruta donde se almacenarán los archivos

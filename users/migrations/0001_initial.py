@@ -58,7 +58,7 @@ class Migration(migrations.Migration):
                 ('country', models.CharField(blank=True, max_length=30, null=True)),
                 ('birthdate', models.DateField(blank=True, null=True)),
                 ('document_number', models.CharField(max_length=40, unique=True)),
-                ('profile_image', models.ImageField(default='profile_images_default/user_default.webp', upload_to='profile_images/')),
+                ('profile_image', models.ImageField(blank=True, default='', null=True, upload_to='profile_images/')),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('update_at', models.DateTimeField(auto_now=True)),
                 ('groups', models.ManyToManyField(blank=True, help_text='The groups this user belongs to. A user will get all permissions granted to each of their groups.', related_name='user_set', related_query_name='user', to='auth.group', verbose_name='groups')),

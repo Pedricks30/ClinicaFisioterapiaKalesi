@@ -49,7 +49,7 @@ class Patient(ImageCompressionMixin, ImageDeletionMixin, models.Model):
     nacionalidad = models.CharField(max_length=30, null=True, blank=True)
     sexo = models.CharField(max_length=10, choices=SEXO_CHOICES)
     fecha_nacimiento = models.DateField()
-    foto_perfil = models.ImageField(upload_to='profile_images/', default='profile_images_default/user_default.webp')
+    foto_perfil = models.ImageField(upload_to='profile_images/', default='', blank=True)
     estado_civil = models.CharField(
         max_length=20,
         choices=ESTADO_CIVIL_CHOICES,
@@ -126,20 +126,6 @@ class Patient(ImageCompressionMixin, ImageDeletionMixin, models.Model):
         return None
     
     def save(self, *args, **kwargs):
-    # Si es un nuevo paciente y no tiene foto, asignar la imagen por defecto
-        is_new = not self.pk
-
-        # Solo procesar la imagen si es nueva o ha cambiado
-        if self.foto_perfil and hasattr(self.foto_perfil, 'file'):
-            # Verificar si la imagen ha cambiado
-            if is_new or self._has_image_changed():
-                try:
-                    compressed = compress_image(self.foto_perfil)
-                    if compressed:
-                        self.foto_perfil = compressed
-                except Exception as e:
-                    print(f"Error compressing image: {e}")
-
         super().save(*args, **kwargs)
 
     def _has_image_changed(self):
@@ -148,7 +134,7 @@ class Patient(ImageCompressionMixin, ImageDeletionMixin, models.Model):
             return True
         try:
             old = Patient.objects.get(pk=self.pk)
-            return old.foto_perfil != self.foto_perfil
+            return False
         except Patient.DoesNotExist:
             return True
 

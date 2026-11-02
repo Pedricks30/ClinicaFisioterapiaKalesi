@@ -140,7 +140,12 @@ class PreguntaUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView
     form_class = PreguntaCuestionarioForm
     template_name = 'cuestionarios/pregunta_form.html'
     permission_required = 'cuestionarios.change_preguntacuestionario'
-    
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['cuestionario'] = self.object.cuestionario
+        return context
+
     def get_success_url(self):
         return reverse('cuestionarios:detail', kwargs={'pk': self.object.cuestionario.pk})
 
